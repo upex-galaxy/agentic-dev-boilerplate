@@ -1736,7 +1736,7 @@
             >
             <a class="wf" href="#tdd"
               ><span class="lt">2</span
-              ><span><b>TDD guiado</b><span>Ciclo por ciclo, confirmando el rumbo entre uno y otro.</span></span></a
+              ><span><b>TDD guiado</b><span>Primero las costuras a testear, después ciclo por ciclo.</span></span></a
             >
           </div>
           <div class="lane">
@@ -1878,12 +1878,15 @@
           <div class="hum">
             <span class="k">Tú decides</span>
             <p>
-              <b>Qué unidad</b>, cuando el pedido es ambiguo: la IA te lo confirma antes de escribir.
+              <b>Qué unidad</b>, cuando el pedido es ambiguo: la IA te lo confirma antes de escribir. Si
+              nadie puede contestar (un worker o una rutina), elige la unidad más probable, la anota
+              y sigue.
             </p>
             <p>
               El <b>runner</b>, solo si <span class="mono">stack.test_runner</span> es
               <span class="mono">null</span>: la IA te pregunta y la elección se guarda con
-              <span class="mono">bun run agents:setup --stack</span>.
+              <span class="mono">bun run agents:setup --stack</span>. Sin nadie presente decide ella,
+              como una decisión técnica, y la reporta como <span class="mono">DECIDED</span>.
             </p>
           </div>
           <div class="out">
@@ -2005,6 +2008,13 @@
             </p>
           </div>
         </div>
+
+        <p class="sub r" style="margin-top: 22px">
+          Antes del primer ciclo se nombran las <b>costuras</b>: los puntos donde el comportamiento
+          se puede probar sin montar todo el sistema. Un worker o <span class="mono">/autonomous-delivery</span>
+          las toma del plan de la historia; si el plan no nombra ninguna, usa la más alta que ya existe
+          y la anota en <span class="mono">progress.md</span>.
+        </p>
 
         <div class="tablewrap r" style="margin-top: 26px">
           <table class="cmp narrow">
@@ -2409,6 +2419,14 @@
             ><span
               ><b>No deja pasar un test flaky en verde.</b> Se arregla la causa (tiempos, estado
               compartido, red) o se pone en cuarentena con un ticket.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>No deja pasar tests que mienten</b> (LT-1 a LT-3): los que pasan sin comprobar el
+              comportamiento o se rompen con un refactor inocente. La tabla está en
+              <span class="mono">tdd-workflow.md</span>, sección <i>Lying tests</i>.</span
             >
           </div>
           <div class="it">

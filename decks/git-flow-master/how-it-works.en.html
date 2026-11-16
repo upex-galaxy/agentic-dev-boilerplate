@@ -1,0 +1,2905 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Git Flow Master: branches, pushes and PRs</title>
+    <meta
+      name="description"
+      content="How /git-flow-master runs the git layer: it reads the state, reconciles the declared policy against the host, resolves the branching strategy and adapts branches, commits, pushes, PRs, conflicts, PR chains and worktrees."
+    />
+    <style>
+      /* ============================================================
+     Self-contained deck: zero external requests, not even
+     fonts. Designed to survive for years as a loose file.
+     Tokens: "Planos": see packages/decks/README.md (single source).
+     ============================================================ */
+      :root {
+        --paper: #e8ecf1;
+        --paper-2: #dee5ed;
+        --surface: #f5f8fb;
+        --surface-2: #ffffff;
+        --ink: #172236;
+        --ink-soft: #4a5873;
+        --ink-faint: #5e6e88;
+        --line: rgba(23, 34, 54, 0.14);
+        --line-soft: rgba(23, 34, 54, 0.08);
+        --blue: #1e56a8;
+        --blue-2: #2f72ce;
+        --blue-wash: rgba(30, 86, 168, 0.08);
+        --blue-solid: #1e56a8;
+        --signal: #c2410c;
+        --signal-2: #ea580c;
+        --signal-wash: rgba(194, 65, 12, 0.09);
+        --signal-solid: #9a3412;
+        --agent: #6d28d9;
+        --agent-2: #7c3aed;
+        --agent-wash: rgba(109, 40, 217, 0.08);
+        --agent-solid: #6d28d9;
+        --good: #15803d;
+        --warn: #b45309;
+        --grid: rgba(30, 86, 168, 0.055);
+        --shadow: 0 1px 2px rgba(23, 34, 54, 0.06), 0 8px 24px -12px rgba(23, 34, 54, 0.18);
+        --shadow-lg: 0 2px 4px rgba(23, 34, 54, 0.05), 0 24px 60px -24px rgba(23, 34, 54, 0.28);
+        /* -solid tokens: fixed across both themes, reserved for solid-fill
+           + white-text UI (buttons, bubbles, ::selection): the plain
+           --blue/--signal/--agent above lighten in dark mode for on-paper
+           text/links and fail contrast as a white-text fill. Never themed. */
+
+        --font-display:
+          'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
+        --font-body:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', system-ui, sans-serif;
+        --font-mono:
+          ui-monospace, 'SF Mono', 'JetBrains Mono', 'Cascadia Code', Menlo, Consolas, monospace;
+
+        --maxw: 1120px;
+        --prose: 66ch;
+        --r: 14px;
+        --r-sm: 9px;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --paper: #0b1220;
+          --paper-2: #0e1626;
+          --surface: #121b2e;
+          --surface-2: #16213a;
+          --ink: #e4e9f2;
+          --ink-soft: #9fb0c9;
+          --ink-faint: #7e8caa;
+          --line: rgba(160, 180, 210, 0.16);
+          --line-soft: rgba(160, 180, 210, 0.09);
+          --blue: #6fa8ff;
+          --blue-2: #8cbbff;
+          --blue-wash: rgba(111, 168, 255, 0.11);
+          --signal: #fb923c;
+          --signal-2: #fdba74;
+          --signal-wash: rgba(251, 146, 60, 0.12);
+          --agent: #c4b5fd;
+          --agent-2: #ddd6fe;
+          --agent-wash: rgba(196, 181, 253, 0.12);
+          --good: #4ade80;
+          --warn: #fbbf24;
+          --grid: rgba(111, 168, 255, 0.06);
+          --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 30px -14px rgba(0, 0, 0, 0.6);
+          --shadow-lg: 0 2px 6px rgba(0, 0, 0, 0.4), 0 30px 70px -28px rgba(0, 0, 0, 0.7);
+        }
+      }
+      :root[data-theme='light'] {
+        --paper: #e8ecf1;
+        --paper-2: #dee5ed;
+        --surface: #f5f8fb;
+        --surface-2: #ffffff;
+        --ink: #172236;
+        --ink-soft: #4a5873;
+        --ink-faint: #5e6e88;
+        --line: rgba(23, 34, 54, 0.14);
+        --line-soft: rgba(23, 34, 54, 0.08);
+        --blue: #1e56a8;
+        --blue-2: #2f72ce;
+        --blue-wash: rgba(30, 86, 168, 0.08);
+        --signal: #c2410c;
+        --signal-2: #ea580c;
+        --signal-wash: rgba(194, 65, 12, 0.09);
+        --agent: #6d28d9;
+        --agent-2: #7c3aed;
+        --agent-wash: rgba(109, 40, 217, 0.08);
+        --good: #15803d;
+        --warn: #b45309;
+        --grid: rgba(30, 86, 168, 0.055);
+        --shadow: 0 1px 2px rgba(23, 34, 54, 0.06), 0 8px 24px -12px rgba(23, 34, 54, 0.18);
+        --shadow-lg: 0 2px 4px rgba(23, 34, 54, 0.05), 0 24px 60px -24px rgba(23, 34, 54, 0.28);
+      }
+      :root[data-theme='dark'] {
+        --paper: #0b1220;
+        --paper-2: #0e1626;
+        --surface: #121b2e;
+        --surface-2: #16213a;
+        --ink: #e4e9f2;
+        --ink-soft: #9fb0c9;
+        --ink-faint: #7e8caa;
+        --line: rgba(160, 180, 210, 0.16);
+        --line-soft: rgba(160, 180, 210, 0.09);
+        --blue: #6fa8ff;
+        --blue-2: #8cbbff;
+        --blue-wash: rgba(111, 168, 255, 0.11);
+        --signal: #fb923c;
+        --signal-2: #fdba74;
+        --signal-wash: rgba(251, 146, 60, 0.12);
+        --agent: #c4b5fd;
+        --agent-2: #ddd6fe;
+        --agent-wash: rgba(196, 181, 253, 0.12);
+        --good: #4ade80;
+        --warn: #fbbf24;
+        --grid: rgba(111, 168, 255, 0.06);
+        --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 30px -14px rgba(0, 0, 0, 0.6);
+        --shadow-lg: 0 2px 6px rgba(0, 0, 0, 0.4), 0 30px 70px -28px rgba(0, 0, 0, 0.7);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+      }
+      body {
+        margin: 0;
+        font-family: var(--font-body);
+        font-size: 17px;
+        line-height: 1.65;
+        color: var(--ink);
+        background-color: var(--paper);
+        background-image:
+          linear-gradient(var(--grid) 1px, transparent 1px),
+          linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+        background-size: 30px 30px;
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
+      }
+      h1,
+      h2,
+      h3 {
+        font-family: var(--font-display);
+        font-weight: 600;
+        text-wrap: balance;
+        line-height: 1.12;
+        margin: 0;
+      }
+      p {
+        margin: 0 0 1.1em;
+      }
+      a {
+        color: var(--blue);
+        text-decoration-color: var(--line);
+        text-underline-offset: 3px;
+      }
+      a:focus-visible {
+        outline: 2px solid var(--blue);
+        outline-offset: 2px;
+      }
+      code,
+      .mono {
+        font-family: var(--font-mono);
+      }
+      ::selection {
+        background: var(--signal-solid);
+        color: #fff;
+      }
+
+      .wrap {
+        max-width: var(--maxw);
+        margin: 0 auto;
+        padding: 0 clamp(20px, 5vw, 56px);
+      }
+      .prose {
+        max-width: var(--prose);
+      }
+
+      .eyebrow {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        font-weight: 600;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--signal);
+        display: inline-flex;
+        align-items: baseline;
+        gap: 0.6em;
+      }
+      .eyebrow .num {
+        color: var(--blue);
+      }
+
+      .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 11px clamp(20px, 5vw, 56px);
+        background: color-mix(in srgb, var(--paper) 82%, transparent);
+        backdrop-filter: blur(12px) saturate(1.4);
+        border-bottom: 1px solid var(--line-soft);
+      }
+      .topbar .brand {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        letter-spacing: 0.04em;
+        color: var(--ink-soft);
+        display: flex;
+        align-items: center;
+        gap: 0.6em;
+        text-decoration: none;
+      }
+      .topbar .brand b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .topbar .mark {
+        width: 16px;
+        height: 16px;
+        border: 1.5px solid var(--blue);
+        border-radius: 3px;
+        position: relative;
+        flex: none;
+      }
+      .topbar .mark::after {
+        content: '';
+        position: absolute;
+        inset: 3px;
+        border: 1.5px solid var(--agent);
+        border-radius: 1px;
+      }
+      .topnav {
+        display: flex;
+        gap: 4px;
+        align-items: center;
+      }
+      .topnav a {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        letter-spacing: 0.03em;
+        color: var(--ink-faint);
+        text-decoration: none;
+        padding: 5px 9px;
+        border-radius: 6px;
+      }
+      .topnav a:hover {
+        color: var(--ink);
+        background: var(--blue-wash);
+      }
+      @media (max-width: 900px) {
+        .topnav {
+          display: none;
+        }
+      }
+      .themebtn {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        letter-spacing: 0.05em;
+        cursor: pointer;
+        border: 1px solid var(--line);
+        background: var(--surface);
+        color: var(--ink-soft);
+        padding: 6px 11px;
+        border-radius: 7px;
+        display: flex;
+        gap: 0.5em;
+        align-items: center;
+      }
+      .themebtn:hover {
+        border-color: var(--blue);
+        color: var(--ink);
+      }
+      .themebtn:focus-visible {
+        outline: 2px solid var(--blue);
+        outline-offset: 2px;
+      }
+
+      .hero {
+        position: relative;
+        padding: clamp(60px, 12vh, 130px) 0 clamp(48px, 8vh, 90px);
+        overflow: hidden;
+      }
+      .hero .kicker {
+        margin-bottom: 26px;
+      }
+      .hero h1 {
+        font-size: clamp(2.5rem, 6.6vw, 5.2rem);
+        letter-spacing: -0.015em;
+      }
+      .hero h1 em {
+        font-style: italic;
+        color: var(--blue);
+      }
+      .hero h1 .sig {
+        color: var(--signal);
+        font-style: normal;
+      }
+      .hero .lede {
+        font-size: clamp(1.06rem, 2vw, 1.32rem);
+        color: var(--ink-soft);
+        max-width: 60ch;
+        margin-top: 28px;
+        line-height: 1.55;
+      }
+      .hero .lede b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .hero-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px 10px;
+        margin-top: 36px;
+      }
+      .chip {
+        font-family: var(--font-mono);
+        font-size: 0.74rem;
+        letter-spacing: 0.02em;
+        padding: 7px 12px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        color: var(--ink-soft);
+        background: var(--surface);
+        display: inline-flex;
+        gap: 0.55em;
+        align-items: center;
+      }
+      .chip b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .chip .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--signal);
+        flex: none;
+      }
+      .chip.agent .dot {
+        background: var(--agent);
+      }
+
+      .pipe {
+        margin-top: 54px;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0;
+        align-items: stretch;
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        overflow: hidden;
+        background: var(--surface);
+        box-shadow: var(--shadow);
+      }
+      .pipe .node {
+        position: relative;
+        padding: 22px 20px;
+        border-right: 1px solid var(--line);
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      .pipe .node:last-child {
+        border-right: 0;
+      }
+      .reveal-pipe .node {
+        animation: pipeIn 0.6s cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+      }
+      .pipe .node:nth-child(1) {
+        animation-delay: 0.1s;
+      }
+      .pipe .node:nth-child(2) {
+        animation-delay: 0.3s;
+      }
+      .pipe .node:nth-child(3) {
+        animation-delay: 0.5s;
+      }
+      .pipe .node:nth-child(4) {
+        animation-delay: 0.7s;
+      }
+      .pipe .node .n {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        letter-spacing: 0.12em;
+        color: var(--signal);
+        text-transform: uppercase;
+      }
+      .pipe .node h3 {
+        font-family: var(--font-display);
+        font-size: 1.14rem;
+        margin: 8px 0 5px;
+      }
+      .pipe .node p {
+        font-size: 0.85rem;
+        color: var(--ink-soft);
+        margin: 0;
+        line-height: 1.45;
+      }
+      .pipe .node .arw {
+        position: absolute;
+        right: -8px;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 2;
+        width: 16px;
+        height: 16px;
+        color: var(--blue);
+        background: var(--surface);
+        display: grid;
+        place-items: center;
+      }
+      .pipe .node:last-child .arw {
+        display: none;
+      }
+      @media (max-width: 760px) {
+        .pipe {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+      @media (max-width: 460px) {
+        .pipe {
+          grid-template-columns: 1fr;
+        }
+        .pipe .node {
+          border-right: 0;
+          border-bottom: 1px solid var(--line);
+        }
+        .pipe .node .arw {
+          display: none;
+        }
+      }
+      @keyframes pipeIn {
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .pipe .node {
+          opacity: 1;
+          transform: none;
+          animation: none !important;
+        }
+      }
+
+      section.band {
+        padding: clamp(56px, 9vh, 96px) 0;
+        border-top: 1px solid var(--line-soft);
+      }
+      .sec-head {
+        max-width: 62ch;
+        margin-bottom: 40px;
+      }
+      .sec-head h2 {
+        font-size: clamp(1.9rem, 4vw, 2.9rem);
+        letter-spacing: -0.012em;
+        margin-top: 16px;
+      }
+      .sec-head p.sub {
+        font-size: 1.1rem;
+        color: var(--ink-soft);
+        margin-top: 18px;
+      }
+
+      .r {
+        opacity: 0;
+        transform: translateY(18px);
+        transition:
+          opacity 0.7s ease,
+          transform 0.7s cubic-bezier(0.2, 0.7, 0.3, 1);
+      }
+      .r.in {
+        opacity: 1;
+        transform: none;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .r {
+          opacity: 1;
+          transform: none;
+          transition: none;
+        }
+      }
+
+      .planes {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+      }
+      @media (max-width: 780px) {
+        .planes {
+          grid-template-columns: 1fr;
+        }
+      }
+      .plane {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface);
+        padding: 26px 26px 24px;
+        box-shadow: var(--shadow);
+        position: relative;
+        overflow: hidden;
+      }
+      .plane::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 3px;
+        background: var(--blue);
+      }
+      .plane.sig::before {
+        background: var(--signal);
+      }
+      .plane.agent::before {
+        background: var(--agent);
+      }
+      .plane .tag {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+      }
+      .plane h3 {
+        font-size: 1.32rem;
+        margin: 8px 0 4px;
+      }
+      .plane .path {
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        color: var(--blue);
+        background: var(--blue-wash);
+        padding: 3px 8px;
+        border-radius: 5px;
+        display: inline-block;
+        margin-bottom: 12px;
+      }
+      .plane.sig .path {
+        color: var(--signal);
+        background: var(--signal-wash);
+      }
+      .plane.agent .path {
+        color: var(--agent);
+        background: var(--agent-wash);
+      }
+      .plane ul {
+        margin: 12px 0 0;
+        padding: 0;
+        list-style: none;
+      }
+      .plane li {
+        position: relative;
+        padding-left: 20px;
+        margin-bottom: 8px;
+        font-size: 0.93rem;
+        color: var(--ink-soft);
+      }
+      .plane li::before {
+        content: '-';
+        position: absolute;
+        left: 0;
+        color: var(--ink-faint);
+      }
+      .plane li b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+
+      .callout {
+        border: 1px solid var(--line);
+        border-left: 3px solid var(--signal);
+        background: var(--signal-wash);
+        border-radius: var(--r-sm);
+        padding: 16px 20px;
+        font-size: 0.93rem;
+        color: var(--ink);
+        margin: 22px 0 0;
+      }
+      .callout b {
+        color: var(--signal);
+      }
+      .callout.blue {
+        border-left-color: var(--blue);
+        background: var(--blue-wash);
+      }
+      .callout.blue b {
+        color: var(--blue);
+      }
+      .callout.agent {
+        border-left-color: var(--agent);
+        background: var(--agent-wash);
+      }
+      .callout.agent b {
+        color: var(--agent);
+      }
+
+      .steps {
+        display: grid;
+        gap: 2px;
+        margin-top: 8px;
+        counter-reset: st;
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        overflow: hidden;
+        background: var(--line-soft);
+      }
+      .step {
+        background: var(--surface);
+        padding: 20px 22px 20px 66px;
+        position: relative;
+      }
+      .step::before {
+        counter-increment: st;
+        content: counter(st, decimal-leading-zero);
+        position: absolute;
+        left: 20px;
+        top: 20px;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: var(--signal);
+      }
+      .step h3 {
+        font-family: var(--font-display);
+        font-size: 1.16rem;
+        margin: 0 0 5px;
+      }
+      .step p {
+        margin: 0;
+        font-size: 0.93rem;
+        color: var(--ink-soft);
+      }
+      .step p + p {
+        margin-top: 8px;
+      }
+      .step .say {
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        color: var(--ink);
+        background: var(--blue-wash);
+        border: 1px solid var(--line-soft);
+        border-radius: 7px;
+        padding: 8px 12px;
+        margin-top: 12px;
+        display: block;
+      }
+      .step .say .who {
+        color: var(--signal);
+        font-weight: 600;
+      }
+
+      .figwrap {
+        margin-top: 8px;
+      }
+      .figcap {
+        font-family: var(--font-mono);
+        font-size: 0.74rem;
+        color: var(--ink-faint);
+        margin-top: 12px;
+        text-align: center;
+        letter-spacing: 0.02em;
+      }
+      .win {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        overflow: hidden;
+        background: var(--surface-2);
+        box-shadow: var(--shadow-lg);
+      }
+      .win-bar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 9px 13px;
+        background: var(--surface);
+        border-bottom: 1px solid var(--line);
+      }
+      .win-dots {
+        display: flex;
+        gap: 6px;
+      }
+      .win-dots i {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--line);
+        display: block;
+      }
+      .win-url {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        color: var(--ink-soft);
+        background: var(--paper-2);
+        border-radius: 6px;
+        padding: 4px 10px;
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .win-btn {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        padding: 4px 9px;
+        border-radius: 6px;
+        border: 1px solid var(--line);
+        color: var(--ink-soft);
+        white-space: nowrap;
+      }
+      .win-btn.exp {
+        color: #fff;
+        background: var(--signal-solid);
+        border-color: var(--signal-solid);
+      }
+      .win-btn.mcp {
+        color: #fff;
+        background: var(--agent-solid);
+        border-color: var(--agent-solid);
+      }
+      .win-nav {
+        display: flex;
+        gap: 3px;
+        padding: 7px 13px;
+        border-bottom: 1px solid var(--line);
+        background: var(--surface);
+        overflow-x: auto;
+      }
+      .win-nav span {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        color: var(--ink-faint);
+        padding: 3px 9px;
+        border-radius: 5px;
+        white-space: nowrap;
+      }
+      .win-nav span.on {
+        color: var(--ink);
+        background: var(--blue-wash);
+      }
+      .win-nav .gear {
+        margin-left: auto;
+        color: var(--ink-faint);
+      }
+
+      .win-body {
+        display: grid;
+        min-height: 260px;
+      }
+      .win-body.two {
+        grid-template-columns: 40% 60%;
+      }
+      .win-body.three {
+        grid-template-columns: 30% 30% 40%;
+      }
+      @media (max-width: 600px) {
+        .win-body.two,
+        .win-body.three {
+          grid-template-columns: 1fr;
+        }
+        .win-body .pane {
+          border-right: 0 !important;
+          border-bottom: 1px solid var(--line);
+        }
+      }
+      .pane {
+        padding: 15px;
+        border-right: 1px solid var(--line);
+        position: relative;
+      }
+      .pane:last-child {
+        border-right: 0;
+      }
+      .pane-label {
+        position: absolute;
+        top: 8px;
+        right: 10px;
+        font-family: var(--font-mono);
+        font-size: 0.6rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        opacity: 0.8;
+      }
+      .pane.chat {
+        background: var(--surface);
+      }
+      .bub {
+        border-radius: 9px;
+        padding: 8px 11px;
+        margin-bottom: 9px;
+        font-size: 0.76rem;
+        line-height: 1.4;
+        max-width: 92%;
+      }
+      .bub.me {
+        background: var(--blue-solid);
+        color: #fff;
+        margin-left: auto;
+      }
+      .bub.ai {
+        background: var(--paper-2);
+        color: var(--ink-soft);
+        border: 1px solid var(--line-soft);
+      }
+      .bub.tool {
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        color: var(--good);
+        background: transparent;
+        border: 0;
+        padding: 2px 0;
+      }
+      .bub.mcp {
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        color: var(--agent);
+        background: transparent;
+        border: 0;
+        padding: 2px 0;
+      }
+      .promptbox {
+        margin-top: 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface-2);
+        padding: 8px 10px;
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        color: var(--ink-faint);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+      }
+      .promptbox .send {
+        color: #fff;
+        background: var(--blue-solid);
+        border-radius: 5px;
+        padding: 3px 8px;
+        font-size: 0.64rem;
+      }
+
+      .canvas {
+        background: var(--paper);
+        background-image:
+          linear-gradient(var(--grid) 1px, transparent 1px),
+          linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+        background-size: 16px 16px;
+        display: grid;
+        place-items: center;
+      }
+      .mini {
+        width: 82%;
+        max-width: 260px;
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        position: relative;
+      }
+      .mini .mtop {
+        height: 26px;
+        background: var(--blue);
+        display: flex;
+        align-items: center;
+        padding: 0 8px;
+        gap: 5px;
+      }
+      .mini .mtop i {
+        width: 24px;
+        height: 5px;
+        border-radius: 3px;
+        background: rgba(255, 255, 255, 0.55);
+        display: block;
+      }
+      .mini .mtop i.sm {
+        width: 12px;
+        margin-left: auto;
+      }
+      .mini .mbody {
+        padding: 10px;
+        display: grid;
+        gap: 7px;
+      }
+      .mini .line {
+        height: 6px;
+        border-radius: 3px;
+        background: var(--line);
+      }
+      .mini .line.w1 {
+        width: 70%;
+      }
+      .mini .line.w2 {
+        width: 45%;
+        background: var(--signal);
+        opacity: 0.8;
+      }
+      .mini .cards {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 6px;
+        margin-top: 4px;
+      }
+      .mini .cards i {
+        height: 30px;
+        border-radius: 5px;
+        background: var(--blue-wash);
+        border: 1px solid var(--line-soft);
+        display: block;
+      }
+      .mini .btn {
+        height: 16px;
+        width: 60px;
+        border-radius: 5px;
+        background: var(--signal);
+        margin-top: 2px;
+      }
+      .mini .pin {
+        position: absolute;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: var(--signal-solid);
+        color: #fff;
+        font-family: var(--font-mono);
+        font-size: 0.58rem;
+        display: grid;
+        place-items: center;
+        top: 40px;
+        right: 14px;
+        box-shadow: 0 0 0 3px var(--signal-wash);
+      }
+      .sliders {
+        position: absolute;
+        bottom: 10px;
+        left: 12px;
+        right: 12px;
+        display: grid;
+        gap: 5px;
+      }
+      .sliders .sl {
+        height: 4px;
+        border-radius: 3px;
+        background: var(--line);
+        position: relative;
+      }
+      .sliders .sl::after {
+        content: '';
+        position: absolute;
+        top: -3px;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--blue);
+        border: 2px solid var(--surface-2);
+      }
+      .sliders .sl.a::after {
+        left: 30%;
+      }
+      .sliders .sl.b::after {
+        left: 62%;
+      }
+
+      .tree {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        color: var(--ink-soft);
+        line-height: 1.9;
+      }
+      .tree .f {
+        color: var(--ink);
+      }
+      .tree .on {
+        color: var(--signal);
+      }
+      .tree .mut {
+        color: var(--ink-faint);
+      }
+      .verpill {
+        display: inline-block;
+        font-size: 0.58rem;
+        padding: 1px 5px;
+        border-radius: 4px;
+        background: var(--blue-wash);
+        color: var(--blue);
+        margin-left: 6px;
+      }
+
+      .preview {
+        background: var(--paper);
+        background-image:
+          linear-gradient(var(--grid) 1px, transparent 1px),
+          linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+        background-size: 14px 14px;
+        display: grid;
+        place-items: center;
+        position: relative;
+      }
+      .exp-fab {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        color: #fff;
+        background: var(--agent-solid);
+        padding: 4px 9px;
+        border-radius: 6px;
+      }
+
+      .tablewrap {
+        overflow-x: auto;
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        box-shadow: var(--shadow);
+      }
+      table.cmp {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 760px;
+        background: var(--surface);
+        font-size: 0.9rem;
+      }
+      table.cmp th,
+      table.cmp td {
+        text-align: left;
+        padding: 14px 16px;
+        border-bottom: 1px solid var(--line-soft);
+        vertical-align: top;
+      }
+      table.cmp thead th {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        background: var(--paper-2);
+        position: sticky;
+        top: 0;
+      }
+      table.cmp tbody th {
+        font-family: var(--font-body);
+        font-weight: 600;
+        color: var(--ink);
+        font-size: 0.9rem;
+        width: 20%;
+      }
+      table.cmp td {
+        color: var(--ink-soft);
+      }
+      table.cmp tr:last-child td,
+      table.cmp tr:last-child th {
+        border-bottom: 0;
+      }
+      .badge {
+        font-family: var(--font-mono);
+        font-size: 0.64rem;
+        padding: 2px 7px;
+        border-radius: 5px;
+        letter-spacing: 0.03em;
+        white-space: nowrap;
+      }
+      .badge.free {
+        color: var(--good);
+        background: color-mix(in srgb, var(--good) 14%, transparent);
+      }
+      .badge.paid {
+        color: var(--warn);
+        background: color-mix(in srgb, var(--warn) 16%, transparent);
+      }
+      .badge.local {
+        color: var(--blue);
+        background: var(--blue-wash);
+      }
+      .badge.mcp {
+        color: var(--agent);
+        background: var(--agent-wash);
+      }
+
+      .code {
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.7;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+        padding: 16px 18px;
+        overflow-x: auto;
+        color: var(--ink);
+      }
+      .code .c {
+        color: var(--ink-faint);
+      }
+      .code .k {
+        color: var(--signal);
+      }
+      .code .s {
+        color: var(--blue);
+      }
+
+      .alts {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 18px;
+        margin-top: 8px;
+      }
+      @media (max-width: 720px) {
+        .alts {
+          grid-template-columns: 1fr;
+        }
+      }
+      .alt {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface);
+        padding: 22px 22px;
+        box-shadow: var(--shadow);
+      }
+      .alt h3 {
+        font-size: 1.18rem;
+        margin: 0 0 4px;
+        display: flex;
+        align-items: center;
+        gap: 0.5em;
+      }
+      .alt .kk {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        color: var(--signal);
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      .alt p {
+        font-size: 0.9rem;
+        color: var(--ink-soft);
+        margin: 8px 0 0;
+      }
+
+      .check {
+        display: grid;
+        gap: 10px;
+        margin-top: 8px;
+      }
+      .check .it {
+        display: flex;
+        gap: 14px;
+        align-items: flex-start;
+        padding: 15px 18px;
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+        background: var(--surface);
+      }
+      .check .bx {
+        flex: none;
+        width: 22px;
+        height: 22px;
+        border-radius: 6px;
+        border: 2px solid var(--blue);
+        position: relative;
+        margin-top: 1px;
+      }
+      .check .bx::after {
+        content: '';
+        position: absolute;
+        left: 6px;
+        top: 2px;
+        width: 6px;
+        height: 11px;
+        border: solid var(--signal);
+        border-width: 0 2.5px 2.5px 0;
+        transform: rotate(42deg);
+      }
+      .check .it b {
+        color: var(--ink);
+      }
+      .check .it span {
+        color: var(--ink-soft);
+        font-size: 0.92rem;
+      }
+      .check .it .mono {
+        color: var(--blue);
+        font-size: 0.84rem;
+      }
+
+      .facts {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+        margin-top: 8px;
+      }
+      @media (max-width: 700px) {
+        .facts {
+          grid-template-columns: 1fr;
+        }
+      }
+      .fact {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface);
+        padding: 20px 22px;
+      }
+      .fact .big {
+        font-family: var(--font-display);
+        font-size: 2rem;
+        color: var(--blue);
+        font-variant-numeric: tabular-nums;
+      }
+      .fact .lbl {
+        font-size: 0.88rem;
+        color: var(--ink-soft);
+        margin-top: 4px;
+      }
+
+      .gotchas {
+        display: grid;
+        gap: 10px;
+        margin-top: 8px;
+      }
+      .gotchas .g {
+        border: 1px solid var(--line);
+        border-left: 3px solid var(--agent);
+        background: var(--surface);
+        border-radius: var(--r-sm);
+        padding: 14px 18px;
+      }
+      .gotchas .g b {
+        color: var(--agent);
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        letter-spacing: 0.02em;
+        display: block;
+        margin-bottom: 4px;
+      }
+      .gotchas .g span {
+        color: var(--ink-soft);
+        font-size: 0.89rem;
+      }
+
+      footer {
+        padding: 60px 0 80px;
+        border-top: 1px solid var(--line-soft);
+      }
+      footer .prose {
+        color: var(--ink-soft);
+        font-size: 0.95rem;
+      }
+      footer .sig {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        color: var(--ink-faint);
+        letter-spacing: 0.04em;
+        margin-top: 26px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px 14px;
+      }
+
+      .lead-in {
+        font-size: 1.14rem;
+        color: var(--ink);
+        line-height: 1.6;
+      }
+      .lead-in b {
+        color: var(--blue);
+      }
+
+
+      /* ============================================================
+     Deck-local: sprint-development (Stages 1 to 5).
+     ============================================================ */
+      .pipe.five {
+        grid-template-columns: repeat(5, 1fr);
+      }
+      .pipe .node:nth-child(5) {
+        animation-delay: 0.9s;
+      }
+      @media (max-width: 960px) {
+        .pipe.five {
+          grid-template-columns: 1fr 1fr;
+        }
+        .pipe.five .node .arw {
+          display: none;
+        }
+      }
+      @media (max-width: 460px) {
+        .pipe.five {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .lanes {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 18px;
+      }
+      @media (max-width: 860px) {
+        .lanes {
+          grid-template-columns: 1fr;
+        }
+      }
+      .lane {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+      }
+      .lane-head {
+        padding: 12px 18px;
+        border-bottom: 1px solid var(--line);
+        background: var(--paper-2);
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+      }
+      .wf {
+        display: flex;
+        gap: 14px;
+        align-items: flex-start;
+        padding: 14px 18px;
+        border-bottom: 1px solid var(--line-soft);
+        text-decoration: none;
+        color: inherit;
+      }
+      .wf:last-child {
+        border-bottom: 0;
+      }
+      .wf:hover {
+        background: var(--blue-wash);
+      }
+      .wf .lt {
+        flex: none;
+        width: 30px;
+        height: 30px;
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+        font-family: var(--font-mono);
+        font-weight: 700;
+        font-size: 0.82rem;
+        color: #fff;
+        background: var(--blue-solid);
+      }
+      .wf .lt.sig {
+        background: var(--signal-solid);
+      }
+      .wf .lt.agent {
+        background: var(--agent-solid);
+      }
+      .wf b {
+        display: block;
+        color: var(--ink);
+        font-size: 0.97rem;
+      }
+      .wf span {
+        display: block;
+        color: var(--ink-soft);
+        font-size: 0.86rem;
+        line-height: 1.45;
+        margin-top: 2px;
+      }
+      .wf span.mono {
+        display: inline;
+        margin-top: 0;
+        font-size: 0.82rem;
+      }
+
+      .trio {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+        margin-top: 22px;
+      }
+      @media (max-width: 820px) {
+        .trio {
+          grid-template-columns: 1fr;
+        }
+      }
+      .trio > div {
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+        background: var(--surface);
+        padding: 16px 18px;
+        border-top: 3px solid var(--agent);
+      }
+      .trio > div.hum {
+        border-top-color: var(--signal);
+      }
+      .trio > div.out {
+        border-top-color: var(--blue);
+      }
+      .trio .k {
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        display: block;
+        margin-bottom: 6px;
+      }
+      .trio p {
+        margin: 0;
+        font-size: 0.9rem;
+        color: var(--ink-soft);
+      }
+      .trio p + p {
+        margin-top: 8px;
+      }
+      .trio b {
+        color: var(--ink);
+      }
+
+      .gate {
+        margin-top: 14px;
+        font-size: 0.9rem;
+        color: var(--ink);
+        border: 1px dashed var(--blue);
+        border-radius: var(--r-sm);
+        padding: 12px 16px;
+        background: var(--surface);
+      }
+      .gate b {
+        color: var(--blue);
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        margin-right: 0.6em;
+      }
+
+      .code.pre {
+        white-space: pre;
+      }
+
+      .states {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px;
+        margin: 6px 0 4px;
+      }
+      .states .st {
+        font-family: var(--font-mono);
+        font-size: 0.74rem;
+        padding: 6px 10px;
+        border-radius: 7px;
+        border: 1px solid var(--line);
+        background: var(--surface-2);
+        color: var(--ink);
+      }
+      .states .st.hum {
+        border-color: var(--signal);
+        color: var(--signal);
+      }
+      .states .ar {
+        color: var(--ink-faint);
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+      }
+
+      .hosts {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 14px;
+      }
+      @media (max-width: 820px) {
+        .hosts {
+          grid-template-columns: 1fr;
+        }
+      }
+      .host {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface);
+        padding: 18px 20px;
+        box-shadow: var(--shadow);
+      }
+      .host h3 {
+        font-size: 1.12rem;
+        margin: 0 0 10px;
+      }
+      .host .say {
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        background: var(--blue-wash);
+        border: 1px solid var(--line-soft);
+        border-radius: 7px;
+        padding: 8px 12px;
+        display: block;
+        overflow-wrap: anywhere;
+      }
+      .host .say + .say {
+        margin-top: 8px;
+      }
+      .host p {
+        font-size: 0.86rem;
+        color: var(--ink-soft);
+        margin: 10px 0 0;
+      }
+      .planes > *,
+      .lanes > *,
+      .alts > *,
+      .hosts > * {
+        min-width: 0;
+      }
+      .sec-head .mono,
+      .plane .mono,
+      .callout .mono,
+      .step .mono,
+      .trio .mono,
+      .gate .mono,
+      .check .mono,
+      table.cmp .mono {
+        overflow-wrap: anywhere;
+      }
+      table.cmp.narrow {
+        min-width: 0;
+      }
+      @media (max-width: 600px) {
+        table.cmp.narrow tbody th {
+          width: 36%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="topbar">
+      <a class="brand" href="../../index.html"
+        ><span class="mark"></span> <b>Planos</b> · agentic-dev-boilerplate</a
+      >
+      <nav class="topnav">
+        <a href="#cuando">When</a>
+        <a href="#mapa">Map</a>
+        <a href="#estrategia">Strategy</a>
+        <a href="#push">Push</a>
+        <a href="#paridad">Parity</a>
+        <a href="#commits">Commits</a>
+        <a href="#pr">PR</a>
+        <a href="#cadena">Chain</a>
+        <a href="#worktrees">Worktrees</a>
+        <a href="#invocar">Invoke</a>
+      </nav>
+      <button class="themebtn" id="themebtn" aria-label="Cambiar tema">
+        <span id="themeicon">◐</span> theme
+      </button>
+    </div>
+
+    <!-- ============ HERO ============ -->
+    <header class="hero">
+      <div class="wrap">
+        <div class="kicker eyebrow"><span class="num">00</span> · the version control layer</div>
+        <h1>What was decided for the repo, <span class="sig">applied</span> on every push.</h1>
+        <p class="lede">
+          <span class="mono">/git-flow-master</span> is the single entry point for everything that happens in git:
+          branches, commits, pushes, pull requests, conflicts and PR chains. It assumes no branching
+          model: it reads the one the project <b>chose</b>, checks what the host <b>enforces</b> for
+          real and adapts every command to that.
+        </p>
+
+        <div class="hero-meta">
+          <span class="chip"
+            ><span class="dot"></span> for whoever codes and whoever <b>leads</b> the repo</span
+          >
+          <span class="chip"
+            ><span class="dot"></span> the strategy lives in
+            <b>.agents/project.yaml</b></span
+          >
+          <span class="chip agent"
+            ><span class="dot"></span> it stops once the PR is open: the merge is <b>yours</b></span
+          >
+        </div>
+
+        <div class="pipe five" id="pipe">
+          <div class="node">
+            <div class="n">Step 1</div>
+            <h3>Read the state</h3>
+            <p>Branch, tree, upstream, remotes. Always, before anything else.</p>
+            <div class="arw">→</div>
+          </div>
+          <div class="node">
+            <div class="n">Step 1b</div>
+            <h3>Reconcile the policy</h3>
+            <p><span class="mono">git:policy verify</span> on the first push, PR or merge.</p>
+            <div class="arw">→</div>
+          </div>
+          <div class="node">
+            <div class="n">Step 2</div>
+            <h3>Resolve the strategy</h3>
+            <p>The <span class="mono">git_strategy</span> block, or detection, or a question.</p>
+            <div class="arw">→</div>
+          </div>
+          <div class="node">
+            <div class="n">Step 3</div>
+            <h3>Operate</h3>
+            <p>Branch, commit, push, PR, conflict or Strategy Setup.</p>
+            <div class="arw">→</div>
+          </div>
+          <div class="node">
+            <div class="n">Step 4</div>
+            <h3>Split if it grows</h3>
+            <p>Over 400 lines: the chained-PR decision tree.</p>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- ============ §01 WHEN ============ -->
+    <section class="band" id="cuando">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">01</span> · when to use it</div>
+          <h2>Every time the work touches git</h2>
+          <p class="sub">
+            It fires even if you do not name it: if the request looks like a branch, commit, push or
+            PR, it is this skill. The other skills in the repo hand off to it when they reach that layer.
+          </p>
+        </div>
+
+        <div class="planes r">
+          <div class="plane">
+            <div class="tag">Use it when</div>
+            <h3>Code has to move through git</h3>
+            <ul>
+              <li>You start work: <b>"start work on PROJ-123"</b>, create a branch.</li>
+              <li><b>Commit</b> and <b>push</b>: "commit and push", "subir cambios" (push changes).</li>
+              <li>Open a <b>pull request</b>: "abre un PR contra staging" (open a PR against staging).</li>
+              <li>There are <b>conflicts</b> or the push was <b>rejected</b>.</li>
+              <li>A change is going to end up <b>huge</b> and has to be split into several PRs.</li>
+              <li>You want to <b>choose or change</b> the repo's branching strategy.</li>
+            </ul>
+          </div>
+          <div class="plane sig">
+            <div class="tag">Do not use it for</div>
+            <h3>Anything that is not version control</h3>
+            <ul>
+              <li>
+                <b>Implementing a feature:</b> that is
+                <span class="mono">/sprint-development</span>, which calls this skill for the PR.
+              </li>
+              <li><b>Writing tests:</b> that is <span class="mono">/unit-testing</span>.</li>
+              <li>
+                <b>Refining the backlog:</b> that is <span class="mono">/product-management</span>.
+              </li>
+              <li>
+                <b>Editing code in general:</b> the skill works strictly on the version
+                layer.
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="callout blue r">
+          <b>If the request is ambiguous</b> ("hagamos lo de git", let's do the git thing), the skill does not guess: it reports the
+          repo state (Step 1) and asks what you need.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §02 MAP ============ -->
+    <section class="band" id="mapa">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">02</span> · the map</div>
+          <h2>Two fixed checks, one operation, a chain if needed</h2>
+          <p class="sub">
+            The request picks the operation; the strategy decides how it runs. The first two steps
+            are the same for any operation.
+          </p>
+        </div>
+
+        <div class="lanes r">
+          <div class="lane">
+            <div class="lane-head">Always · before acting</div>
+            <a class="wf" href="#mapa"
+              ><span class="lt agent">1</span
+              ><span
+                ><b>Repo state</b
+                ><span>Current branch, dirty or clean tree, ahead or behind the upstream.</span></span
+              ></a
+            >
+            <a class="wf" href="#paridad"
+              ><span class="lt agent">1b</span
+              ><span
+                ><b>Policy vs host</b
+                ><span>Once per session, on the first push, PR or merge.</span></span
+              ></a
+            >
+            <a class="wf" href="#estrategia"
+              ><span class="lt agent">2</span
+              ><span
+                ><b>Strategy</b
+                ><span>Read from <span class="mono">.agents/project.yaml</span> on every invocation.</span></span
+              ></a
+            >
+          </div>
+          <div class="lane">
+            <div class="lane-head">The operation · depends on the request</div>
+            <a class="wf" href="#commits"
+              ><span class="lt">B</span
+              ><span><b>Branch</b><span>Prefix + issue key, proposed before creating.</span></span></a
+            >
+            <a class="wf" href="#commits"
+              ><span class="lt">C</span
+              ><span><b>Commit</b><span>One responsibility per commit, with forensic trailers.</span></span></a
+            >
+            <a class="wf" href="#push"
+              ><span class="lt sig">P</span
+              ><span><b>Push</b><span>Protected-branch gate resolved by a variable.</span></span></a
+            >
+            <a class="wf" href="#pr"
+              ><span class="lt">PR</span
+              ><span><b>Pull request</b><span>Base by strategy; it stops once it is created.</span></span></a
+            >
+            <a class="wf" href="#conflictos"
+              ><span class="lt sig">X</span
+              ><span><b>Conflict</b><span>Diagnosis first, options ranked by safety.</span></span></a
+            >
+            <a class="wf" href="#setup"
+              ><span class="lt sig">S</span
+              ><span><b>Strategy Setup</b><span>Pick the flow and write the block.</span></span></a
+            >
+          </div>
+          <div class="lane">
+            <div class="lane-head">When the change grows</div>
+            <a class="wf" href="#cadena"
+              ><span class="lt">4</span
+              ><span
+                ><b>Chained PRs</b
+                ><span>Decision tree with a trace; the caller rejects a lone label.</span></span
+              ></a
+            >
+            <a class="wf" href="#worktrees"
+              ><span class="lt agent">W</span
+              ><span
+                ><b>Worktrees</b
+                ><span>Isolated work or parallel sessions, with their lifecycle.</span></span
+              ></a
+            >
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §03 STRATEGY ============ -->
+    <section class="band" id="estrategia">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">03</span> · Step 2 · the branching strategy</div>
+          <h2>A default is not a decision</h2>
+          <p class="sub">
+            The strategy is stored in the <span class="mono">git_strategy</span> block of
+            <span class="mono">.agents/project.yaml</span> and read on every invocation. It is never
+            inferred from a skill example or from another project.
+          </p>
+        </div>
+
+        <div class="tablewrap r">
+          <table class="cmp">
+            <thead>
+              <tr>
+                <th>Strategy</th>
+                <th>Shape</th>
+                <th>Working branch comes from</th>
+                <th>The PR targets</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th><span class="mono">solo-main</span></th>
+                <td>A single long-lived branch, <span class="mono">main</span>. Everything lands directly.</td>
+                <td><span class="mono">main</span></td>
+                <td><span class="mono">main</span>, when there is a PR</td>
+              </tr>
+              <tr>
+                <th><span class="mono">main-integration</span></th>
+                <td><span class="mono">main</span> + an integration branch (<span class="mono">staging</span> or similar).</td>
+                <td>integration</td>
+                <td>integration</td>
+              </tr>
+              <tr>
+                <th><span class="mono">enterprise</span></th>
+                <td>Integration + many <span class="mono">feature/*</span>, <span class="mono">release/*</span>, <span class="mono">hotfix/*</span>.</td>
+                <td>integration (hotfix: <span class="mono">main</span>)</td>
+                <td>integration (hotfix: <span class="mono">main</span>)</td>
+              </tr>
+              <tr>
+                <th><span class="mono">trunk-based</span></th>
+                <td>Only the trunk; branches under a day old, behind feature flags.</td>
+                <td><span class="mono">main</span></td>
+                <td><span class="mono">main</span></td>
+              </tr>
+              <tr>
+                <th><span class="mono">gitflow</span></th>
+                <td><span class="mono">main</span> + <span class="mono">develop</span> + release and hotfix.</td>
+                <td><span class="mono">develop</span> (hotfix: <span class="mono">main</span>)</td>
+                <td><span class="mono">develop</span>; release and hotfix: <span class="mono">main</span></td>
+              </tr>
+              <tr>
+                <th><span class="mono">github-flow</span></th>
+                <td><span class="mono">main</span> always deployable; branch, PR, merge, deploy.</td>
+                <td><span class="mono">main</span></td>
+                <td><span class="mono">main</span></td>
+              </tr>
+              <tr>
+                <th><span class="mono">gitlab-flow</span></th>
+                <td>GitHub Flow + environment branches (<span class="mono">pre-production</span>, <span class="mono">production</span>).</td>
+                <td><span class="mono">main</span>, which is its integration branch</td>
+                <td><span class="mono">main</span>; promotion goes through the environments</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="steps r" style="margin-top: 26px">
+          <div class="step">
+            <h3>How it finds it</h3>
+            <p>
+              First the block: if <span class="mono">git_strategy.strategy</span> has a value, that
+              is the decision. If not, it looks at the branches (only <span class="mono">main</span>,
+              <span class="mono">main</span> + an integration branch, many
+              <span class="mono">feature/*</span>) and the repo hints
+              (<span class="mono">.gitlab-ci.yml</span>, <span class="mono">release/*</span> branches).
+              If nothing is enough, it shows you the catalog and you pick. It never picks silently.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Chosen or inherited</h3>
+            <p>
+              The boilerplate ships the block filled in with <span class="mono">solo-main</span>. What
+              separates "this project chose <span class="mono">solo-main</span>" from "nobody
+              chose" is <span class="mono">meta.strategy_source</span>:
+              <span class="mono">inherited</span> or <span class="mono">chosen</span>. Only Strategy
+              Setup stamps <span class="mono">chosen</span>.
+            </p>
+          </div>
+          <div class="step">
+            <h3>The offer, never the execution</h3>
+            <p>
+              If the block is missing in a new repo, if the project is not configured yet
+              (<span class="mono">project.project_name</span> empty), or if the project already has a
+              name but the strategy is still <span class="mono">inherited</span>, the skill
+              <b>offers</b> Strategy Setup once per session and tells you what the default costs: no
+              integration branch, no promotion path, no review gate of its own. A "no"
+              carries on with the strategy in place, writing nothing.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §04 STRATEGY SETUP ============ -->
+    <section class="band" id="setup">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">04</span> · operation · Strategy Setup</div>
+          <h2>A questionnaire, branches only if needed, one block written</h2>
+          <p class="sub">
+            It is the only operation that creates long-lived branches and writes the
+            <span class="mono">git_strategy</span> block. The other operations adapt to what this
+            one leaves behind.
+          </p>
+        </div>
+
+        <div class="tablewrap r">
+          <table class="cmp">
+            <thead>
+              <tr>
+                <th>Question</th>
+                <th>Applies to</th>
+                <th>Options (default first)</th>
+                <th>Stored in</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th>Q1 · integration → production promotion</th>
+                <td>strategies with an integration branch</td>
+                <td>fast-forward only · merge commit · squash</td>
+                <td><span class="mono">decisions.promote_method</span></td>
+              </tr>
+              <tr>
+                <th>Q2 · merging the working branch</th>
+                <td>multi-branch strategies</td>
+                <td>merge commit · squash · rebase + merge</td>
+                <td><span class="mono">decisions.feature_merge</span></td>
+              </tr>
+              <tr>
+                <th>Q3 · hotfixes</th>
+                <td>production differs from where work happens</td>
+                <td>branch from production + same-day back-merge · always through integration · no policy</td>
+                <td><span class="mono">decisions.hotfix_policy</span></td>
+              </tr>
+              <tr>
+                <th>Q4 · protected branches</th>
+                <td><b>all</b> strategies</td>
+                <td>direct push, admin bypass, minimum reviews</td>
+                <td><span class="mono">policy.*</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="trio r">
+          <div>
+            <span class="k">The AI does</span>
+            <p>
+              Resolves the strategy, skips the questions that do not apply or are already answered,
+              proposes each branch to create and syncs by fast-forward only.
+            </p>
+          </div>
+          <div class="hum">
+            <span class="k">You decide</span>
+            <p>
+              The strategy, each questionnaire answer, each proposed branch and the sync push to
+              a protected branch.
+            </p>
+          </div>
+          <div class="out">
+            <span class="k">Output</span>
+            <p>
+              The <span class="mono">git_strategy</span> block written in place inside
+              <span class="mono">.agents/project.yaml</span>, with
+              <span class="mono">strategy_source: chosen</span> and
+              <span class="mono">policy_source: declared</span>.
+            </p>
+          </div>
+        </div>
+
+        <div class="gate r">
+          <b>Gate</b> Never <span class="mono">--force</span>, not even
+          <span class="mono">--force-with-lease</span>. If integration and production diverged
+          in both directions, the sync stops and hands over to conflict resolution.
+        </div>
+
+        <div class="callout r">
+          <b>The sync push always asks.</b> Setup runs before you ratify the
+          new policy, so a freshly answered <span class="mono">allowed</span> does not
+          authorize its own push. At the end, Setup offers to carry the policy to the host with
+          <span class="mono">bun run git:policy</span>: read first, then a dry run, and the
+          write only with your yes.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §05 PUSH ============ -->
+    <section class="band" id="push">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">05</span> · operation · push</div>
+          <h2>The variable decides whether the AI asks</h2>
+          <p class="sub">
+            Before pushing to a protected branch, the skill resolves
+            <span class="mono">git_strategy.policy.direct_push_to_protected</span>
+            (<span class="mono">AGENTS.md</span>, Critical Rule #4). The answer is never
+            written in the rule: it is in the value.
+          </p>
+        </div>
+
+        <div class="tablewrap r">
+          <table class="cmp narrow">
+            <thead>
+              <tr>
+                <th>Value</th>
+                <th>What the AI does</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th><span class="mono">allowed</span></th>
+                <td>
+                  Pushes <b>without asking</b>. The stored value is the standing authorization;
+                  asking anyway would turn <span class="mono">allowed</span> into
+                  <span class="mono">confirm</span>.
+                </td>
+              </tr>
+              <tr>
+                <th><span class="mono">confirm</span></th>
+                <td>Asks <b>before every push</b> and waits for an explicit yes.</td>
+              </tr>
+              <tr>
+                <th><span class="mono">forbidden</span></th>
+                <td>
+                  Does not push to the protected branch: it opens a working branch, pushes it and sends the
+                  change as a PR.
+                </td>
+              </tr>
+              <tr>
+                <th>block missing or <span class="mono">null</span></th>
+                <td>Behaves as <span class="mono">confirm</span>: asking is the safe default.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="planes r" style="margin-top: 22px">
+          <div class="plane">
+            <div class="tag">Before the push</div>
+            <h3>The state picks the command</h3>
+            <ul>
+              <li>No upstream: <span class="mono">git push -u origin &lt;branch&gt;</span>.</li>
+              <li>Upstream behind: <span class="mono">git push</span>.</li>
+              <li>Upstream diverged: it stops and hands over to conflicts. It does not force.</li>
+            </ul>
+          </div>
+          <div class="plane sig">
+            <div class="tag">Admin bypass</div>
+            <h3>Only offered, and with a double check</h3>
+            <ul>
+              <li>Only if <span class="mono">policy.admin_bypass: true</span>.</li>
+              <li>It asks whether you really are an admin: the skill cannot know your role.</li>
+              <li>It confirms the specific irreversible action with you.</li>
+              <li>With <span class="mono">false</span>, it never offers it.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="callout agent r">
+          <b>Which branches count as protected</b> comes from the strategy:
+          <span class="mono">main</span> always, the integration branch when there is one,
+          <span class="mono">develop</span> in gitflow and <span class="mono">release/*</span> in
+          enterprise. On any of them, never
+          <span class="mono">--force</span>, <span class="mono">--force-with-lease</span> or
+          <span class="mono">--no-verify</span> without an explicit request from you and a branch nobody
+          else uses.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §06 PARITY ============ -->
+    <section class="band" id="paridad">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">06</span> · Step 1b · parity with the host</div>
+          <h2>What is declared is intent; what rules is the host</h2>
+          <p class="sub">
+            The <span class="mono">policy</span> block records what the team decided. GitHub
+            records what is enforced. They drift apart, and the surprise arrives at the worst moment: a
+            merge rejected halfway through. That is why the reconciliation is a script, not a
+            procedure.
+          </p>
+        </div>
+
+        <div class="tablewrap r">
+          <table class="cmp">
+            <thead>
+              <tr>
+                <th>Command</th>
+                <th>Reads the host</th>
+                <th>Writes</th>
+                <th>What for</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th><span class="mono">bun run git:policy plan</span></th>
+                <td>no</td>
+                <td>nothing</td>
+                <td>See which ruleset derives from the block.</td>
+              </tr>
+              <tr>
+                <th><span class="mono">bun run git:policy verify</span></th>
+                <td>yes</td>
+                <td>nothing</td>
+                <td>On the first push, PR or merge of the session. Exits 1 on an unaccepted drift.</td>
+              </tr>
+              <tr>
+                <th><span class="mono">… verify --stamp</span></th>
+                <td>yes</td>
+                <td><span class="mono">meta.policy_verified</span> y <span class="mono">policy_source</span></td>
+                <td>Record the reconciliation when it is clean.</td>
+              </tr>
+              <tr>
+                <th><span class="mono">bun run git:policy apply</span></th>
+                <td>yes</td>
+                <td>nothing (dry run)</td>
+                <td>Show the exact payload before proposing the write.</td>
+              </tr>
+              <tr>
+                <th><span class="mono">… apply --yes</span></th>
+                <td>yes</td>
+                <td>the host ruleset</td>
+                <td>Write, with your choice. Never to cover a drift you did not read.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="planes r" style="margin-top: 22px">
+          <div class="plane">
+            <div class="tag">What the script knows</div>
+            <h3>Two mechanisms, and a push proves nothing</h3>
+            <ul>
+              <li>
+                It checks classic protection <b>and</b> rulesets. A
+                <span class="mono">404</span> on the classic one does not mean "no protection".
+              </li>
+              <li>
+                A push that goes through does not prove there is no rule: admins skip it and the rule still
+                applies to everyone else. If the remote says
+                <span class="mono">Changes must be made through a pull request</span>, it was a bypass.
+              </li>
+              <li>
+                <span class="mono">require_code_owner_review</span> without a
+                <span class="mono">CODEOWNERS</span> file is not strict: it is impossible to meet, and every
+                merge ends up being a bypass.
+              </li>
+            </ul>
+          </div>
+          <div class="plane sig">
+            <div class="tag">On a drift</div>
+            <h3>It is reported, never fixed on its own</h3>
+            <ul>
+              <li>(a) fix <span class="mono">.agents/project.yaml</span> so it matches the host;</li>
+              <li>(b) change the host configuration;</li>
+              <li>
+                (c) accept the difference and note why in
+                <span class="mono">policy.accepted_divergences</span>.
+              </li>
+              <li>Any of the three needs your choice.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="code pre r" style="margin-top: 22px"><span class="c"># an accepted divergence: one verify field, with its reason</span>
+<span class="k">git_strategy</span>:
+  <span class="k">policy</span>:
+    <span class="k">accepted_divergences</span>:
+      - <span class="k">field</span>: <span class="s">main.direct_push_to_protected</span>
+        <span class="k">enforced</span>: <span class="s">blocked (pull_request rule)</span>
+        <span class="k">accepted</span>: <span class="s">&lt;sign-off date&gt;</span>
+        <span class="k">reason</span>: <span class="s">why the two sides differ on purpose</span></div>
+
+        <div class="check r">
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Accepted is not silenced.</b> <span class="mono">verify</span> lists it as
+              ACCEPTED with its reason and exits 0; <span class="mono">--stamp</span> records
+              <span class="mono">policy_source: accepted</span>, different from
+              <span class="mono">verified</span>.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>An old exception shows up by itself.</b> An accepted divergence that no longer matches
+              any drift is reported as a note, so the list does not collect dead
+              exceptions.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b><span class="mono">apply</span> loosens nothing without permission.</b> Removing a
+              guard, lowering approvals, turning off code-owner review or widening the merge
+              methods requires <span class="mono">--allow-loosening</span> for that specific
+              waiver.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>What is not verified is called that.</b> With
+              <span class="mono">policy_source: declared</span>, the AI does not tell you what the
+              remote requires: it says "declared, not verified".</span
+            >
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §07 COMMITS ============ -->
+    <section class="band" id="commits">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">07</span> · operations · branch and commit</div>
+          <h2>Branches with a proposed name, commits with a single reason</h2>
+          <p class="sub">
+            The AI proposes the branch name and the full commit block, and waits for your OK before
+            running anything. You can accept, change or reject each one.
+          </p>
+        </div>
+
+        <div class="planes r">
+          <div class="plane">
+            <div class="tag">Branch</div>
+            <h3>Prefix + key + slug</h3>
+            <ul>
+              <li>
+                Prefix by the dominant change: <span class="mono">feat</span>,
+                <span class="mono">fix</span>, <span class="mono">refactor</span>,
+                <span class="mono">test</span>, <span class="mono">docs</span>,
+                <span class="mono">chore</span>, in that order of precedence.
+              </li>
+              <li>
+                With a key: <span class="mono">feat/PROJ-123-bulk-assign</span>. Without a key:
+                <span class="mono">refactor/split-auth-utils</span>.
+              </li>
+              <li>It branches from the base branch the strategy sets.</li>
+            </ul>
+          </div>
+          <div class="plane">
+            <div class="tag">Commit</div>
+            <h3>Conventional, atomic, explicit</h3>
+            <ul>
+              <li>One commit, one responsibility. Tests go with the behavior they prove.</li>
+              <li><span class="mono">feat(PROJ-123): add bulk-assign action</span>.</li>
+              <li>Never <span class="mono">git add -A</span> or <span class="mono">git add .</span>: each path, by name.</li>
+              <li>If a hook rejects the commit: fix the cause and make a new commit, never <span class="mono">--amend</span>.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="code pre r" style="margin-top: 22px">feat(PROJ-123): add bulk-assign action
+
+<span class="c">Optional body: the outcome, not the list of files.</span>
+
+<span class="k">Worktree</span>: <span class="s">&lt;name|primary&gt;</span>
+<span class="k">Session</span>: <span class="s">&lt;label&gt;</span></div>
+
+        <div class="callout agent r">
+          <b>The trailers are forensic, not attribution.</b> The last two lines of every commit
+          an agent session writes say which checkout and which session produced it, copied
+          from the <span class="mono">AGENT IDENTITY:</span> line the prompt hook injects
+          (<span class="mono">unknown</span> if it cannot be resolved). They name no tool.
+          Forbidden: "Generated with…", an AI <span class="mono">Co-Authored-By:</span> or
+          any branded trailer such as <span class="mono">Claude-Session:</span>.
+          <span class="mono">.husky/commit-msg</span> runs
+          <span class="mono">scripts/check-commit-trailers.ts</span> and warns, without blocking.
+        </div>
+
+        <div class="callout agent r">
+          <b>One more trailer can go above those two.</b> When the docs contracts gate
+          names a <span class="mono">LINT.IfChange</span> region, and the pages it
+          cites were not touched and still describe the behavior correctly, the commit carries
+          <span class="mono">Docs-Checked: &lt;label&gt; &lt;reason&gt;</span> above
+          <span class="mono">Worktree:</span> and <span class="mono">Session:</span>. Never by reflex
+          and never without a reason: a label alone does not count, and the pre-push hook and CI block the push without
+          that trailer or without the page edits.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §08 PR ============ -->
+    <section class="band" id="pr">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">08</span> · operation · pull request</div>
+          <h2>It opens with full context and stops there</h2>
+          <p class="sub">
+            The base comes from the strategy, the body is built on the spot, and the merge stays as your
+            explicit next step.
+          </p>
+        </div>
+
+        <div class="steps r">
+          <div class="step">
+            <h3>Base and title</h3>
+            <p>
+              The base is the one the strategy sets (table in section 03). If you change it with
+              <span class="mono">--base</span>, the AI flags it against the default. The title follows
+              the commit format, under 70 characters.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Body</h3>
+            <p>
+              Summary, Changes, Test Plan, Traceability (issue, branch, base, strategy, worktree and
+              session), Evidence and Merge danger (way in or way back, blast radius and
+              rollback). What the skill cannot complete stays visible so
+              you can edit it: it is not deleted silently. It shows you the body and base before sending them with
+              <span class="mono">gh pr create --body-file</span>.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Labels, reviewers, draft</h3>
+            <p>
+              It asks you. It does not invent labels the repo may not have: if in doubt, it
+              confirms them with <span class="mono">gh label list</span>.
+            </p>
+          </div>
+          <div class="step">
+            <h3>How many approvals are missing, and according to whom</h3>
+            <p>
+              With the policy verified it says "the host requires N approvals on the base". With the
+              policy only declared it says "declared <span class="mono">require_pr_reviews: N</span>,
+              not verified against the host".
+            </p>
+          </div>
+        </div>
+
+        <div class="gate r">
+          <b>Gate</b> The skill never merges. It leaves you the PR and the command for when it is
+          approved.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §09 CONFLICTS ============ -->
+    <section class="band" id="conflictos">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">09</span> · operation · conflicts</div>
+          <h2>Diagnosis before the fix</h2>
+          <p class="sub">
+            A wrong fix here costs hours. The AI looks at
+            <span class="mono">git status</span>, <span class="mono">git diff --check</span> and the
+            state files in <span class="mono">.git/</span> to know what happened before
+            proposing anything.
+          </p>
+        </div>
+
+        <div class="states r">
+          <span class="st">explain the cause</span><span class="ar">→</span>
+          <span class="st hum">options by safety</span><span class="ar">→</span>
+          <span class="st">guide step by step</span><span class="ar">→</span>
+          <span class="st">verify</span><span class="ar">→</span>
+          <span class="st">how to avoid it</span>
+        </div>
+
+        <div class="alts r" style="margin-top: 18px">
+          <div class="alt">
+            <div class="kk">Merge and rebase</div>
+            <h3>Content, renames, rebase</h3>
+            <p>Content conflicts, rename or delete conflicts, and rebase or cherry-pick conflicts.</p>
+          </div>
+          <div class="alt">
+            <div class="kk">Branches</div>
+            <h3>Rejected push, loose HEAD</h3>
+            <p>Diverged branches, rejected push, detached HEAD, unrelated histories.</p>
+          </div>
+          <div class="alt">
+            <div class="kk">Local work</div>
+            <h3>Stash and hooks</h3>
+            <p>A conflict when applying a stash, or a pre-commit hook that rejected the commit.</p>
+          </div>
+          <div class="alt">
+            <div class="kk">When in doubt</div>
+            <h3>Aborting wins</h3>
+            <p>
+              <span class="mono">git merge --abort</span>,
+              <span class="mono">git rebase --abort</span>: aborting always beats guessing.
+            </p>
+          </div>
+        </div>
+
+        <div class="callout r">
+          <b>Destructive options are never picked silently.</b> Force push, hard reset or
+          aborting a merge with uncommitted work are presented to you as an option, with their risk, and
+          wait for your decision.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §10 CHAIN ============ -->
+    <section class="band" id="cadena">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">10</span> · Step 4 · chained PRs</div>
+          <h2>Over 400 lines: it gets split, and the decision travels with its trace</h2>
+          <p class="sub">
+            Above that review budget, defect detection drops sharply. Before opening
+            PRs, the skill walks a tree of three questions and stops at the first leaf.
+          </p>
+        </div>
+
+        <div class="tablewrap r">
+          <table class="cmp">
+            <thead>
+              <tr>
+                <th>Question</th>
+                <th>If yes</th>
+                <th>If no</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th>Q1 · is it mostly mechanical? (rename, formatting, generated code)</th>
+                <td><span class="mono">size-exception</span>: one PR, with your override and a <span class="mono">Why size-exception:</span> line</td>
+                <td>go to Q2</td>
+              </tr>
+              <tr>
+                <th>Q2 · does it split into 2 to 4 independent slices, each safe on its own on the base?</th>
+                <td><span class="mono">stacked-to-main</span>: small PRs on the base</td>
+                <td>go to Q3</td>
+              </tr>
+              <tr>
+                <th>Q3 · is there shared scaffolding that a partial merge would break?</th>
+                <td><span class="mono">feature-branch-chain</span>: one integration branch, child PRs, one final PR</td>
+                <td>decompose the story again: it is a planning smell</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="code pre r" style="margin-top: 22px"><span class="k">Chain strategy</span>: <span class="s">feature-branch-chain</span>
+<span class="k">Decision trace</span>: Q1=No (new domain logic, not a rename) ·
+                Q2=No (slice 2 does not compile without the types from slice 1) ·
+                Q3=Yes (shared schema used by slices 2 to 4) → feature-branch-chain
+<span class="k">Decided by</span>: /git-flow-master §Chained-PR decision tree (branching-strategies.md)</div>
+
+        <div class="callout blue r">
+          <b>A label alone is not a decision.</b>
+          <span class="mono">/sprint-development</span> blocks its Stage 2 on this answer and
+          rejects a strategy name without a trace. Each answer carries the reason for this change,
+          and this skill is the only authority that can fill in those lines. If the real diff
+          exceeds the estimate, it is decided again: the budget is not stretched silently.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §11 WORKTREES ============ -->
+    <section class="band" id="worktrees">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">11</span> · isolated work</div>
+          <h2>One session, one worktree, one branch</h2>
+          <p class="sub">
+            A worktree is a second working directory over the same
+            <span class="mono">.git</span>, with its own branch and its own index. It is useful for two
+            parallel AI sessions, a hotfix with a feature open, or risky work you do not
+            want to mix in.
+          </p>
+        </div>
+
+        <div class="states r">
+          <span class="st">create</span><span class="ar">→</span>
+          <span class="st">bun run worktree:provision</span><span class="ar">→</span>
+          <span class="st">work</span><span class="ar">→</span>
+          <span class="st hum">bun run worktree:audit &lt;wt&gt; --rescue</span><span class="ar">→</span>
+          <span class="st">remove</span>
+        </div>
+
+        <div class="steps r" style="margin-top: 18px">
+          <div class="step">
+            <h3>Create: git is the canon, the harness is a shortcut</h3>
+            <p>
+              <span class="mono">git worktree add ../dir -b feat/x main</span> works on
+              any host. A harness's own tool (in Claude Code
+              <span class="mono">EnterWorktree</span>, or a worktree managed by Codex) is a
+              harness path, never the repo canon, and needs the same two steps
+              around it. OpenCode has no equivalent: it uses git.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Provision before working</h3>
+            <p>
+              A new worktree brings only the versioned files.
+              <span class="mono">worktree:provision</span> copies the ignored inputs that cannot be
+              rebuilt (<span class="mono">.env</span>,
+              <span class="mono">.vercel/</span>, local settings), installs dependencies and creates the
+              <span class="mono">.claude/skills</span> alias. The list lives in code:
+              <span class="mono">PROVISION_COPIES</span> in
+              <span class="mono">cli/lib/worktree.ts</span>.
+            </p>
+          </div>
+          <div class="step">
+            <h3><span class="mono">.session/</span> is never copied</h3>
+            <p>
+              Durable state (plans, progress, locks, reports) lives in
+              <span class="mono">&lt;&lt;PRIMARY_ROOT&gt;&gt;</span>, the main checkout, and is
+              cited by absolute path from the worktree. A copy silently diverges and dies with the
+              worktree.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Audit before removing</h3>
+            <p>
+              <span class="mono">worktree:audit</span> is read-only and exits 1 while there is
+              state that lives only in the worktree; <span class="mono">--rescue</span> copies it to the
+              main checkout without overwriting anything. With Orca, the versioned <span class="mono">orca.yaml</span>
+              runs both steps as setup and archive hooks, but the CLI skips the archive
+              hook unless given <span class="mono">--run-hooks</span>; without hooks, run
+              <span class="mono">bun run worktree:audit &lt;wt&gt; --rescue</span> by hand.
+            </p>
+          </div>
+        </div>
+
+        <div class="check r">
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>What is not versioned does not travel.</b> A new file without
+              <span class="mono">git add</span> stays in the original directory: move it, or
+              commit it before creating the worktree.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Stash is repo-wide.</b> It is not a way to pass work between sessions:
+              commit on your branch.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Provenance is in the commit.</b> The
+              <span class="mono">Worktree:</span> and <span class="mono">Session:</span> trailers say who
+              wrote an orphan branch. An old worktree is reported, never deleted if it belongs to another
+              session.</span
+            >
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §12 RAILS ============ -->
+    <section class="band" id="rieles">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">12</span> · safety rails</div>
+          <h2>What the skill never does</h2>
+          <p class="sub">
+            The full list lives in <span class="mono">SKILL.md</span> (Compact Rules, which already
+            gather the critical rules and the antipatterns). These are the ones most visible from the outside.
+          </p>
+        </div>
+
+        <div class="check r">
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>It does not rewrite pushed history.</b> No force push to a shared branch, and no
+              <span class="mono">--amend</span> or rebase on commits already published: a new
+              commit is added.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>It does not discard changes globally.</b> Never <span class="mono">git restore .</span>,
+              <span class="mono">git checkout -- .</span>, <span class="mono">git reset --hard</span>,
+              an untargeted <span class="mono">git stash</span> or
+              <span class="mono">git clean -f</span>: another session may be in the same tree. Only
+              paths this session modified (Critical Rule #13).</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>It does not commit secrets.</b> <span class="mono">.env</span>, credentials or tokens
+              in git are forever; that is why each path is added by name.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>It does not merge</b> or chain PRs without naming the dependency in the body of each
+              one.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>It does not quote examples as configuration.</b> The blocks in
+              <span class="mono">references/</span> are illustrations; the answer about a
+              project comes from its own <span class="mono">.agents/project.yaml</span>, quoted.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>It does not fake a PR.</b> If <span class="mono">gh</span> is missing or not authenticated,
+              it stops and tells you.</span
+            >
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §13 INPUTS AND OUTPUTS ============ -->
+    <section class="band" id="archivos">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">13</span> · where each thing lives</div>
+          <h2>The owner files, not copies</h2>
+          <p class="sub">
+            The deck does not repeat values: each one is read at its owner, which is what the skill
+            does too.
+          </p>
+        </div>
+
+        <div class="tablewrap r">
+          <table class="cmp narrow">
+            <thead>
+              <tr>
+                <th>File or command</th>
+                <th>What it settles</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th><span class="mono">.agents/project.yaml</span> → <span class="mono">git_strategy</span></th>
+                <td>Strategy, branches, protected ones, decisions, policy, accepted divergences and the provenance in <span class="mono">meta</span>.</td>
+              </tr>
+              <tr>
+                <th><span class="mono">package.json</span></th>
+                <td>The <span class="mono">git:policy</span>, <span class="mono">worktree:provision</span> and <span class="mono">worktree:audit</span> scripts.</td>
+              </tr>
+              <tr>
+                <th><span class="mono">.husky/commit-msg</span></th>
+                <td>The trailer warning, through <span class="mono">scripts/check-commit-trailers.ts</span>.</td>
+              </tr>
+              <tr>
+                <th><span class="mono">cli/lib/worktree.ts</span> · <span class="mono">orca.yaml</span></th>
+                <td>What provisioning copies and the setup and archive hooks in Orca.</td>
+              </tr>
+              <tr>
+                <th><span class="mono">.agents/README.md</span> · "Checkout roots"</th>
+                <td>What <span class="mono">&lt;&lt;REPO_ROOT&gt;&gt;</span> is and what <span class="mono">&lt;&lt;PRIMARY_ROOT&gt;&gt;</span> is.</td>
+              </tr>
+              <tr>
+                <th><span class="mono">.agents/instructions/agent-project.md</span> · "Git Strategy"</th>
+                <td>Only a pointer to the block, plus the prose context of an accepted divergence.</td>
+              </tr>
+              <tr>
+                <th><span class="mono">.agents/skills/REGISTRY.md</span></th>
+                <td>The skill's Compact Rules that travel in a subagent's briefing.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §14 INVOKE ============ -->
+    <section class="band" id="invocar">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">14</span> · what you tell the AI</div>
+          <h2>Invoking it in each terminal</h2>
+          <p class="sub">
+            The skill has no named modes: the operation comes from your phrase, in Spanish or
+            English. Often you do not even need to name it.
+          </p>
+        </div>
+
+        <div class="hosts r">
+          <div class="host">
+            <h3>Claude Code</h3>
+            <span class="say">/git-flow-master open a PR</span>
+            <span class="say">/git-flow-master set up the git flow</span>
+            <p>The slash loads the skill; the rest of the phrase picks the operation.</p>
+          </div>
+          <div class="host">
+            <h3>OpenCode</h3>
+            <span class="say">load the skill git-flow-master: commit and push</span>
+            <p>No slash: you name the skill in the phrase.</p>
+          </div>
+          <div class="host">
+            <h3>Codex</h3>
+            <span class="say">load the skill git-flow-master: I have conflicts when I pull</span>
+            <p>Same pattern as OpenCode, in the CLI or Desktop.</p>
+          </div>
+          <div class="host">
+            <h3>Pi</h3>
+            <span class="say">/skill:git-flow-master open a PR</span>
+            <p>Slash with the <span class="mono">/skill:</span> prefix. In a new folder, <span class="mono">/trust</span> once.</p>
+          </div>
+        </div>
+
+        <div class="tablewrap r" style="margin-top: 26px">
+          <table class="cmp narrow">
+            <thead>
+              <tr>
+                <th>If you say something like…</th>
+                <th>It runs</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th>"start work on PROJ-123" · "crear branch" (create a branch)</th>
+                <td>Branch</td>
+              </tr>
+              <tr>
+                <th>"commit this" · "commitear esto" (commit this) · "commit and push"</th>
+                <td>Commit, and Push if you asked for it</td>
+              </tr>
+              <tr>
+                <th>"create PR" · "abrir PR" (open a PR)</th>
+                <td>Pull request</td>
+              </tr>
+              <tr>
+                <th>"fix conflict" · "push rejected" · "resolver conflicto" (resolve conflict)</th>
+                <td>Conflict</td>
+              </tr>
+              <tr>
+                <th>"split this PR" · "PR demasiado grande" (PR too big)</th>
+                <td>Chained-PR tree</td>
+              </tr>
+              <tr>
+                <th>"set up our git strategy" · "configura el flujo de git" (set up the git flow)</th>
+                <td>Strategy Setup</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §15 HANDOFFS ============ -->
+    <section class="band" id="handoffs">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">15</span> · who it works with</div>
+          <h2>Who it hands off to, and who hands off to it</h2>
+        </div>
+
+        <div class="alts r">
+          <div class="alt">
+            <div class="kk">The story loop</div>
+            <h3>/sprint-development</h3>
+            <p>
+              Implements and reviews; asks this skill for the PR, the chain with its trace and the push
+              policy.
+              <a href="../sprint-development/how-it-works.en.html">See the deck</a>.
+            </p>
+          </div>
+          <div class="alt">
+            <div class="kk">TDD inside a feature</div>
+            <h3>/unit-testing</h3>
+            <p>
+              Red, green, refactor; the tests go in the same commit as the behavior.
+              <a href="../unit-testing/how-it-works.en.html">See the deck</a>.
+            </p>
+          </div>
+          <div class="alt">
+            <div class="kk">Backlog and refinement</div>
+            <h3>/product-management</h3>
+            <p>
+              If the request is about stories and not git, it goes there.
+              <a href="../product-management/how-it-works.en.html">See the deck</a>.
+            </p>
+          </div>
+          <div class="alt">
+            <div class="kk">Jira from a commit or a PR</div>
+            <h3>/acli</h3>
+            <p>The Jira operations that a commit or a PR triggers.</p>
+          </div>
+          <div class="alt">
+            <div class="kk">Fleets of workers in worktrees</div>
+            <h3>/orca-orchestration</h3>
+            <p>
+              A conductor that launches supervised workers, each in its own worktree; Orca creates,
+              provisions and audits.
+            </p>
+          </div>
+        </div>
+
+        <div class="callout blue r">
+          <b>To read more:</b>
+          <a
+            href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/.agents/skills/git-flow-master/SKILL.md"
+            >.agents/skills/git-flow-master/SKILL.md</a
+          >
+          and its <span class="mono">references/</span> folder: the strategy catalog, the
+          Strategy Setup mechanics, ruleset parity, commits, PRs, conflicts and
+          worktrees, one reference per topic.
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <div class="wrap">
+        <div class="prose">
+          <p>
+            <b style="color: var(--ink)">The core idea.</b> Git policy is decided once,
+            stored in one place and checked against the host. After that, every branch, commit,
+            push and PR applies it without anyone having to remember it. The AI proposes and executes; you
+            choose the strategy, accept or reject the divergences and do the merge.
+          </p>
+        </div>
+        <div class="sig">
+          <span>Source: <span class="mono">.agents/skills/git-flow-master/</span></span>
+          <span>·</span>
+          <span><a href="../../index.html">← back to Planos</a></span>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      // theme toggle
+      (function () {
+        var root = document.documentElement;
+        var btn = document.getElementById('themebtn');
+        var icon = document.getElementById('themeicon');
+        function current() {
+          var t = root.getAttribute('data-theme');
+          if (t) return t;
+          return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+            ? 'dark'
+            : 'light';
+        }
+        function setIcon() {
+          icon.textContent = current() === 'dark' ? '☾' : '☀';
+        }
+        setIcon();
+        btn.addEventListener('click', function () {
+          var next = current() === 'dark' ? 'light' : 'dark';
+          root.setAttribute('data-theme', next);
+          setIcon();
+        });
+        if (window.matchMedia) {
+          window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', setIcon);
+        }
+      })();
+
+      // hero pipeline animation
+      (function () {
+        var reduce =
+          window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var pipe = document.getElementById('pipe');
+        if (pipe && !reduce) {
+          var io = new IntersectionObserver(
+            function (es) {
+              es.forEach(function (e) {
+                if (e.isIntersecting) {
+                  pipe.classList.add('reveal-pipe');
+                  io.disconnect();
+                }
+              });
+            },
+            { threshold: 0.3 }
+          );
+          io.observe(pipe);
+        } else if (pipe) {
+          pipe.classList.add('reveal-pipe');
+        }
+      })();
+
+      // scroll reveal
+      (function () {
+        var reduce =
+          window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var els = document.querySelectorAll('.r');
+        if (reduce) {
+          els.forEach(function (el) {
+            el.classList.add('in');
+          });
+          return;
+        }
+        var io = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (e) {
+              if (e.isIntersecting) {
+                e.target.classList.add('in');
+                io.unobserve(e.target);
+              }
+            });
+          },
+          { threshold: 0.12, rootMargin: '0px 0px -8% 0px' }
+        );
+        els.forEach(function (el) {
+          io.observe(el);
+        });
+      })();
+    </script>
+    <!-- ============ MOBILE (UPEX): scroll deck, reflow by CSS, no scale-to-fit or swipe ============
+         The decks in this repo are pages read by scrolling and rearranged with @media.
+         There are no slides to scale or swipe through: this block only declares the mobile mode.
+         The site that serves the deck validates the id `upex-mobile-nav`. -->
+    <script id="upex-mobile-nav">
+      (function () {
+        var mobile =
+          window.matchMedia &&
+          window.matchMedia('(pointer: coarse)').matches &&
+          window.matchMedia('(max-width: 768px)').matches;
+        document.documentElement.setAttribute('data-mobile', mobile ? 'reflow' : 'off');
+      })();
+    </script>
+  </body>
+</html>

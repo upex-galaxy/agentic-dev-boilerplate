@@ -1,0 +1,2736 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Context skills: the business map inside a skill</title>
+    <meta
+      name="description"
+      content="What a context skill with a map is: why the business map lives in a skill and not in .context/, how project-context generates it, how it is read by section with bun run context:map, how to tell it has gone stale and how to fix it one section at a time with evidence and approval."
+    />
+    <style>
+      /* ============================================================
+     Self-contained deck: zero external requests, not even
+     fonts. Built to survive for years as a loose file.
+     Tokens: "Planos", see packages/decks/README.md (single source).
+     ============================================================ */
+      :root {
+        --paper: #e8ecf1;
+        --paper-2: #dee5ed;
+        --surface: #f5f8fb;
+        --surface-2: #ffffff;
+        --ink: #172236;
+        --ink-soft: #4a5873;
+        --ink-faint: #5e6e88;
+        --line: rgba(23, 34, 54, 0.14);
+        --line-soft: rgba(23, 34, 54, 0.08);
+        --blue: #1e56a8;
+        --blue-2: #2f72ce;
+        --blue-wash: rgba(30, 86, 168, 0.08);
+        --blue-solid: #1e56a8;
+        --signal: #c2410c;
+        --signal-2: #ea580c;
+        --signal-wash: rgba(194, 65, 12, 0.09);
+        --signal-solid: #9a3412;
+        --agent: #6d28d9;
+        --agent-2: #7c3aed;
+        --agent-wash: rgba(109, 40, 217, 0.08);
+        --agent-solid: #6d28d9;
+        --good: #15803d;
+        --warn: #b45309;
+        --grid: rgba(30, 86, 168, 0.055);
+        --shadow: 0 1px 2px rgba(23, 34, 54, 0.06), 0 8px 24px -12px rgba(23, 34, 54, 0.18);
+        --shadow-lg: 0 2px 4px rgba(23, 34, 54, 0.05), 0 24px 60px -24px rgba(23, 34, 54, 0.28);
+        /* -solid tokens: fixed across both themes, reserved for solid-fill
+           + white-text UI (buttons, bubbles, ::selection): the plain
+           --blue/--signal/--agent above lighten in dark mode for on-paper
+           text/links and fail contrast as a white-text fill. Never themed. */
+
+        --font-display:
+          'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
+        --font-body:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', system-ui, sans-serif;
+        --font-mono:
+          ui-monospace, 'SF Mono', 'JetBrains Mono', 'Cascadia Code', Menlo, Consolas, monospace;
+
+        --maxw: 1120px;
+        --prose: 66ch;
+        --r: 14px;
+        --r-sm: 9px;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --paper: #0b1220;
+          --paper-2: #0e1626;
+          --surface: #121b2e;
+          --surface-2: #16213a;
+          --ink: #e4e9f2;
+          --ink-soft: #9fb0c9;
+          --ink-faint: #7e8caa;
+          --line: rgba(160, 180, 210, 0.16);
+          --line-soft: rgba(160, 180, 210, 0.09);
+          --blue: #6fa8ff;
+          --blue-2: #8cbbff;
+          --blue-wash: rgba(111, 168, 255, 0.11);
+          --signal: #fb923c;
+          --signal-2: #fdba74;
+          --signal-wash: rgba(251, 146, 60, 0.12);
+          --agent: #c4b5fd;
+          --agent-2: #ddd6fe;
+          --agent-wash: rgba(196, 181, 253, 0.12);
+          --good: #4ade80;
+          --warn: #fbbf24;
+          --grid: rgba(111, 168, 255, 0.06);
+          --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 30px -14px rgba(0, 0, 0, 0.6);
+          --shadow-lg: 0 2px 6px rgba(0, 0, 0, 0.4), 0 30px 70px -28px rgba(0, 0, 0, 0.7);
+        }
+      }
+      :root[data-theme='light'] {
+        --paper: #e8ecf1;
+        --paper-2: #dee5ed;
+        --surface: #f5f8fb;
+        --surface-2: #ffffff;
+        --ink: #172236;
+        --ink-soft: #4a5873;
+        --ink-faint: #5e6e88;
+        --line: rgba(23, 34, 54, 0.14);
+        --line-soft: rgba(23, 34, 54, 0.08);
+        --blue: #1e56a8;
+        --blue-2: #2f72ce;
+        --blue-wash: rgba(30, 86, 168, 0.08);
+        --signal: #c2410c;
+        --signal-2: #ea580c;
+        --signal-wash: rgba(194, 65, 12, 0.09);
+        --agent: #6d28d9;
+        --agent-2: #7c3aed;
+        --agent-wash: rgba(109, 40, 217, 0.08);
+        --good: #15803d;
+        --warn: #b45309;
+        --grid: rgba(30, 86, 168, 0.055);
+        --shadow: 0 1px 2px rgba(23, 34, 54, 0.06), 0 8px 24px -12px rgba(23, 34, 54, 0.18);
+        --shadow-lg: 0 2px 4px rgba(23, 34, 54, 0.05), 0 24px 60px -24px rgba(23, 34, 54, 0.28);
+      }
+      :root[data-theme='dark'] {
+        --paper: #0b1220;
+        --paper-2: #0e1626;
+        --surface: #121b2e;
+        --surface-2: #16213a;
+        --ink: #e4e9f2;
+        --ink-soft: #9fb0c9;
+        --ink-faint: #7e8caa;
+        --line: rgba(160, 180, 210, 0.16);
+        --line-soft: rgba(160, 180, 210, 0.09);
+        --blue: #6fa8ff;
+        --blue-2: #8cbbff;
+        --blue-wash: rgba(111, 168, 255, 0.11);
+        --signal: #fb923c;
+        --signal-2: #fdba74;
+        --signal-wash: rgba(251, 146, 60, 0.12);
+        --agent: #c4b5fd;
+        --agent-2: #ddd6fe;
+        --agent-wash: rgba(196, 181, 253, 0.12);
+        --good: #4ade80;
+        --warn: #fbbf24;
+        --grid: rgba(111, 168, 255, 0.06);
+        --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 30px -14px rgba(0, 0, 0, 0.6);
+        --shadow-lg: 0 2px 6px rgba(0, 0, 0, 0.4), 0 30px 70px -28px rgba(0, 0, 0, 0.7);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+      }
+      body {
+        margin: 0;
+        font-family: var(--font-body);
+        font-size: 17px;
+        line-height: 1.65;
+        color: var(--ink);
+        background-color: var(--paper);
+        background-image:
+          linear-gradient(var(--grid) 1px, transparent 1px),
+          linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+        background-size: 30px 30px;
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
+      }
+      h1,
+      h2,
+      h3 {
+        font-family: var(--font-display);
+        font-weight: 600;
+        text-wrap: balance;
+        line-height: 1.12;
+        margin: 0;
+      }
+      p {
+        margin: 0 0 1.1em;
+      }
+      a {
+        color: var(--blue);
+        text-decoration-color: var(--line);
+        text-underline-offset: 3px;
+      }
+      a:focus-visible {
+        outline: 2px solid var(--blue);
+        outline-offset: 2px;
+      }
+      code,
+      .mono {
+        font-family: var(--font-mono);
+      }
+      ::selection {
+        background: var(--signal-solid);
+        color: #fff;
+      }
+
+      .wrap {
+        max-width: var(--maxw);
+        margin: 0 auto;
+        padding: 0 clamp(20px, 5vw, 56px);
+      }
+      .prose {
+        max-width: var(--prose);
+      }
+
+      .eyebrow {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        font-weight: 600;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--signal);
+        display: inline-flex;
+        align-items: baseline;
+        gap: 0.6em;
+      }
+      .eyebrow .num {
+        color: var(--blue);
+      }
+
+      .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 11px clamp(20px, 5vw, 56px);
+        background: color-mix(in srgb, var(--paper) 82%, transparent);
+        backdrop-filter: blur(12px) saturate(1.4);
+        border-bottom: 1px solid var(--line-soft);
+      }
+      .topbar .brand {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        letter-spacing: 0.04em;
+        color: var(--ink-soft);
+        display: flex;
+        align-items: center;
+        gap: 0.6em;
+        text-decoration: none;
+      }
+      .topbar .brand b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .topbar .mark {
+        width: 16px;
+        height: 16px;
+        border: 1.5px solid var(--blue);
+        border-radius: 3px;
+        position: relative;
+        flex: none;
+      }
+      .topbar .mark::after {
+        content: '';
+        position: absolute;
+        inset: 3px;
+        border: 1.5px solid var(--agent);
+        border-radius: 1px;
+      }
+      .topnav {
+        display: flex;
+        gap: 4px;
+        align-items: center;
+      }
+      .topnav a {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        letter-spacing: 0.03em;
+        color: var(--ink-faint);
+        text-decoration: none;
+        padding: 5px 9px;
+        border-radius: 6px;
+      }
+      .topnav a:hover {
+        color: var(--ink);
+        background: var(--blue-wash);
+      }
+      @media (max-width: 900px) {
+        .topnav {
+          display: none;
+        }
+      }
+      .themebtn {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        letter-spacing: 0.05em;
+        cursor: pointer;
+        border: 1px solid var(--line);
+        background: var(--surface);
+        color: var(--ink-soft);
+        padding: 6px 11px;
+        border-radius: 7px;
+        display: flex;
+        gap: 0.5em;
+        align-items: center;
+      }
+      .themebtn:hover {
+        border-color: var(--blue);
+        color: var(--ink);
+      }
+      .themebtn:focus-visible {
+        outline: 2px solid var(--blue);
+        outline-offset: 2px;
+      }
+
+      .hero {
+        position: relative;
+        padding: clamp(60px, 12vh, 130px) 0 clamp(48px, 8vh, 90px);
+        overflow: hidden;
+      }
+      .hero .kicker {
+        margin-bottom: 26px;
+      }
+      .hero h1 {
+        font-size: clamp(2.5rem, 6.6vw, 5.2rem);
+        letter-spacing: -0.015em;
+      }
+      .hero h1 em {
+        font-style: italic;
+        color: var(--blue);
+      }
+      .hero h1 .sig {
+        color: var(--signal);
+        font-style: normal;
+      }
+      .hero .lede {
+        font-size: clamp(1.06rem, 2vw, 1.32rem);
+        color: var(--ink-soft);
+        max-width: 60ch;
+        margin-top: 28px;
+        line-height: 1.55;
+      }
+      .hero .lede b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .hero-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px 10px;
+        margin-top: 36px;
+      }
+      .chip {
+        font-family: var(--font-mono);
+        font-size: 0.74rem;
+        letter-spacing: 0.02em;
+        padding: 7px 12px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        color: var(--ink-soft);
+        background: var(--surface);
+        display: inline-flex;
+        gap: 0.55em;
+        align-items: center;
+      }
+      .chip b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .chip .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--signal);
+        flex: none;
+      }
+      .chip.agent .dot {
+        background: var(--agent);
+      }
+
+      .pipe {
+        margin-top: 54px;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0;
+        align-items: stretch;
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        overflow: hidden;
+        background: var(--surface);
+        box-shadow: var(--shadow);
+      }
+      .pipe .node {
+        position: relative;
+        padding: 22px 20px;
+        border-right: 1px solid var(--line);
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      .pipe .node:last-child {
+        border-right: 0;
+      }
+      .reveal-pipe .node {
+        animation: pipeIn 0.6s cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+      }
+      .pipe .node:nth-child(1) {
+        animation-delay: 0.1s;
+      }
+      .pipe .node:nth-child(2) {
+        animation-delay: 0.3s;
+      }
+      .pipe .node:nth-child(3) {
+        animation-delay: 0.5s;
+      }
+      .pipe .node:nth-child(4) {
+        animation-delay: 0.7s;
+      }
+      .pipe .node .n {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        letter-spacing: 0.12em;
+        color: var(--signal);
+        text-transform: uppercase;
+      }
+      .pipe .node h3 {
+        font-family: var(--font-display);
+        font-size: 1.14rem;
+        margin: 8px 0 5px;
+      }
+      .pipe .node p {
+        font-size: 0.85rem;
+        color: var(--ink-soft);
+        margin: 0;
+        line-height: 1.45;
+      }
+      .pipe .node .arw {
+        position: absolute;
+        right: -8px;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 2;
+        width: 16px;
+        height: 16px;
+        color: var(--blue);
+        background: var(--surface);
+        display: grid;
+        place-items: center;
+      }
+      .pipe .node:last-child .arw {
+        display: none;
+      }
+      @media (max-width: 760px) {
+        .pipe {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+      @media (max-width: 460px) {
+        .pipe {
+          grid-template-columns: 1fr;
+        }
+        .pipe .node {
+          border-right: 0;
+          border-bottom: 1px solid var(--line);
+        }
+        .pipe .node .arw {
+          display: none;
+        }
+      }
+      @keyframes pipeIn {
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .pipe .node {
+          opacity: 1;
+          transform: none;
+          animation: none !important;
+        }
+      }
+
+      section.band {
+        padding: clamp(56px, 9vh, 96px) 0;
+        border-top: 1px solid var(--line-soft);
+      }
+      .sec-head {
+        max-width: 62ch;
+        margin-bottom: 40px;
+      }
+      .sec-head h2 {
+        font-size: clamp(1.9rem, 4vw, 2.9rem);
+        letter-spacing: -0.012em;
+        margin-top: 16px;
+      }
+      .sec-head p.sub {
+        font-size: 1.1rem;
+        color: var(--ink-soft);
+        margin-top: 18px;
+      }
+
+      .r {
+        opacity: 0;
+        transform: translateY(18px);
+        transition:
+          opacity 0.7s ease,
+          transform 0.7s cubic-bezier(0.2, 0.7, 0.3, 1);
+      }
+      .r.in {
+        opacity: 1;
+        transform: none;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .r {
+          opacity: 1;
+          transform: none;
+          transition: none;
+        }
+      }
+
+      .planes {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+      }
+      @media (max-width: 780px) {
+        .planes {
+          grid-template-columns: 1fr;
+        }
+      }
+      .plane {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface);
+        padding: 26px 26px 24px;
+        box-shadow: var(--shadow);
+        position: relative;
+        overflow: hidden;
+      }
+      .plane::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 3px;
+        background: var(--blue);
+      }
+      .plane.sig::before {
+        background: var(--signal);
+      }
+      .plane.agent::before {
+        background: var(--agent);
+      }
+      .plane .tag {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+      }
+      .plane h3 {
+        font-size: 1.32rem;
+        margin: 8px 0 4px;
+      }
+      .plane .path {
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        color: var(--blue);
+        background: var(--blue-wash);
+        padding: 3px 8px;
+        border-radius: 5px;
+        display: inline-block;
+        margin-bottom: 12px;
+      }
+      .plane.sig .path {
+        color: var(--signal);
+        background: var(--signal-wash);
+      }
+      .plane.agent .path {
+        color: var(--agent);
+        background: var(--agent-wash);
+      }
+      .plane ul {
+        margin: 12px 0 0;
+        padding: 0;
+        list-style: none;
+      }
+      .plane li {
+        position: relative;
+        padding-left: 20px;
+        margin-bottom: 8px;
+        font-size: 0.93rem;
+        color: var(--ink-soft);
+      }
+      .plane li::before {
+        content: '-';
+        position: absolute;
+        left: 0;
+        color: var(--ink-faint);
+      }
+      .plane li b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+
+      .callout {
+        border: 1px solid var(--line);
+        border-left: 3px solid var(--signal);
+        background: var(--signal-wash);
+        border-radius: var(--r-sm);
+        padding: 16px 20px;
+        font-size: 0.93rem;
+        color: var(--ink);
+        margin: 22px 0 0;
+      }
+      .callout b {
+        color: var(--signal);
+      }
+      .callout.blue {
+        border-left-color: var(--blue);
+        background: var(--blue-wash);
+      }
+      .callout.blue b {
+        color: var(--blue);
+      }
+      .callout.agent {
+        border-left-color: var(--agent);
+        background: var(--agent-wash);
+      }
+      .callout.agent b {
+        color: var(--agent);
+      }
+
+      .steps {
+        display: grid;
+        gap: 2px;
+        margin-top: 8px;
+        counter-reset: st;
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        overflow: hidden;
+        background: var(--line-soft);
+      }
+      .step {
+        background: var(--surface);
+        padding: 20px 22px 20px 66px;
+        position: relative;
+      }
+      .step::before {
+        counter-increment: st;
+        content: counter(st, decimal-leading-zero);
+        position: absolute;
+        left: 20px;
+        top: 20px;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: var(--signal);
+      }
+      .step h3 {
+        font-family: var(--font-display);
+        font-size: 1.16rem;
+        margin: 0 0 5px;
+      }
+      .step p {
+        margin: 0;
+        font-size: 0.93rem;
+        color: var(--ink-soft);
+      }
+      .step p + p {
+        margin-top: 8px;
+      }
+      .step .say {
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        color: var(--ink);
+        background: var(--blue-wash);
+        border: 1px solid var(--line-soft);
+        border-radius: 7px;
+        padding: 8px 12px;
+        margin-top: 12px;
+        display: block;
+      }
+      .step .say .who {
+        color: var(--signal);
+        font-weight: 600;
+      }
+
+      .figwrap {
+        margin-top: 8px;
+      }
+      .figcap {
+        font-family: var(--font-mono);
+        font-size: 0.74rem;
+        color: var(--ink-faint);
+        margin-top: 12px;
+        text-align: center;
+        letter-spacing: 0.02em;
+      }
+      .win {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        overflow: hidden;
+        background: var(--surface-2);
+        box-shadow: var(--shadow-lg);
+      }
+      .win-bar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 9px 13px;
+        background: var(--surface);
+        border-bottom: 1px solid var(--line);
+      }
+      .win-dots {
+        display: flex;
+        gap: 6px;
+      }
+      .win-dots i {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--line);
+        display: block;
+      }
+      .win-url {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        color: var(--ink-soft);
+        background: var(--paper-2);
+        border-radius: 6px;
+        padding: 4px 10px;
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .win-btn {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        padding: 4px 9px;
+        border-radius: 6px;
+        border: 1px solid var(--line);
+        color: var(--ink-soft);
+        white-space: nowrap;
+      }
+      .win-btn.exp {
+        color: #fff;
+        background: var(--signal-solid);
+        border-color: var(--signal-solid);
+      }
+      .win-btn.mcp {
+        color: #fff;
+        background: var(--agent-solid);
+        border-color: var(--agent-solid);
+      }
+      .win-nav {
+        display: flex;
+        gap: 3px;
+        padding: 7px 13px;
+        border-bottom: 1px solid var(--line);
+        background: var(--surface);
+        overflow-x: auto;
+      }
+      .win-nav span {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        color: var(--ink-faint);
+        padding: 3px 9px;
+        border-radius: 5px;
+        white-space: nowrap;
+      }
+      .win-nav span.on {
+        color: var(--ink);
+        background: var(--blue-wash);
+      }
+      .win-nav .gear {
+        margin-left: auto;
+        color: var(--ink-faint);
+      }
+
+      .win-body {
+        display: grid;
+        min-height: 260px;
+      }
+      .win-body.two {
+        grid-template-columns: 40% 60%;
+      }
+      .win-body.three {
+        grid-template-columns: 30% 30% 40%;
+      }
+      @media (max-width: 600px) {
+        .win-body.two,
+        .win-body.three {
+          grid-template-columns: 1fr;
+        }
+        .win-body .pane {
+          border-right: 0 !important;
+          border-bottom: 1px solid var(--line);
+        }
+      }
+      .pane {
+        padding: 15px;
+        border-right: 1px solid var(--line);
+        position: relative;
+      }
+      .pane:last-child {
+        border-right: 0;
+      }
+      .pane-label {
+        position: absolute;
+        top: 8px;
+        right: 10px;
+        font-family: var(--font-mono);
+        font-size: 0.6rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        opacity: 0.8;
+      }
+      .pane.chat {
+        background: var(--surface);
+      }
+      .bub {
+        border-radius: 9px;
+        padding: 8px 11px;
+        margin-bottom: 9px;
+        font-size: 0.76rem;
+        line-height: 1.4;
+        max-width: 92%;
+      }
+      .bub.me {
+        background: var(--blue-solid);
+        color: #fff;
+        margin-left: auto;
+      }
+      .bub.ai {
+        background: var(--paper-2);
+        color: var(--ink-soft);
+        border: 1px solid var(--line-soft);
+      }
+      .bub.tool {
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        color: var(--good);
+        background: transparent;
+        border: 0;
+        padding: 2px 0;
+      }
+      .bub.mcp {
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        color: var(--agent);
+        background: transparent;
+        border: 0;
+        padding: 2px 0;
+      }
+      .promptbox {
+        margin-top: 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface-2);
+        padding: 8px 10px;
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        color: var(--ink-faint);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+      }
+      .promptbox .send {
+        color: #fff;
+        background: var(--blue-solid);
+        border-radius: 5px;
+        padding: 3px 8px;
+        font-size: 0.64rem;
+      }
+
+      .canvas {
+        background: var(--paper);
+        background-image:
+          linear-gradient(var(--grid) 1px, transparent 1px),
+          linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+        background-size: 16px 16px;
+        display: grid;
+        place-items: center;
+      }
+      .mini {
+        width: 82%;
+        max-width: 260px;
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        position: relative;
+      }
+      .mini .mtop {
+        height: 26px;
+        background: var(--blue);
+        display: flex;
+        align-items: center;
+        padding: 0 8px;
+        gap: 5px;
+      }
+      .mini .mtop i {
+        width: 24px;
+        height: 5px;
+        border-radius: 3px;
+        background: rgba(255, 255, 255, 0.55);
+        display: block;
+      }
+      .mini .mtop i.sm {
+        width: 12px;
+        margin-left: auto;
+      }
+      .mini .mbody {
+        padding: 10px;
+        display: grid;
+        gap: 7px;
+      }
+      .mini .line {
+        height: 6px;
+        border-radius: 3px;
+        background: var(--line);
+      }
+      .mini .line.w1 {
+        width: 70%;
+      }
+      .mini .line.w2 {
+        width: 45%;
+        background: var(--signal);
+        opacity: 0.8;
+      }
+      .mini .cards {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 6px;
+        margin-top: 4px;
+      }
+      .mini .cards i {
+        height: 30px;
+        border-radius: 5px;
+        background: var(--blue-wash);
+        border: 1px solid var(--line-soft);
+        display: block;
+      }
+      .mini .btn {
+        height: 16px;
+        width: 60px;
+        border-radius: 5px;
+        background: var(--signal);
+        margin-top: 2px;
+      }
+      .mini .pin {
+        position: absolute;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: var(--signal-solid);
+        color: #fff;
+        font-family: var(--font-mono);
+        font-size: 0.58rem;
+        display: grid;
+        place-items: center;
+        top: 40px;
+        right: 14px;
+        box-shadow: 0 0 0 3px var(--signal-wash);
+      }
+      .sliders {
+        position: absolute;
+        bottom: 10px;
+        left: 12px;
+        right: 12px;
+        display: grid;
+        gap: 5px;
+      }
+      .sliders .sl {
+        height: 4px;
+        border-radius: 3px;
+        background: var(--line);
+        position: relative;
+      }
+      .sliders .sl::after {
+        content: '';
+        position: absolute;
+        top: -3px;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--blue);
+        border: 2px solid var(--surface-2);
+      }
+      .sliders .sl.a::after {
+        left: 30%;
+      }
+      .sliders .sl.b::after {
+        left: 62%;
+      }
+
+      .tree {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        color: var(--ink-soft);
+        line-height: 1.9;
+      }
+      .tree .f {
+        color: var(--ink);
+      }
+      .tree .on {
+        color: var(--signal);
+      }
+      .tree .mut {
+        color: var(--ink-faint);
+      }
+      .verpill {
+        display: inline-block;
+        font-size: 0.58rem;
+        padding: 1px 5px;
+        border-radius: 4px;
+        background: var(--blue-wash);
+        color: var(--blue);
+        margin-left: 6px;
+      }
+
+      .preview {
+        background: var(--paper);
+        background-image:
+          linear-gradient(var(--grid) 1px, transparent 1px),
+          linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+        background-size: 14px 14px;
+        display: grid;
+        place-items: center;
+        position: relative;
+      }
+      .exp-fab {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        color: #fff;
+        background: var(--agent-solid);
+        padding: 4px 9px;
+        border-radius: 6px;
+      }
+
+      .tablewrap {
+        overflow-x: auto;
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        box-shadow: var(--shadow);
+      }
+      table.cmp {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 760px;
+        background: var(--surface);
+        font-size: 0.9rem;
+      }
+      table.cmp th,
+      table.cmp td {
+        text-align: left;
+        padding: 14px 16px;
+        border-bottom: 1px solid var(--line-soft);
+        vertical-align: top;
+      }
+      table.cmp thead th {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        background: var(--paper-2);
+        position: sticky;
+        top: 0;
+      }
+      table.cmp tbody th {
+        font-family: var(--font-body);
+        font-weight: 600;
+        color: var(--ink);
+        font-size: 0.9rem;
+        width: 20%;
+      }
+      table.cmp td {
+        color: var(--ink-soft);
+      }
+      table.cmp tr:last-child td,
+      table.cmp tr:last-child th {
+        border-bottom: 0;
+      }
+      .badge {
+        font-family: var(--font-mono);
+        font-size: 0.64rem;
+        padding: 2px 7px;
+        border-radius: 5px;
+        letter-spacing: 0.03em;
+        white-space: nowrap;
+      }
+      .badge.free {
+        color: var(--good);
+        background: color-mix(in srgb, var(--good) 14%, transparent);
+      }
+      .badge.paid {
+        color: var(--warn);
+        background: color-mix(in srgb, var(--warn) 16%, transparent);
+      }
+      .badge.local {
+        color: var(--blue);
+        background: var(--blue-wash);
+      }
+      .badge.mcp {
+        color: var(--agent);
+        background: var(--agent-wash);
+      }
+
+      .code {
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.7;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+        padding: 16px 18px;
+        overflow-x: auto;
+        color: var(--ink);
+      }
+      .code .c {
+        color: var(--ink-faint);
+      }
+      .code .k {
+        color: var(--signal);
+      }
+      .code .s {
+        color: var(--blue);
+      }
+
+      .alts {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 18px;
+        margin-top: 8px;
+      }
+      @media (max-width: 720px) {
+        .alts {
+          grid-template-columns: 1fr;
+        }
+      }
+      .alt {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface);
+        padding: 22px 22px;
+        box-shadow: var(--shadow);
+      }
+      .alt h3 {
+        font-size: 1.18rem;
+        margin: 0 0 4px;
+        display: flex;
+        align-items: center;
+        gap: 0.5em;
+      }
+      .alt .kk {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        color: var(--signal);
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      .alt p {
+        font-size: 0.9rem;
+        color: var(--ink-soft);
+        margin: 8px 0 0;
+      }
+
+      .check {
+        display: grid;
+        gap: 10px;
+        margin-top: 8px;
+      }
+      .check .it {
+        display: flex;
+        gap: 14px;
+        align-items: flex-start;
+        padding: 15px 18px;
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+        background: var(--surface);
+      }
+      .check .bx {
+        flex: none;
+        width: 22px;
+        height: 22px;
+        border-radius: 6px;
+        border: 2px solid var(--blue);
+        position: relative;
+        margin-top: 1px;
+      }
+      .check .bx::after {
+        content: '';
+        position: absolute;
+        left: 6px;
+        top: 2px;
+        width: 6px;
+        height: 11px;
+        border: solid var(--signal);
+        border-width: 0 2.5px 2.5px 0;
+        transform: rotate(42deg);
+      }
+      .check .it b {
+        color: var(--ink);
+      }
+      .check .it span {
+        color: var(--ink-soft);
+        font-size: 0.92rem;
+      }
+      .check .it .mono {
+        color: var(--blue);
+        font-size: 0.84rem;
+      }
+
+      .facts {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+        margin-top: 8px;
+      }
+      @media (max-width: 700px) {
+        .facts {
+          grid-template-columns: 1fr;
+        }
+      }
+      .fact {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface);
+        padding: 20px 22px;
+      }
+      .fact .big {
+        font-family: var(--font-display);
+        font-size: 2rem;
+        color: var(--blue);
+        font-variant-numeric: tabular-nums;
+      }
+      .fact .lbl {
+        font-size: 0.88rem;
+        color: var(--ink-soft);
+        margin-top: 4px;
+      }
+
+      .gotchas {
+        display: grid;
+        gap: 10px;
+        margin-top: 8px;
+      }
+      .gotchas .g {
+        border: 1px solid var(--line);
+        border-left: 3px solid var(--agent);
+        background: var(--surface);
+        border-radius: var(--r-sm);
+        padding: 14px 18px;
+      }
+      .gotchas .g b {
+        color: var(--agent);
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        letter-spacing: 0.02em;
+        display: block;
+        margin-bottom: 4px;
+      }
+      .gotchas .g span {
+        color: var(--ink-soft);
+        font-size: 0.89rem;
+      }
+
+      footer {
+        padding: 60px 0 80px;
+        border-top: 1px solid var(--line-soft);
+      }
+      footer .prose {
+        color: var(--ink-soft);
+        font-size: 0.95rem;
+      }
+      footer .sig {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        color: var(--ink-faint);
+        letter-spacing: 0.04em;
+        margin-top: 26px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px 14px;
+      }
+
+      .lead-in {
+        font-size: 1.14rem;
+        color: var(--ink);
+        line-height: 1.6;
+      }
+      .lead-in b {
+        color: var(--blue);
+      }
+
+      /* ============================================================
+     Deck-local: shell compartido con project-bootstrap y product-management.
+     ============================================================ */
+      .pipe.five {
+        grid-template-columns: repeat(5, 1fr);
+      }
+      .pipe .node:nth-child(5) {
+        animation-delay: 0.9s;
+      }
+      @media (max-width: 960px) {
+        .pipe.five {
+          grid-template-columns: 1fr 1fr;
+        }
+        .pipe.five .node .arw {
+          display: none;
+        }
+      }
+      @media (max-width: 460px) {
+        .pipe.five {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .lanes {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 18px;
+      }
+      @media (max-width: 860px) {
+        .lanes {
+          grid-template-columns: 1fr;
+        }
+      }
+      .lane {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+      }
+      .lane-head {
+        padding: 12px 18px;
+        border-bottom: 1px solid var(--line);
+        background: var(--paper-2);
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+      }
+      .wf {
+        display: flex;
+        gap: 14px;
+        align-items: flex-start;
+        padding: 14px 18px;
+        border-bottom: 1px solid var(--line-soft);
+        text-decoration: none;
+        color: inherit;
+      }
+      .wf:last-child {
+        border-bottom: 0;
+      }
+      .wf:hover {
+        background: var(--blue-wash);
+      }
+      .wf .lt {
+        flex: none;
+        width: 30px;
+        height: 30px;
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+        font-family: var(--font-mono);
+        font-weight: 700;
+        font-size: 0.9rem;
+        color: #fff;
+        background: var(--blue-solid);
+      }
+      .wf .lt.sig {
+        background: var(--signal-solid);
+      }
+      .wf .lt.agent {
+        background: var(--agent-solid);
+      }
+      .wf b {
+        display: block;
+        color: var(--ink);
+        font-size: 0.97rem;
+      }
+      .wf span {
+        display: block;
+        color: var(--ink-soft);
+        font-size: 0.86rem;
+        line-height: 1.45;
+        margin-top: 2px;
+      }
+
+      .trio {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+        margin-top: 22px;
+      }
+      @media (max-width: 820px) {
+        .trio {
+          grid-template-columns: 1fr;
+        }
+      }
+      .trio > div {
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+        background: var(--surface);
+        padding: 16px 18px;
+        border-top: 3px solid var(--agent);
+      }
+      .trio > div.hum {
+        border-top-color: var(--signal);
+      }
+      .trio > div.out {
+        border-top-color: var(--blue);
+      }
+      .trio .k {
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        display: block;
+        margin-bottom: 6px;
+      }
+      .trio p {
+        margin: 0;
+        font-size: 0.9rem;
+        color: var(--ink-soft);
+      }
+      .trio p + p {
+        margin-top: 8px;
+      }
+      .trio b {
+        color: var(--ink);
+      }
+
+      .gate {
+        margin-top: 14px;
+        font-size: 0.9rem;
+        color: var(--ink);
+        border: 1px dashed var(--blue);
+        border-radius: var(--r-sm);
+        padding: 12px 16px;
+        background: var(--surface);
+      }
+      .gate b {
+        color: var(--blue);
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        margin-right: 0.6em;
+      }
+
+      .levels {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+      }
+      @media (max-width: 860px) {
+        .levels {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .title-demo {
+        font-family: var(--font-mono);
+        font-size: clamp(0.82rem, 2.4vw, 1.05rem);
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+        padding: 14px 16px;
+        overflow-wrap: anywhere;
+      }
+      .title-demo .f {
+        color: var(--blue);
+        font-weight: 600;
+      }
+      .title-demo .p {
+        color: var(--signal);
+        font-weight: 700;
+      }
+      .title-demo .a {
+        color: var(--ink);
+      }
+      .title-demo.bad {
+        text-decoration: line-through;
+        text-decoration-color: var(--signal);
+        color: var(--ink-faint);
+      }
+
+      .code.gk {
+        white-space: pre;
+      }
+      .code .g {
+        color: var(--agent);
+        font-weight: 600;
+      }
+
+      .sprints {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        margin-top: 8px;
+      }
+      @media (max-width: 700px) {
+        .sprints {
+          grid-template-columns: 1fr;
+        }
+      }
+      .sprint {
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+        background: var(--surface);
+        padding: 14px 16px;
+      }
+      .sprint .n {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--signal);
+      }
+      .sprint .ks {
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        color: var(--ink);
+        margin-top: 6px;
+      }
+      .sprint p {
+        margin: 6px 0 0;
+        font-size: 0.85rem;
+        color: var(--ink-soft);
+      }
+
+      .hosts {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 14px;
+      }
+      @media (max-width: 820px) {
+        .hosts {
+          grid-template-columns: 1fr;
+        }
+      }
+      .host {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface);
+        padding: 18px 20px;
+        box-shadow: var(--shadow);
+      }
+      .host h3 {
+        font-size: 1.12rem;
+        margin: 0 0 10px;
+      }
+      .host .say {
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        background: var(--blue-wash);
+        border: 1px solid var(--line-soft);
+        border-radius: 7px;
+        padding: 8px 12px;
+        display: block;
+        overflow-wrap: anywhere;
+      }
+      .host p {
+        font-size: 0.86rem;
+        color: var(--ink-soft);
+        margin: 10px 0 0;
+      }
+      .planes > *,
+      .lanes > *,
+      .levels > *,
+      .hosts > * {
+        min-width: 0;
+      }
+      .plane .mono,
+      .callout .mono {
+        overflow-wrap: anywhere;
+      }
+      table.cmp.narrow {
+        min-width: 0;
+      }
+      .steps,
+      .step {
+        min-width: 0;
+      }
+      .step .mono,
+      .check .mono,
+      .alt .mono,
+      .g .mono {
+        overflow-wrap: anywhere;
+      }
+      table.cmp.sections tbody th {
+        width: 3em;
+      }
+      /* deck-local: inline identifiers inside a .wf step description */
+      .wf span.mono {
+        display: inline;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="topbar">
+      <a class="brand" href="../../index.html"
+        ><span class="mark"></span> <b>Blueprints</b> · agentic-dev-boilerplate</a
+      >
+      <nav class="topnav">
+        <a href="#por-que">Why</a>
+        <a href="#mapas">Maps</a>
+        <a href="#anatomia">Anatomy</a>
+        <a href="#leer">Read</a>
+        <a href="#generar">Generate</a>
+        <a href="#frescura">Freshness</a>
+        <a href="#corregir">Fix</a>
+        <a href="#propia">Yours</a>
+        <a href="#invocar">Invoke</a>
+      </nav>
+      <button class="themebtn" id="themebtn" aria-label="Cambiar tema">
+        <span id="themeicon">◐</span> theme
+      </button>
+    </div>
+
+    <!-- ============ HERO ============ -->
+    <header class="hero">
+      <div class="wrap">
+        <div class="kicker eyebrow"><span class="num">00</span> · context skills</div>
+        <h1>The business map <em>arrives on its own</em>, you don't <span class="sig">hunt</span> for it.</h1>
+        <p class="lede">
+          Which entities the product has, what each role can do from each screen, what each route
+          changes: no script pulls that from a source. An AI writes it by reading the code, the
+          schema and the API contract. That is why each business map lives
+          <b>inside a context skill</b>, as an HTML file a human opens in the browser and the AI
+          reads by section with <span class="mono">bun run context:map</span>. This deck
+          explains what a map is, how it is read and how it is kept honest.
+        </p>
+
+        <div class="hero-meta">
+          <span class="chip"
+            ><span class="dot"></span> for whoever <b>develops</b> and whoever <b>maintains</b></span
+          >
+          <span class="chip"><span class="dot"></span> knowledge, not a <b>workflow</b></span>
+          <span class="chip agent"
+            ><span class="dot"></span> writes only in its own <b>references/</b></span
+          >
+        </div>
+
+        <div class="pipe five" id="pipe">
+          <div class="node">
+            <div class="n">Generate</div>
+            <h3>A project-context mode</h3>
+            <p>
+              <span class="mono">data</span>, <span class="mono">features</span> or
+              <span class="mono">api</span> read the sources and write the map.
+            </p>
+            <div class="arw">→</div>
+          </div>
+          <div class="node">
+            <div class="n">Store</div>
+            <h3>An HTML file in the skill</h3>
+            <p><span class="mono">references/&lt;map&gt;.html</span>, one section per fact.</p>
+            <div class="arw">→</div>
+          </div>
+          <div class="node">
+            <div class="n">Read</div>
+            <h3>The reader</h3>
+            <p>
+              <span class="mono">bun run context:map</span> strips the SVG and leaves the text, by
+              section.
+            </p>
+            <div class="arw">→</div>
+          </div>
+          <div class="node">
+            <div class="n">Use</div>
+            <h3>The AI, or you</h3>
+            <p>
+              A briefing injects the command; a human uses
+              <span class="mono">--open</span> and sees it in the browser.
+            </p>
+            <div class="arw">→</div>
+          </div>
+          <div class="node">
+            <div class="n">Fix</div>
+            <h3>One section at a time</h3>
+            <p>Whatever contradicts the map is proposed with evidence and applied with your yes.</p>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- ============ §01 POR QUÉ ============ -->
+    <section class="band" id="por-que">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">01</span> · why a map is a skill</div>
+          <h2>A synthesis is not a cache</h2>
+          <p class="sub">
+            <span class="mono">.context/</span> holds what a SCRIPT pulls from a source of truth
+            and what this repo itself is the source of truth for. A business map is neither of the
+            two: two sessions would write it differently and redoing it costs thousands of tokens.
+            It is written knowledge, and knowledge that has to arrive without anyone asking for it
+            is a skill.
+          </p>
+        </div>
+
+        <div class="tablewrap r">
+          <table class="cmp">
+            <thead>
+              <tr>
+                <th>The question, for each piece of knowledge</th>
+                <th>If the answer is yes, it goes to</th>
+                <th>It is recovered with</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Does a script pull it from an external source? (Jira, the OpenAPI spec, the schema)</td>
+                <td><span class="mono">.context/</span> as a <span class="mono">[SYNC]</span> cache, or generated types</td>
+                <td>
+                  <span class="mono">bun run context:hydrate</span>,
+                  <span class="mono">bun run api:sync</span>
+                </td>
+              </tr>
+              <tr>
+                <td>Is this repo the source of truth? (ADR, PRD, SRS, glossary, design plan)</td>
+                <td><span class="mono">.context/</span> as <span class="mono">[COMMIT]</span></td>
+                <td><span class="mono">git checkout</span></td>
+              </tr>
+              <tr>
+                <th>If not: the AI synthesizes it from the code, the database and the contracts</th>
+                <th>A context skill: the generated map inside, the judgment in its rules</th>
+                <th>Regenerating is expensive: it is fixed by section</th>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="planes r" style="margin-top: 22px">
+          <div class="plane">
+            <div class="tag">Fact</div>
+            <h3>Goes to the map</h3>
+            <ul>
+              <li>
+                Two competent sessions would write it the same way: an entity, a route, a CRUD
+                action. It is never copied into <span class="mono">SKILL.md</span>.
+              </li>
+            </ul>
+          </div>
+          <div class="plane sig">
+            <div class="tag">Judgment</div>
+            <h3>Goes to the skill's rules</h3>
+            <ul>
+              <li>
+                Two sessions would write it differently: "profiles use soft delete; a count
+                without <span class="mono">deleted_at IS NULL</span> is wrong". It goes to
+                <span class="mono">## Rules</span> or to <span class="mono">references/gotchas.md</span>,
+                with a date and how it was measured.
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="callout blue r">
+          <b>One file, no twin.</b> The human and the AI read the same HTML. There is no copy in
+          markdown and none under <span class="mono">docs/</span>: the twin is always the one that
+          goes stale. For the other side, the Jira cache, see the deck
+          <a href="../agentic-dev-core/pbi-jira-cache.en.html">the PBI cache</a>.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §02 MAPAS ============ -->
+    <section class="band" id="mapas">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">02</span> · the maps the boilerplate ships</div>
+          <h2>One aspect per skill, one generator per map</h2>
+          <p class="sub">
+            The single list of skills with a map is <span class="mono">CONTEXT_MAP_SKILLS</span> in
+            <span class="mono">cli/lib/context-maps.ts</span>: each entry names its map, its
+            generator and the old markdown it replaces. The table below is what the
+            boilerplate ships; to know what is in your repo, read that constant.
+          </p>
+        </div>
+
+        <div class="tablewrap r">
+          <table class="cmp">
+            <thead>
+              <tr>
+                <th>Skill</th>
+                <th>What it knows</th>
+                <th>Generator</th>
+                <th>Wins on a conflict</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="mono">business-data-context</span></td>
+                <td>
+                  Entities and relations, RLS, migrations, state machines, automated processes,
+                  integrations
+                </td>
+                <td><span class="mono">project-context</span> mode <span class="mono">data</span></td>
+                <td>The live Supabase database (capability <span class="mono">db</span>)</td>
+              </tr>
+              <tr>
+                <td><span class="mono">business-feature-context</span></td>
+                <td>Feature catalog, CRUD matrix, UI inventory, flows between features</td>
+                <td>
+                  <span class="mono">project-context</span> mode
+                  <span class="mono">features</span>
+                </td>
+                <td>The frontend tree; the running app, for behavior</td>
+              </tr>
+              <tr>
+                <td><span class="mono">business-api-context</span></td>
+                <td>Auth model, route groups, OpenAPI surface, journeys across routes</td>
+                <td><span class="mono">project-context</span> mode <span class="mono">api</span></td>
+                <td>The spec for the shape; the handlers and the running API, for behavior</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="gotchas r">
+          <div class="g">
+            <b>They load by their description</b
+            ><span
+              >A task that writes a migration brings the data map; one that touches a handler, the
+              API map; one that touches a screen, the features map. Nobody has to say "map".</span
+            >
+          </div>
+          <div class="g">
+            <b>There is no domain map or infrastructure map</b
+            ><span
+              >The vocabulary lives in <span class="mono">.context/business/domain-glossary.md</span>,
+              written by hand. PRD and SRS stay under <span class="mono">.context/</span>.</span
+            >
+          </div>
+          <div class="g">
+            <b>Each one cites the others</b
+            ><span
+              >The features map names the data and the routes behind each feature, and does not
+              repeat them: it cites their skill.</span
+            >
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §03 ANATOMÍA ============ -->
+    <section class="band" id="anatomia">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">03</span> · anatomy of a map</div>
+          <h2>The contract the generator writes and the reader parses</h2>
+          <p class="sub">
+            A self-contained HTML file that opens from <span class="mono">file://</span>, with flat
+            sections. Each section's <span class="mono">id</span> is the editing anchor: it is set
+            at CREATE and never changes again.
+          </p>
+        </div>
+
+        <pre class="code r"><span class="c">&lt;!-- line 1 of a generated map --&gt;</span>
+&lt;!-- generated by <span class="s">project-context mode data</span>; edited in place by <span class="s">business-data-context</span> refresh; do not hand-edit --&gt;
+<span class="c">&lt;!-- or, if it has not been generated yet --&gt;</span>
+&lt;!-- placeholder: run <span class="s">project-context mode data</span> to generate this map --&gt;
+
+<span class="k">&lt;section</span> id="<span class="s">orders-lifecycle</span>"
+         data-sources="<span class="s">src/app/api/orders/, db:orders, migration:&lt;file&gt;</span>"
+         data-updated="<span class="s">YYYY-MM-DD</span>"<span class="k">&gt;</span>
+  &lt;h2&gt;...&lt;/h2&gt;  &lt;p&gt; &lt;ul&gt; &lt;table&gt; &lt;code&gt;  <span class="c">&lt;!-- plain semantic HTML --&gt;</span>
+  &lt;figure data-diagram="<span class="s">state</span>" data-for="<span class="s">orders-lifecycle</span>"&gt;&lt;svg&gt;…&lt;/svg&gt;&lt;figcaption&gt;…&lt;/figcaption&gt;&lt;/figure&gt;
+<span class="k">&lt;/section&gt;</span>
+...
+<span class="k">&lt;section</span> id="<span class="s">discovery-gaps</span>"<span class="k">&gt;</span>  <span class="c">&lt;!-- always the last one --&gt;</span></pre>
+
+        <div class="steps r">
+          <div class="step">
+            <h3>Line 1 decides everything</h3>
+            <p>
+              The reader, the updater and the doctor read ONLY that line to know whether the map is
+              generated or a placeholder. The generator it names comes verbatim from the
+              <span class="mono">CONTEXT_MAP_SKILLS</span> entry.
+            </p>
+          </div>
+          <div class="step">
+            <h3>One section per unit of fact</h3>
+            <p>
+              An entity, a flow, a feature, a route group. Never nested, each one opens
+              with its <span class="mono">&lt;h2&gt;</span>.
+              <span class="mono">data-sources</span> lists the signals it came from (the freshness
+              check reads them); <span class="mono">data-updated</span>, the date.
+            </p>
+          </div>
+          <div class="step">
+            <h3>No fact lives only in a figure</h3>
+            <p>
+              Everything a diagram shows is also in the text. One summary figure at the top,
+              and one per section only where a drawing explains the mechanism.
+            </p>
+          </div>
+          <div class="step">
+            <h3><span class="mono">discovery-gaps</span>, at the end</h3>
+            <p>
+              What could not be verified. "I could not verify X" beats an invented answer.
+              A section migrated from an old markdown map carries
+              <span class="mono">data-migrated-from</span> once, until it is regenerated.
+            </p>
+          </div>
+        </div>
+
+        <div class="callout r">
+          <b>A generated map may have counts.</b> Tables per schema, routes per group: it is a
+          generated artifact and is exempt from Critical Rule #17, like any generated
+          file.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §04 LEER ============ -->
+    <section class="band" id="leer">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">04</span> · how it is read</div>
+          <h2>The AI never reads the raw HTML</h2>
+          <p class="sub">
+            The inline SVG is nearly all of a map's weight and none of its facts. The reader,
+            <span class="mono">scripts/context-map.ts</span>, strips the SVG, the
+            <span class="mono">&lt;style&gt;</span> and the <span class="mono">&lt;head&gt;</span>, and
+            prints each section as text with its id, its date and its sources.
+          </p>
+        </div>
+
+        <div class="tablewrap r">
+          <table class="cmp">
+            <thead>
+              <tr>
+                <th>You need</th>
+                <th>Command</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>The whole map, as text</td>
+                <td><span class="mono">bun run context:map &lt;slug&gt;</span></td>
+              </tr>
+              <tr>
+                <td>One section (a dispatch that touches an entity or a route group)</td>
+                <td><span class="mono">bun run context:map &lt;slug&gt; --section &lt;id&gt;</span></td>
+              </tr>
+              <tr>
+                <td>The index, for a freshness check (id · date · sources)</td>
+                <td><span class="mono">bun run context:map &lt;slug&gt; --list</span></td>
+              </tr>
+              <tr>
+                <td>The map drawn, for a human</td>
+                <td><span class="mono">bun run context:map &lt;slug&gt; --open</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="planes r" style="margin-top: 22px">
+          <div class="plane">
+            <div class="tag">In a briefing</div>
+            <h3>The command is injected, not the path</h3>
+            <ul>
+              <li>
+                The Skill Resolver (rule 5 of <span class="mono">skill-resolver.md</span>) injects
+                only the context skills whose ASPECT the dispatch touches, as
+                <span class="mono">bun run context:map &lt;slug&gt; --section &lt;id&gt;</span> for
+                the sections it touches. Never all of them: a subagent that touches one aspect pays for one.
+              </li>
+              <li>A dispatch that names no aspect receives none. When in doubt, name it in the Goal.</li>
+            </ul>
+          </div>
+          <div class="plane sig">
+            <div class="tag">Placeholder</div>
+            <h3>It means "there is no map", not an empty system</h3>
+            <ul>
+              <li>
+                The reader warns on stderr which generator to run and exits with
+                <span class="mono">0</span>. A migration is never planned as if the schema
+                were empty: the human is handed the mode that generates it.
+              </li>
+              <li>
+                It exits with <span class="mono">1</span> on an unknown skill, a missing map or
+                a section id that does not exist, and in that case it lists the known ids.
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="callout blue r">
+          <b>Cite with a date.</b> A map fact is cited with its section id and its
+          <span class="mono">data-updated</span>. A section older than the migration it describes
+          is a hypothesis to check against the database, not an answer.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §05 GENERAR ============ -->
+    <section class="band" id="generar">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">05</span> · create and update</div>
+          <h2>No path regenerates a whole map</h2>
+          <p class="sub">
+            Generating is the job of <span class="mono">project-context</span>: its modes, its gates and
+            the order of <span class="mono">refresh-all</span> are explained in
+            <a href="../project-context/how-it-works.en.html">its own deck</a>. Here is what
+            happens to the map. The section id is what makes the saving mechanical: one edit
+            on one <span class="mono">&lt;section&gt;</span> block.
+          </p>
+        </div>
+
+        <div class="tablewrap r">
+          <table class="cmp">
+            <thead>
+              <tr>
+                <th>Map state</th>
+                <th>What runs</th>
+                <th>What it writes</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Missing or placeholder</td>
+                <td>
+                  The mode's CREATE: all sections from the sources. If the old markdown it replaces
+                  exists (the <span class="mono">legacy</span> list of its entry), it is read as
+                  input and cited in <span class="mono">data-migrated-from</span>
+                </td>
+                <td>The whole file, once</td>
+              </tr>
+              <tr>
+                <td>Generated</td>
+                <td>
+                  The mode's UPDATE: freshness check, regenerates ONLY the stale sections, shows
+                  a diff per section and WAITS for your approval
+                </td>
+                <td>The approved sections</td>
+              </tr>
+              <tr>
+                <td>The facts of a section with a figure changed</td>
+                <td>That figure is redrawn</td>
+                <td>Un <span class="mono">&lt;figure&gt;</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="trio r">
+          <div>
+            <span class="k">The AI does</span>
+            <p>Reads every source the mode asks for. What it could not verify goes to <span class="mono">discovery-gaps</span>, not to the body.</p>
+            <p>
+              After writing a map, it reviews that skill's <span class="mono">## Rules</span> and
+              gotchas against the new map and PROPOSES changes.
+            </p>
+          </div>
+          <div class="hum">
+            <span class="k">You decide</span>
+            <p>Which <b>mode</b> runs: if you don't name it, the AI asks.</p>
+            <p>Whether an UPDATE's diff is <b>applied</b>.</p>
+          </div>
+          <div class="out">
+            <span class="k">Output</span>
+            <p>
+              <span class="mono">references/&lt;map&gt;.html</span> inside its skill, and nothing else:
+              the mode writes only that file.
+            </p>
+            <p>The old markdown maps in <span class="mono">.context/business/</span> are never deleted.</p>
+          </div>
+        </div>
+        <div class="gate r">
+          <b>Gate</b> an existing map is not overwritten without your explicit approval of the per-section diff.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §06 FRESCURA ============ -->
+    <section class="band" id="frescura">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">06</span> · is it stale?</div>
+          <h2>Each section says where it came from, and that says when it expired</h2>
+          <p class="sub">
+            The check walks <span class="mono">--list</span> and compares each signal in
+            <span class="mono">data-sources</span> against its date. The generic signals are in the
+            doctrine; each skill adds those of its aspect in its own
+            <span class="mono">references/refresh.md</span>.
+          </p>
+        </div>
+
+        <div class="tablewrap r">
+          <table class="cmp">
+            <thead>
+              <tr>
+                <th>Signal</th>
+                <th>Stale when</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>A repo path</td>
+                <td>
+                  <span class="mono">git log --since=&lt;data-updated&gt; --oneline -- &lt;path&gt;</span>
+                  returns any commit
+                </td>
+              </tr>
+              <tr>
+                <td><span class="mono">db:&lt;table&gt;</span>, <span class="mono">migration:&lt;file&gt;</span></td>
+                <td>
+                  There is a later migration, or the database (capability <span class="mono">db</span>)
+                  shows a column, constraint, policy or trigger the section does not describe
+                </td>
+              </tr>
+              <tr>
+                <td><span class="mono">openapi:&lt;x&gt;</span></td>
+                <td>
+                  The contract changed since the date (output of
+                  <span class="mono">bun run api:sync</span>, or the <span class="mono">git log</span>
+                  of the spec)
+                </td>
+              </tr>
+              <tr>
+                <td><span class="mono">route:&lt;path&gt;</span></td>
+                <td>The handler or the page changed</td>
+              </tr>
+              <tr>
+                <td>The aspect's own signals</td>
+                <td>
+                  Declared by each skill's <span class="mono">refresh.md</span>: for example
+                  <span class="mono">cron:&lt;job&gt;</span> and
+                  <span class="mono">webhook:&lt;event&gt;</span> in data,
+                  <span class="mono">auth:&lt;scheme&gt;</span> in API, a flag or a role gate in
+                  features
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout r">
+          <b>No sources, no freshness.</b> A section that declares no sources is reported as
+          <span class="mono">unknown</span>, never silently as fresh.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §07 CORREGIR ============ -->
+    <section class="band" id="corregir">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">07</span> · the skill corrects itself</div>
+          <h2>It proposes with evidence, applies with your yes</h2>
+          <p class="sub">
+            A context skill runs no workflows. All it does is keep its map honest:
+            when a session sees something that contradicts a section (a column the map omits, a
+            status the map calls impossible, a CRUD action missing from the matrix), it proposes the
+            edit.
+          </p>
+        </div>
+
+        <div class="lanes r">
+          <div class="lane">
+            <div class="lane-head">The five steps</div>
+            <a class="wf" href="#corregir"
+              ><span class="lt">1</span
+              ><span
+                ><b>Locate</b
+                ><span
+                  ><span class="mono">--list</span>, then <span class="mono">--section &lt;id&gt;</span>
+                  of the section concerned.</span
+                ></span
+              ></a
+            >
+            <a class="wf" href="#corregir"
+              ><span class="lt">2</span
+              ><span
+                ><b>Evidence</b
+                ><span
+                  >Measured: a query, a request, a file in a commit, a session. Without evidence
+                  there is no proposal.</span
+                ></span
+              ></a
+            >
+            <a class="wf" href="#corregir"
+              ><span class="lt sig">3</span
+              ><span
+                ><b>Propose</b
+                ><span
+                  >To the session's owner: you in the main thread, or the conductor if it is a supervised
+                  worker. An unattended routine applies only if its brief names that map or section; otherwise
+                  it leaves it in its report, like a one-shot subagent.</span
+                ></span
+              ></a
+            >
+            <a class="wf" href="#corregir"
+              ><span class="lt">4</span
+              ><span
+                ><b>Apply, only with approval</b
+                ><span
+                  >Re-read the section (another session may have edited it), edit THAT block, update
+                  <span class="mono">data-updated</span> and the sources; the figure, only if its
+                  facts changed.</span
+                ></span
+              ></a
+            >
+            <a class="wf" href="#corregir"
+              ><span class="lt">5</span
+              ><span
+                ><b>Verify</b
+                ><span><span class="mono">--section &lt;id&gt;</span> prints the new text.</span></span
+              ></a
+            >
+          </div>
+          <div class="lane">
+            <div class="lane-head">Two paths, never mixed</div>
+            <a class="wf" href="#corregir"
+              ><span class="lt">A</span
+              ><span
+                ><b>A contradicted section</b
+                ><span
+                  >The context skill writes it, after your yes, with the five steps.</span
+                ></span
+              ></a
+            >
+            <a class="wf" href="#corregir"
+              ><span class="lt sig">B</span
+              ><span
+                ><b>Several stale sections, or something new</b
+                ><span
+                  >Done by the UPDATE of a <span class="mono">project-context</span> mode. The skill
+                  hands you that mode; it does not rebuild sections itself.</span
+                ></span
+              ></a
+            >
+            <a class="wf" href="#corregir"
+              ><span class="lt">=</span
+              ><span
+                ><b>Silence is not approval</b
+                ><span>Only a <span class="mono">yes</span> applies the edit.</span></span
+              ></a
+            >
+          </div>
+        </div>
+
+        <pre
+          class="code r"
+          style="margin-top: 26px"
+        ><span class="c"># the proposal, in a single message (references/refresh.md)</span>
+<span class="k">business-data-context</span> · proposed edit to section <span class="s">&lt;id&gt;</span> (updated <span class="s">&lt;date&gt;</span>)
+evidence: <span class="s">&lt;what was observed, how, where: query / request / file@commit / session label&gt;</span>
+before: <span class="s">&lt;the sentence or row as the map has it&gt;</span>
+after:  <span class="s">&lt;the replacement&gt;</span>
+figure: <span class="s">&lt;unchanged | redraw: why&gt;</span>
+apply? (yes / no)</pre>
+
+        <div class="gotchas r">
+          <div class="g">
+            <b>Verified before proposing</b
+            ><span
+              >Data, against the database; features, against the running app or the route file; API,
+              against the handler, the OpenAPI types or a real request.</span
+            >
+          </div>
+          <div class="g">
+            <b>An id is never renamed</b
+            ><span
+              >A renamed entity, feature or group is a new section, plus a line in
+              <span class="mono">discovery-gaps</span> during a refresh.</span
+            >
+          </div>
+          <div class="g">
+            <b>A judgment follows the same path</b
+            ><span
+              >A new rule for READING the map goes to <span class="mono">## Rules</span> or to the
+              gotchas, dated and measured, with the same approval.</span
+            >
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §08 ALCANCE ============ -->
+    <section class="band" id="alcance">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">08</span> · write scope</div>
+          <h2>It writes in its <span class="mono">references/</span> and nowhere else</h2>
+          <p class="sub">
+            The skill declares it in its frontmatter with
+            <span class="mono">metadata.writes: [references/]</span>, and a lint enforces it. No
+            Jira, no <span class="mono">.context/</span>, no other skill, no migrations
+            and no product code.
+          </p>
+        </div>
+
+        <div class="check r">
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Only a skill of kind <span class="mono">context</span> declares
+              <span class="mono">metadata.writes</span></b
+              >. On any other kind, the lint flags it as an error.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Every target is inside its own <span class="mono">references/</span></b
+              >. A target outside is an error.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>It ships <span class="mono">references/refresh.md</span></b>, the procedure that
+              runs its write path. Without it, an error.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>No tracker tag</b> in the body or in <span class="mono">refresh.md</span>:
+              it edits its map, never a tracker.</span
+            >
+          </div>
+        </div>
+
+        <div class="callout blue r">
+          <b>Who enforces it:</b> the <span class="mono">CONTEXT-WRITES</span> rule of
+          <span class="mono">scripts/lint-skills.ts</span>, which runs with
+          <span class="mono">bun run skills:check</span>. In the same lint,
+          <span class="mono">STALE-PATH</span> is strict inside a context skill: every
+          <span class="mono">.context/</span> path it cites has to exist (only the
+          <span class="mono">.context/PBI/</span> cache is exempt). It cites, never copies.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §09 DIAGRAMAS ============ -->
+    <section class="band" id="diagramas">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">09</span> · the figures</div>
+          <h2>The <span class="mono">diagrams</span> capability is a skill, not an MCP</h2>
+          <p class="sub">
+            The figures are drawn by the <span class="mono">diagram-design</span> skill, which
+            <span class="mono">cli/install.ts</span> installs at project level; a user install or
+            a harness plugin works too. It is the only capability resolved by the
+            presence of a skill and not by a tool suffix.
+          </p>
+        </div>
+
+        <div class="planes r">
+          <div class="plane">
+            <div class="tag">Before drawing</div>
+            <h3>Can <span class="mono">diagram-design</span> be loaded?</h3>
+            <ul>
+              <li>
+                If not: STOP at the point of use, naming the install line. Never a map with
+                a hand-drawn SVG or ASCII in its place.
+              </li>
+            </ul>
+          </div>
+          <div class="plane sig">
+            <div class="tag">The style</div>
+            <h3>It is diagram-design's business</h3>
+            <ul>
+              <li>
+                A <span class="mono">.diagram-design</span> marker at the root
+                (<span class="mono">profile: &lt;slug&gt;</span>) picks a saved profile if the
+                project wants one. Two machines may draw differently: what matters is in the
+                text.
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <pre class="code r"><span class="c"># the line the STOP names (mcp-capabilities.md)</span>
+bunx skills add https://github.com/cathrynlavery/diagram-design --skill diagram-design --yes</pre>
+      </div>
+    </section>
+
+    <!-- ============ §10 ENTREGA ============ -->
+    <section class="band" id="entrega">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">10</span> · delivery and owner</div>
+          <h2>Upstream delivers it once; after that it is yours</h2>
+          <p class="sub">
+            Every <span class="mono">&lt;aspect&gt;-context</span> skill is project-local: the
+            updater never delivers it, overwrites it or deletes it (<span class="mono"
+              >isProjectLocalSkillPath</span
+            >
+            in <span class="mono">cli/lib/updater-core.ts</span>). Those of
+            <span class="mono">CONTEXT_MAP_SKILLS</span> are the only exception, and only for
+            delivery.
+          </p>
+        </div>
+
+        <div class="steps r">
+          <div class="step">
+            <h3>It arrives as a placeholder</h3>
+            <p>
+              <span class="mono">bun sync</span> delivers the skill's folder when it is missing
+              (<span class="mono">collectContextMapBootstrap</span>), with a placeholder map
+              inside.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Never touched from upstream again</h3>
+            <p>
+              From there on, nothing in the updater overwrites or deletes what is inside: the map is the
+              synthesis of YOUR product, and so are its rules and gotchas.
+            </p>
+          </div>
+          <div class="step">
+            <h3>A placeholder is flagged, it does not block</h3>
+            <p>
+              A map that is missing or still a placeholder (with the old markdown next to it, if any)
+              shows up as an informational row in the final report of <span class="mono">bun sync</span>
+              (on the page and in the terminal), and
+              <span class="mono">bun run setup:doctor</span> prints the same line, with the generator
+              to run.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §11 PROPIA ============ -->
+    <section class="band" id="propia">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">11</span> · your own context skill</div>
+          <h2>For an aspect the maps do not cover</h2>
+          <p class="sub">
+            <span class="mono">billing</span>, <span class="mono">auth</span>,
+            <span class="mono">stripe</span>: the judgment layer over an aspect that a competent
+            session would misread. <span class="mono">project-context</span> mode
+            <span class="mono">context-skill</span> creates it, always through
+            <span class="mono">skill-creator</span>. The sources hold the facts; the skill, the
+            rules for reading them.
+          </p>
+        </div>
+
+        <div class="trio r">
+          <div>
+            <span class="k">The AI does</span>
+            <p>
+              Reads in full what the skill will cover and lists every place where it can be misread:
+              soft delete, RLS that hides rows from a role, states with different names in the database,
+              API and UI.
+            </p>
+            <p>Runs each candidate through the three questions of §01: only judgment stays as a rule.</p>
+          </div>
+          <div class="hum">
+            <span class="k">You decide</span>
+            <p>The <b>aspect</b> and what it rests on.</p>
+            <p>On UPDATE, whether the <b>diff</b> is applied: rules are added with a date, never rewritten.</p>
+          </div>
+          <div class="out">
+            <span class="k">Output</span>
+            <p>
+              <span class="mono">.agents/skills/&lt;aspect&gt;-context/</span> with
+              <span class="mono">metadata.kind: context</span>, plus
+              <span class="mono">references/gotchas.md</span>.
+            </p>
+            <p>The project's own, never sent upstream.</p>
+          </div>
+        </div>
+        <div class="gate r">
+          <b>Gate</b> <span class="mono">bun run skills:check</span> green and
+          <span class="mono">bun run skills:registry</span> with the new block in
+          <span class="mono">REGISTRY.md</span>; no sentence repeated from the map or the code.
+        </div>
+
+        <div class="gotchas r">
+          <div class="g">
+            <b>What it covers has to exist first</b
+            ><span
+              >A map, a module, a contract. A skill about nothing ends up being the source by
+              accident.</span
+            >
+          </div>
+          <div class="g">
+            <b>Data, features and API already have an owner</b
+            ><span
+              >A <span class="mono">data-context</span> request is answered by pointing to
+              <span class="mono">business-data-context</span>, never with a second source on the
+              same aspect.</span
+            >
+          </div>
+          <div class="g">
+            <b>No measurement, no rule</b
+            ><span
+              >Every rule carries a date and how it was measured. What was not measured goes to memory, not to the
+              skill.</span
+            >
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §12 INVOCAR ============ -->
+    <section class="band" id="invocar">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">12</span> · what you tell the AI</div>
+          <h2>Context skills have no modes: they are generated, read and loaded</h2>
+          <p class="sub">
+            Generating a map is a <span class="mono">project-context</span> mode. Reading it is a
+            repo command, the same on every host. Loading the skill happens on its own, by its
+            description, or by naming it.
+          </p>
+        </div>
+
+        <div class="hosts r">
+          <div class="host">
+            <h3>Claude Code</h3>
+            <span class="say">/project-context data</span>
+            <p>Generates or updates the data map. Same with <span class="mono">features</span> or <span class="mono">api</span>.</p>
+          </div>
+          <div class="host">
+            <h3>OpenCode</h3>
+            <span class="say">load the project-context skill, data mode</span>
+            <p>No slash: you name the skill and the mode in the sentence.</p>
+          </div>
+          <div class="host">
+            <h3>Codex</h3>
+            <span class="say">load the project-context skill, data mode</span>
+            <p>Same pattern as OpenCode, CLI or Desktop.</p>
+          </div>
+          <div class="host">
+            <h3>Pi</h3>
+            <span class="say">/skill:project-context data</span>
+            <p>Slash with the <span class="mono">/skill:</span> prefix. In a new folder, <span class="mono">/trust</span> once.</p>
+          </div>
+        </div>
+
+        <pre
+          class="code r"
+          style="margin-top: 26px"
+        ><span class="c"># read, on any host</span>
+bun run context:map <span class="s">business-data-context</span> --section <span class="s">&lt;id&gt;</span>
+bun run context:map <span class="s">business-feature-context</span> --list
+bun run context:map <span class="s">business-api-context</span> --open   <span class="c"># for you, in the browser</span>
+
+<span class="c"># your own context skill</span>
+/project-context context-skill <span class="s">billing</span>        <span class="c"># or: load the project-context skill, context-skill mode</span></pre>
+      </div>
+    </section>
+
+    <!-- ============ §13 HANDOFFS ============ -->
+    <section class="band" id="handoffs">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">13</span> · around the maps</div>
+          <h2>Who generates them and who reads them</h2>
+          <p class="sub">
+            The maps do not belong to a single workflow: one writes them and several consult them.
+          </p>
+        </div>
+
+        <div class="alts r">
+          <div class="alt">
+            <div class="kk">Generates them · modes and gates</div>
+            <h3><a href="../project-context/how-it-works.en.html">/project-context</a></h3>
+            <p>
+              Its modes <span class="mono">data</span>, <span class="mono">features</span> and
+              <span class="mono">api</span> write the maps; <span class="mono">master-plan</span>
+              requires the generated data map. Its gates and its order live in its
+              <span class="mono">SKILL.md</span>.
+            </p>
+          </div>
+          <div class="alt">
+            <div class="kk">Chains them · Discovery</div>
+            <h3><a href="../project-foundation/how-it-works.en.html">/project-foundation</a></h3>
+            <p>
+              Its Discovery phase runs the map modes and verifies the data map with
+              <span class="mono">bun run context:map</span> before the master plan.
+            </p>
+          </div>
+          <div class="alt">
+            <div class="kk">Reads them · per story</div>
+            <h3><a href="../sprint-development/how-it-works.en.html">/sprint-development</a></h3>
+            <p>
+              To assess the impact of a story that touches several domains. If a map is still a
+              placeholder, it goes on without it and notes that in the plan.
+            </p>
+          </div>
+          <div class="alt">
+            <div class="kk">Reads them · backlog</div>
+            <h3><a href="../product-management/how-it-works.en.html">/product-management</a></h3>
+            <p>
+              Its dependency pass uses the entity graph, the CRUD matrix and the route catalog
+              before creating or editing a story.
+            </p>
+          </div>
+        </div>
+
+        <div class="callout blue r">
+          <b>To read more:</b>
+          <a
+            href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/.agents/skills/agentic-dev-core/references/business-context-maps.md"
+            >agentic-dev-core/references/business-context-maps.md</a
+          >
+          (the whole doctrine), <span class="mono">skill-scaffold.md</span> §3 to §5 (the principle and
+          the own skill), the <span class="mono">SKILL.md</span> and the
+          <span class="mono">references/refresh.md</span> of each context skill, and
+          <span class="mono">cli/lib/context-maps.ts</span>.
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <div class="wrap">
+        <div class="prose">
+          <p>
+            <b style="color: var(--ink)">The idea underneath.</b> What an AI synthesizes by reading the
+            product is expensive to redo and comes out different every time. That is why it is stored only once,
+            inside the skill that brings it into the session, read by section and fixed one
+            section at a time, with evidence and with your yes.
+          </p>
+        </div>
+        <div class="sig">
+          <span
+            >Source: <span class="mono">.agents/skills/business-*-context/</span> ·
+            <span class="mono">cli/lib/context-maps.ts</span></span
+          >
+          <span>·</span>
+          <span><a href="../../index.html">← back to Blueprints</a></span>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      // theme toggle
+      (function () {
+        var root = document.documentElement;
+        var btn = document.getElementById('themebtn');
+        var icon = document.getElementById('themeicon');
+        function current() {
+          var t = root.getAttribute('data-theme');
+          if (t) return t;
+          return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+            ? 'dark'
+            : 'light';
+        }
+        function setIcon() {
+          icon.textContent = current() === 'dark' ? '☾' : '☀';
+        }
+        setIcon();
+        btn.addEventListener('click', function () {
+          var next = current() === 'dark' ? 'light' : 'dark';
+          root.setAttribute('data-theme', next);
+          setIcon();
+        });
+        if (window.matchMedia) {
+          window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', setIcon);
+        }
+      })();
+
+      // hero pipeline animation
+      (function () {
+        var reduce =
+          window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var pipe = document.getElementById('pipe');
+        if (pipe && !reduce) {
+          var io = new IntersectionObserver(
+            function (es) {
+              es.forEach(function (e) {
+                if (e.isIntersecting) {
+                  pipe.classList.add('reveal-pipe');
+                  io.disconnect();
+                }
+              });
+            },
+            { threshold: 0.3 }
+          );
+          io.observe(pipe);
+        } else if (pipe) {
+          pipe.classList.add('reveal-pipe');
+        }
+      })();
+
+      // scroll reveal
+      (function () {
+        var reduce =
+          window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var els = document.querySelectorAll('.r');
+        if (reduce) {
+          els.forEach(function (el) {
+            el.classList.add('in');
+          });
+          return;
+        }
+        var io = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (e) {
+              if (e.isIntersecting) {
+                e.target.classList.add('in');
+                io.unobserve(e.target);
+              }
+            });
+          },
+          { threshold: 0.12, rootMargin: '0px 0px -8% 0px' }
+        );
+        els.forEach(function (el) {
+          io.observe(el);
+        });
+      })();
+    </script>
+    <!-- ============ MOBILE (UPEX) — scroll deck: reflow by CSS, no scale-to-fit or swipe ============
+         The decks in this repo are pages read by scrolling and rearranged with @media.
+         There are no slides to scale or swipe through: this block only declares the mobile mode.
+         The site that serves the deck validates the id `upex-mobile-nav`. -->
+    <script id="upex-mobile-nav">
+      (function () {
+        var mobile =
+          window.matchMedia &&
+          window.matchMedia('(pointer: coarse)').matches &&
+          window.matchMedia('(max-width: 768px)').matches;
+        document.documentElement.setAttribute('data-mobile', mobile ? 'reflow' : 'off');
+      })();
+    </script>
+  </body>
+</html>

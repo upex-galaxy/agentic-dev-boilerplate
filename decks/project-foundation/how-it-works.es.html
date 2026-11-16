@@ -2004,6 +2004,12 @@
               Sin investigación, el hueco queda marcado como <span class="mono">[PLACEHOLDER]</span>
               y la IA te pregunta. No completa con datos inventados.
             </p>
+            <p>
+              Si una respuesta es vaga o sobrecargada (el producto, el usuario, el dinero, el
+              alcance), la IA te entrevista por rondas con la skill <span class="mono">grilling</span>,
+              cada pregunta con su respuesta recomendada. Sin la skill instalada, hace la misma lista
+              numerada.
+            </p>
           </div>
           <div class="out">
             <span class="k">Sale</span>
@@ -2072,7 +2078,8 @@
             <span class="k">Tú decides</span>
             <p>
               El <b>corte del MVP</b>: qué entra y qué queda para después. Personas, problema y KPIs
-              llevan evidencia citada.
+              llevan evidencia citada. Una persona, un KPI o un alcance vago pasa por la misma
+              entrevista de <span class="mono">grilling</span> que en la Constitución.
             </p>
           </div>
           <div class="out">
@@ -2177,8 +2184,9 @@
           <div>
             <span class="k">La IA hace</span>
             <p>
-              Con la arquitectura redactada, <b>promueve a ADR</b> cada decisión que pasa el doble
-              filtro: es arquitectónica <b>y</b> difícil de revertir. Modelo de auth, acceso a
+              Con la arquitectura redactada, <b>promueve a ADR</b> cada decisión arquitectónica que pasa las tres
+              puertas: es difícil de revertir, sorprende sin contexto <b>y</b> es un compromiso real
+              entre alternativas. Modelo de auth, acceso a
               datos, contrato de errores, tenancy, topología de deploy, frameworks con lock-in.
             </p>
           </div>
@@ -2268,7 +2276,7 @@
               </tr>
               <tr>
                 <th>6 · glosario del dominio</th>
-                <td>esta skill, una sola vez</td>
+                <td>esta skill, una sola vez (el método de <span class="mono">domain-modeling</span>, si está instalada)</td>
                 <td>PRD, SRS, mapas y ADRs como semilla</td>
                 <td><span class="mono">.context/business/domain-glossary.md</span></td>
               </tr>
@@ -2380,8 +2388,9 @@
           <div class="eyebrow"><span class="num">11</span> · rieles de seguridad</div>
           <h2>Lo que la skill nunca hace</h2>
           <p class="sub">
-            Los antipatrones completos viven en <span class="mono">SKILL.md</span> y viajan en el
-            registro compacto que reciben los subagentes (<span class="mono">.agents/skills/REGISTRY.md</span>).
+            Las reglas completas viven en el frontmatter de <span class="mono">SKILL.md</span>
+            (<span class="mono">compact_rules</span>) y viajan en el registro compacto que reciben los
+            subagentes (<span class="mono">.agents/skills/REGISTRY.md</span>).
           </p>
         </div>
 

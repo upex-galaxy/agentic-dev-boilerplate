@@ -607,6 +607,26 @@
       .deck-card.soon:hover {
         transform: none;
       }
+      .deck-wrap {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .deck-wrap .deck-card {
+        flex: 1;
+      }
+      .deck-en {
+        align-self: flex-start;
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--signal);
+        text-decoration: none;
+      }
+      .deck-en:hover {
+        text-decoration: underline;
+      }
       .dc-top {
         display: flex;
         align-items: center;
@@ -835,65 +855,90 @@
             </p>
             <span class="dc-status live">Abrir →</span>
           </a>
-          <a class="deck-card" href="./decks/progressive-disclosure/how-it-works.es.html">
-            <div class="dc-top">
-              <span class="dc-tag">agentic-dev-core</span><span class="dc-aud">dev · lead</span>
-            </div>
-            <h3>Las instrucciones, en capas</h3>
-            <p>
-              Un <span class="mono">AGENTS.md</span> chico que siempre carga, una sección por tema
-              que se lee a pedido, el router fijo y la línea <span class="mono">ROUTE:</span> que el
-              hook inyecta.
-            </p>
-            <span class="dc-status live">Abrir →</span>
-          </a>
-          <a class="deck-card" href="./decks/agentic-dev-core/capa-comportamental.es.html">
-            <div class="dc-top">
-              <span class="dc-tag">agentic-dev-core</span><span class="dc-aud">dev</span>
-            </div>
-            <h3>La capa comportamental</h3>
-            <p>
-              Butler Pattern, PM Voice, Visual Mapping y el reparto de capas: por qué el repo
-              responde como responde, con la misma sesión en los dos estilos.
-            </p>
-            <span class="dc-status live">Abrir →</span>
-          </a>
-          <a class="deck-card" href="./decks/orca-orchestration/how-it-works.es.html">
-            <div class="dc-top">
-              <span class="dc-tag">orca-orchestration</span><span class="dc-aud">lead · dev</span>
-            </div>
-            <h3>El comando y sus ejecutores</h3>
-            <p>
-              Dos ejecutores (subagente y worker supervisado), el briefing que sigue
-              <span class="mono">briefing-template.md</span>, conductor / worker / automatización y
-              el <span class="mono">launch.txt</span> que funciona sin runtime.
-            </p>
-            <span class="dc-status live">Abrir →</span>
-          </a>
-          <a class="deck-card" href="./decks/agentic-dev-core/pbi-jira-cache.es.html">
-            <div class="dc-top">
-              <span class="dc-tag">agentic-dev-core</span><span class="dc-aud">dev · lead</span>
-            </div>
-            <h3>PBI como caché de Jira</h3>
-            <p>
-              Jira es la fuente de verdad, el disco es un caché: los tres tiers, la escalera de
-              <span class="mono">.gitignore</span>, <span class="mono">context:hydrate</span> y las
-              defensas del workspace compartido.
-            </p>
-            <span class="dc-status live">Abrir →</span>
-          </a>
-          <a class="deck-card" href="./decks/context-skills/how-it-works.es.html">
-            <div class="dc-top">
-              <span class="dc-tag">context skills</span><span class="dc-aud">dev · lead</span>
-            </div>
-            <h3>El mapa del negocio adentro de una skill</h3>
-            <p>
-              Por qué el mapa de datos, features y API vive en una skill, cómo se lee por sección
-              con <span class="mono">bun run context:map</span> y cómo se corrige de a una sección,
-              con evidencia y tu sí.
-            </p>
-            <span class="dc-status live">Abrir →</span>
-          </a>
+          <div class="deck-wrap">
+            <a class="deck-card" href="./decks/progressive-disclosure/how-it-works.es.html">
+              <div class="dc-top">
+                <span class="dc-tag">agentic-dev-core</span><span class="dc-aud">dev · lead</span>
+              </div>
+              <h3>Las instrucciones, en capas</h3>
+              <p>
+                Un <span class="mono">AGENTS.md</span> chico que siempre carga, una sección por tema
+                que se lee a pedido, el router fijo y la línea <span class="mono">ROUTE:</span> que
+                el hook inyecta.
+              </p>
+              <span class="dc-status live">Abrir →</span>
+            </a>
+            <a class="deck-en" href="./decks/progressive-disclosure/how-it-works.en.html"
+              >English version →</a
+            >
+          </div>
+          <div class="deck-wrap">
+            <a class="deck-card" href="./decks/agentic-dev-core/capa-comportamental.es.html">
+              <div class="dc-top">
+                <span class="dc-tag">agentic-dev-core</span><span class="dc-aud">dev</span>
+              </div>
+              <h3>La capa comportamental</h3>
+              <p>
+                Butler Pattern, PM Voice, Visual Mapping y el reparto de capas: por qué el repo
+                responde como responde, con la misma sesión en los dos estilos.
+              </p>
+              <span class="dc-status live">Abrir →</span>
+            </a>
+            <a class="deck-en" href="./decks/agentic-dev-core/capa-comportamental.en.html"
+              >English version →</a
+            >
+          </div>
+          <div class="deck-wrap">
+            <a class="deck-card" href="./decks/orca-orchestration/how-it-works.es.html">
+              <div class="dc-top">
+                <span class="dc-tag">orca-orchestration</span><span class="dc-aud">lead · dev</span>
+              </div>
+              <h3>El comando y sus ejecutores</h3>
+              <p>
+                Dos ejecutores (subagente y worker supervisado), el briefing que sigue
+                <span class="mono">briefing-template.md</span>, conductor / worker / automatización
+                y el <span class="mono">launch.txt</span> que funciona sin runtime.
+              </p>
+              <span class="dc-status live">Abrir →</span>
+            </a>
+            <a class="deck-en" href="./decks/orca-orchestration/how-it-works.en.html"
+              >English version →</a
+            >
+          </div>
+          <div class="deck-wrap">
+            <a class="deck-card" href="./decks/agentic-dev-core/pbi-jira-cache.es.html">
+              <div class="dc-top">
+                <span class="dc-tag">agentic-dev-core</span><span class="dc-aud">dev · lead</span>
+              </div>
+              <h3>PBI como caché de Jira</h3>
+              <p>
+                Jira es la fuente de verdad, el disco es un caché: los tres tiers, la escalera de
+                <span class="mono">.gitignore</span>, <span class="mono">context:hydrate</span> y
+                las defensas del workspace compartido.
+              </p>
+              <span class="dc-status live">Abrir →</span>
+            </a>
+            <a class="deck-en" href="./decks/agentic-dev-core/pbi-jira-cache.en.html"
+              >English version →</a
+            >
+          </div>
+          <div class="deck-wrap">
+            <a class="deck-card" href="./decks/context-skills/how-it-works.es.html">
+              <div class="dc-top">
+                <span class="dc-tag">context skills</span><span class="dc-aud">dev · lead</span>
+              </div>
+              <h3>El mapa del negocio adentro de una skill</h3>
+              <p>
+                Por qué el mapa de datos, features y API vive en una skill, cómo se lee por sección
+                con <span class="mono">bun run context:map</span> y cómo se corrige de a una
+                sección, con evidencia y tu sí.
+              </p>
+              <span class="dc-status live">Abrir →</span>
+            </a>
+            <a class="deck-en" href="./decks/context-skills/how-it-works.en.html"
+              >English version →</a
+            >
+          </div>
         </div>
       </div>
     </section>
@@ -911,105 +956,152 @@
           </p>
         </div>
         <div class="decks-grid r">
-          <a class="deck-card" href="./decks/project-foundation/how-it-works.es.html">
-            <div class="dc-top">
-              <span class="dc-tag">project-foundation</span><span class="dc-aud">PM/PO · lead</span>
-            </div>
-            <h3>Definir el producto</h3>
-            <p>
-              Antes de la primera línea de código: Constitución, PRD, diseño, SRS con ADRs y
-              Discovery.
-            </p>
-            <span class="dc-status live">Abrir →</span>
-          </a>
-          <a class="deck-card" href="./decks/design-system/flujo-mockups.es.html">
-            <div class="dc-top">
-              <span class="dc-tag">design-system</span><span class="dc-aud">dev · PM/PO</span>
-            </div>
-            <h3>Tokens y mockups</h3>
-            <p>
-              <span class="mono">DESIGN.md</span> una vez, mockup por historia, y el design gate que
-              rutea entre los dos.
-            </p>
-            <span class="dc-status live">Abrir →</span>
-          </a>
-          <a class="deck-card" href="./decks/project-bootstrap/how-it-works.es.html">
-            <div class="dc-top">
-              <span class="dc-tag">project-bootstrap</span><span class="dc-aud">dev · lead</span>
-            </div>
-            <h3>Del SRS a un repo que arranca</h3>
-            <p>
-              Backend, frontend y piezas de integración desde el PRD, el SRS y el
-              <span class="mono">DESIGN.md</span>, antes de la primera historia.
-            </p>
-            <span class="dc-status live">Abrir →</span>
-          </a>
-          <a class="deck-card" href="./decks/project-adoption/how-it-works.es.html">
-            <div class="dc-top">
-              <span class="dc-tag">project-adoption</span><span class="dc-aud">lead · dev</span>
-            </div>
-            <h3>Adoptar una app que ya existe</h3>
-            <p>
-              Leer la app sin tocarla, un plan que esperás aprobar y la prueba de que compila,
-              lintea y testea igual que antes.
-            </p>
-            <span class="dc-status live">Abrir →</span>
-          </a>
-          <a class="deck-card" href="./decks/product-management/how-it-works.es.html">
-            <div class="dc-top">
-              <span class="dc-tag">product-management</span><span class="dc-aud">PM/PO · dev</span>
-            </div>
-            <h3>Del PRD a historias listas</h3>
-            <p>
-              Cómo el backlog pasa de PRD a historias refinadas en Jira y a un orden de ejecución.
-            </p>
-            <span class="dc-status live">Abrir →</span>
-          </a>
-          <a class="deck-card" href="./decks/project-context/how-it-works.es.html">
-            <div class="dc-top">
-              <span class="dc-tag">project-context</span><span class="dc-aud">lead · dev</span>
-            </div>
-            <h3>Mapas, plan maestro y roadmap</h3>
-            <p>
-              Cómo la IA arma y refresca los mapas de negocio, el plan maestro y el roadmap, un modo
-              por vez y con tu aprobación antes de pisar nada.
-            </p>
-            <span class="dc-status live">Abrir →</span>
-          </a>
-          <a class="deck-card" href="./decks/sprint-development/how-it-works.es.html">
-            <div class="dc-top">
-              <span class="dc-tag">sprint-development</span
-              ><span class="dc-aud">dev · lead · PM/PO</span>
-            </div>
-            <h3>Del ticket al deploy</h3>
-            <p>
-              Planning, Implementation, Code Review, Staging y Production con compuerta: plan en
-              Jira, app viva, review adversarial, historia por historia.
-            </p>
-            <span class="dc-status live">Abrir →</span>
-          </a>
-          <a class="deck-card" href="./decks/unit-testing/how-it-works.es.html">
-            <div class="dc-top">
-              <span class="dc-tag">unit-testing</span><span class="dc-aud">dev</span>
-            </div>
-            <h3>Tests que fallan por el motivo correcto</h3>
-            <p>
-              Red-green-refactor, nombres, mocks y cobertura, sola o desde la etapa de
-              Implementation.
-            </p>
-            <span class="dc-status live">Abrir →</span>
-          </a>
-          <a class="deck-card" href="./decks/testability-guide/how-it-works.es.html">
-            <div class="dc-top">
-              <span class="dc-tag">testability-guide</span><span class="dc-aud">dev · lead</span>
-            </div>
-            <h3>La página /qa y sus credenciales</h3>
-            <p>
-              La página <span class="mono">/qa</span> que enseña a testear la app, y las
-              credenciales detrás de una puerta con permisos.
-            </p>
-            <span class="dc-status live">Abrir →</span>
-          </a>
+          <div class="deck-wrap">
+            <a class="deck-card" href="./decks/project-foundation/how-it-works.es.html">
+              <div class="dc-top">
+                <span class="dc-tag">project-foundation</span
+                ><span class="dc-aud">PM/PO · lead</span>
+              </div>
+              <h3>Definir el producto</h3>
+              <p>
+                Antes de la primera línea de código: Constitución, PRD, diseño, SRS con ADRs y
+                Discovery.
+              </p>
+              <span class="dc-status live">Abrir →</span>
+            </a>
+            <a class="deck-en" href="./decks/project-foundation/how-it-works.en.html"
+              >English version →</a
+            >
+          </div>
+          <div class="deck-wrap">
+            <a class="deck-card" href="./decks/design-system/flujo-mockups.es.html">
+              <div class="dc-top">
+                <span class="dc-tag">design-system</span><span class="dc-aud">dev · PM/PO</span>
+              </div>
+              <h3>Tokens y mockups</h3>
+              <p>
+                <span class="mono">DESIGN.md</span> una vez, mockup por historia, y el design gate
+                que rutea entre los dos.
+              </p>
+              <span class="dc-status live">Abrir →</span>
+            </a>
+            <a class="deck-en" href="./decks/design-system/flujo-mockups.en.html"
+              >English version →</a
+            >
+          </div>
+          <div class="deck-wrap">
+            <a class="deck-card" href="./decks/project-bootstrap/how-it-works.es.html">
+              <div class="dc-top">
+                <span class="dc-tag">project-bootstrap</span><span class="dc-aud">dev · lead</span>
+              </div>
+              <h3>Del SRS a un repo que arranca</h3>
+              <p>
+                Backend, frontend y piezas de integración desde el PRD, el SRS y el
+                <span class="mono">DESIGN.md</span>, antes de la primera historia.
+              </p>
+              <span class="dc-status live">Abrir →</span>
+            </a>
+            <a class="deck-en" href="./decks/project-bootstrap/how-it-works.en.html"
+              >English version →</a
+            >
+          </div>
+          <div class="deck-wrap">
+            <a class="deck-card" href="./decks/project-adoption/how-it-works.es.html">
+              <div class="dc-top">
+                <span class="dc-tag">project-adoption</span><span class="dc-aud">lead · dev</span>
+              </div>
+              <h3>Adoptar una app que ya existe</h3>
+              <p>
+                Leer la app sin tocarla, un plan que esperás aprobar y la prueba de que compila,
+                lintea y testea igual que antes.
+              </p>
+              <span class="dc-status live">Abrir →</span>
+            </a>
+            <a class="deck-en" href="./decks/project-adoption/how-it-works.en.html"
+              >English version →</a
+            >
+          </div>
+          <div class="deck-wrap">
+            <a class="deck-card" href="./decks/product-management/how-it-works.es.html">
+              <div class="dc-top">
+                <span class="dc-tag">product-management</span
+                ><span class="dc-aud">PM/PO · dev</span>
+              </div>
+              <h3>Del PRD a historias listas</h3>
+              <p>
+                Cómo el backlog pasa de PRD a historias refinadas en Jira y a un orden de ejecución.
+              </p>
+              <span class="dc-status live">Abrir →</span>
+            </a>
+            <a class="deck-en" href="./decks/product-management/how-it-works.en.html"
+              >English version →</a
+            >
+          </div>
+          <div class="deck-wrap">
+            <a class="deck-card" href="./decks/project-context/how-it-works.es.html">
+              <div class="dc-top">
+                <span class="dc-tag">project-context</span><span class="dc-aud">lead · dev</span>
+              </div>
+              <h3>Mapas, plan maestro y roadmap</h3>
+              <p>
+                Cómo la IA arma y refresca los mapas de negocio, el plan maestro y el roadmap, un
+                modo por vez y con tu aprobación antes de pisar nada.
+              </p>
+              <span class="dc-status live">Abrir →</span>
+            </a>
+            <a class="deck-en" href="./decks/project-context/how-it-works.en.html"
+              >English version →</a
+            >
+          </div>
+          <div class="deck-wrap">
+            <a class="deck-card" href="./decks/sprint-development/how-it-works.es.html">
+              <div class="dc-top">
+                <span class="dc-tag">sprint-development</span
+                ><span class="dc-aud">dev · lead · PM/PO</span>
+              </div>
+              <h3>Del ticket al deploy</h3>
+              <p>
+                Planning, Implementation, Code Review, Staging y Production con compuerta: plan en
+                Jira, app viva, review adversarial, historia por historia.
+              </p>
+              <span class="dc-status live">Abrir →</span>
+            </a>
+            <a class="deck-en" href="./decks/sprint-development/how-it-works.en.html"
+              >English version →</a
+            >
+          </div>
+          <div class="deck-wrap">
+            <a class="deck-card" href="./decks/unit-testing/how-it-works.es.html">
+              <div class="dc-top">
+                <span class="dc-tag">unit-testing</span><span class="dc-aud">dev</span>
+              </div>
+              <h3>Tests que fallan por el motivo correcto</h3>
+              <p>
+                Red-green-refactor, nombres, mocks y cobertura, sola o desde la etapa de
+                Implementation.
+              </p>
+              <span class="dc-status live">Abrir →</span>
+            </a>
+            <a class="deck-en" href="./decks/unit-testing/how-it-works.en.html"
+              >English version →</a
+            >
+          </div>
+          <div class="deck-wrap">
+            <a class="deck-card" href="./decks/testability-guide/how-it-works.es.html">
+              <div class="dc-top">
+                <span class="dc-tag">testability-guide</span><span class="dc-aud">dev · lead</span>
+              </div>
+              <h3>La página /qa y sus credenciales</h3>
+              <p>
+                La página <span class="mono">/qa</span> que enseña a testear la app, y las
+                credenciales detrás de una puerta con permisos.
+              </p>
+              <span class="dc-status live">Abrir →</span>
+            </a>
+            <a class="deck-en" href="./decks/testability-guide/how-it-works.en.html"
+              >English version →</a
+            >
+          </div>
         </div>
       </div>
     </section>
@@ -1026,72 +1118,101 @@
           </p>
         </div>
         <div class="decks-grid r">
-          <a class="deck-card" href="./decks/git-flow-master/how-it-works.es.html">
-            <div class="dc-top">
-              <span class="dc-tag">git-flow-master</span><span class="dc-aud">dev · lead</span>
-            </div>
-            <h3>Ramas, pushes y PRs</h3>
-            <p>
-              Estrategia de ramas, compuerta de push por variable, paridad con el host, trailers
-              forenses, PRs encadenados y worktrees.
-            </p>
-            <span class="dc-status live">Abrir →</span>
-          </a>
-          <a class="deck-card" href="./decks/pr-review-lead/how-it-works.es.html">
-            <div class="dc-top">
-              <span class="dc-tag">pr-review-lead</span><span class="dc-aud">lead · dev</span>
-            </div>
-            <h3>Revisar el PR de otro con evidencia</h3>
-            <p>
-              Rigor elegido antes de leer, hallazgos citados en Real / Pattern / Positive, y nada se
-              postea sin tu OK.
-            </p>
-            <span class="dc-status live">Abrir →</span>
-          </a>
-          <a class="deck-card" href="./decks/session-handoff/how-it-works.es.html">
-            <div class="dc-top">
-              <span class="dc-tag">session-handoff</span><span class="dc-aud">dev · lead</span>
-            </div>
-            <h3>Pasar la sesión entera a su sucesor</h3>
-            <p>
-              Cuando la ventana de contexto se llena: un archivo que deja a una sesión nueva seguir
-              exactamente donde paró la anterior, en el mismo worktree y el mismo harness.
-            </p>
-            <span class="dc-status live">Abrir →</span>
-          </a>
-          <a class="deck-card" href="./decks/autonomous-delivery/how-it-works.es.html">
-            <div class="dc-top">
-              <span class="dc-tag">autonomous-delivery</span
-              ><span class="dc-aud">lead · PM/PO</span>
-            </div>
-            <h3>Corridas programadas sin nadie mirando</h3>
-            <p>
-              Lo que una corrida hace, y nunca hace: lock, git como verdad, corrida vacía correcta,
-              traspaso limpio.
-            </p>
-            <span class="dc-status live">Abrir →</span>
-          </a>
-          <a class="deck-card" href="./decks/jira-administration/how-it-works.es.html">
-            <div class="dc-top">
-              <span class="dc-tag">jira-administration</span><span class="dc-aud">lead</span>
-            </div>
-            <h3>Components y migración de instancia</h3>
-            <p>
-              Dos operaciones de admin de Jira, selladas tras lectura previa y aprobación explícita.
-            </p>
-            <span class="dc-status live">Abrir →</span>
-          </a>
-          <a class="deck-card" href="./decks/tooling/how-it-works.es.html">
-            <div class="dc-top">
-              <span class="dc-tag">tooling</span><span class="dc-aud">dev · lead</span>
-            </div>
-            <h3>acli, vercel-cli y el arranque</h3>
-            <p>
-              La skill se carga antes del binario: Jira por CLI sin romper campos, deploys
-              verificados por SHA y credenciales MCP que no fallan en silencio.
-            </p>
-            <span class="dc-status live">Abrir →</span>
-          </a>
+          <div class="deck-wrap">
+            <a class="deck-card" href="./decks/git-flow-master/how-it-works.es.html">
+              <div class="dc-top">
+                <span class="dc-tag">git-flow-master</span><span class="dc-aud">dev · lead</span>
+              </div>
+              <h3>Ramas, pushes y PRs</h3>
+              <p>
+                Estrategia de ramas, compuerta de push por variable, paridad con el host, trailers
+                forenses, PRs encadenados y worktrees.
+              </p>
+              <span class="dc-status live">Abrir →</span>
+            </a>
+            <a class="deck-en" href="./decks/git-flow-master/how-it-works.en.html"
+              >English version →</a
+            >
+          </div>
+          <div class="deck-wrap">
+            <a class="deck-card" href="./decks/pr-review-lead/how-it-works.es.html">
+              <div class="dc-top">
+                <span class="dc-tag">pr-review-lead</span><span class="dc-aud">lead · dev</span>
+              </div>
+              <h3>Revisar el PR de otro con evidencia</h3>
+              <p>
+                Rigor elegido antes de leer, hallazgos citados en Real / Pattern / Positive, y nada
+                se postea sin tu OK.
+              </p>
+              <span class="dc-status live">Abrir →</span>
+            </a>
+            <a class="deck-en" href="./decks/pr-review-lead/how-it-works.en.html"
+              >English version →</a
+            >
+          </div>
+          <div class="deck-wrap">
+            <a class="deck-card" href="./decks/session-handoff/how-it-works.es.html">
+              <div class="dc-top">
+                <span class="dc-tag">session-handoff</span><span class="dc-aud">dev · lead</span>
+              </div>
+              <h3>Pasar la sesión entera a su sucesor</h3>
+              <p>
+                Cuando la ventana de contexto se llena: un archivo que deja a una sesión nueva
+                seguir exactamente donde paró la anterior, en el mismo worktree y el mismo harness.
+              </p>
+              <span class="dc-status live">Abrir →</span>
+            </a>
+            <a class="deck-en" href="./decks/session-handoff/how-it-works.en.html"
+              >English version →</a
+            >
+          </div>
+          <div class="deck-wrap">
+            <a class="deck-card" href="./decks/autonomous-delivery/how-it-works.es.html">
+              <div class="dc-top">
+                <span class="dc-tag">autonomous-delivery</span
+                ><span class="dc-aud">lead · PM/PO</span>
+              </div>
+              <h3>Corridas programadas sin nadie mirando</h3>
+              <p>
+                Lo que una corrida hace, y nunca hace: lock, git como verdad, corrida vacía
+                correcta, traspaso limpio.
+              </p>
+              <span class="dc-status live">Abrir →</span>
+            </a>
+            <a class="deck-en" href="./decks/autonomous-delivery/how-it-works.en.html"
+              >English version →</a
+            >
+          </div>
+          <div class="deck-wrap">
+            <a class="deck-card" href="./decks/jira-administration/how-it-works.es.html">
+              <div class="dc-top">
+                <span class="dc-tag">jira-administration</span><span class="dc-aud">lead</span>
+              </div>
+              <h3>Components y migración de instancia</h3>
+              <p>
+                Dos operaciones de admin de Jira, selladas tras lectura previa y aprobación
+                explícita.
+              </p>
+              <span class="dc-status live">Abrir →</span>
+            </a>
+            <a class="deck-en" href="./decks/jira-administration/how-it-works.en.html"
+              >English version →</a
+            >
+          </div>
+          <div class="deck-wrap">
+            <a class="deck-card" href="./decks/tooling/how-it-works.es.html">
+              <div class="dc-top">
+                <span class="dc-tag">tooling</span><span class="dc-aud">dev · lead</span>
+              </div>
+              <h3>acli, vercel-cli y el arranque</h3>
+              <p>
+                La skill se carga antes del binario: Jira por CLI sin romper campos, deploys
+                verificados por SHA y credenciales MCP que no fallan en silencio.
+              </p>
+              <span class="dc-status live">Abrir →</span>
+            </a>
+            <a class="deck-en" href="./decks/tooling/how-it-works.en.html">English version →</a>
+          </div>
         </div>
       </div>
     </section>

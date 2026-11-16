@@ -1,0 +1,2504 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Tooling: acli, vercel-cli and the startup</title>
+    <meta
+      name="description"
+      content="How the repo uses its binaries: the owner skill is loaded before the command, /acli for Jira (auth, Markdown to ADF, size budget, slugs, links), the jira:* scripts, /vercel-cli to verify a deploy by SHA, env vars and rollback, and the startup with the .env loader and setup:doctor."
+    />
+    <style>
+      /* ============================================================
+     Self-contained deck: zero external requests, not even
+     fonts. Designed to survive for years as a loose file.
+     Tokens: "Planos": see packages/decks/README.md (single source).
+     ============================================================ */
+      :root {
+        --paper: #e8ecf1;
+        --paper-2: #dee5ed;
+        --surface: #f5f8fb;
+        --surface-2: #ffffff;
+        --ink: #172236;
+        --ink-soft: #4a5873;
+        --ink-faint: #5e6e88;
+        --line: rgba(23, 34, 54, 0.14);
+        --line-soft: rgba(23, 34, 54, 0.08);
+        --blue: #1e56a8;
+        --blue-2: #2f72ce;
+        --blue-wash: rgba(30, 86, 168, 0.08);
+        --blue-solid: #1e56a8;
+        --signal: #c2410c;
+        --signal-2: #ea580c;
+        --signal-wash: rgba(194, 65, 12, 0.09);
+        --signal-solid: #9a3412;
+        --agent: #6d28d9;
+        --agent-2: #7c3aed;
+        --agent-wash: rgba(109, 40, 217, 0.08);
+        --agent-solid: #6d28d9;
+        --good: #15803d;
+        --warn: #b45309;
+        --grid: rgba(30, 86, 168, 0.055);
+        --shadow: 0 1px 2px rgba(23, 34, 54, 0.06), 0 8px 24px -12px rgba(23, 34, 54, 0.18);
+        --shadow-lg: 0 2px 4px rgba(23, 34, 54, 0.05), 0 24px 60px -24px rgba(23, 34, 54, 0.28);
+        /* -solid tokens: fixed across both themes, reserved for solid-fill
+           + white-text UI (buttons, bubbles, ::selection): the plain
+           --blue/--signal/--agent above lighten in dark mode for on-paper
+           text/links and fail contrast as a white-text fill. Never themed. */
+
+        --font-display:
+          'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
+        --font-body:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', system-ui, sans-serif;
+        --font-mono:
+          ui-monospace, 'SF Mono', 'JetBrains Mono', 'Cascadia Code', Menlo, Consolas, monospace;
+
+        --maxw: 1120px;
+        --prose: 66ch;
+        --r: 14px;
+        --r-sm: 9px;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --paper: #0b1220;
+          --paper-2: #0e1626;
+          --surface: #121b2e;
+          --surface-2: #16213a;
+          --ink: #e4e9f2;
+          --ink-soft: #9fb0c9;
+          --ink-faint: #7e8caa;
+          --line: rgba(160, 180, 210, 0.16);
+          --line-soft: rgba(160, 180, 210, 0.09);
+          --blue: #6fa8ff;
+          --blue-2: #8cbbff;
+          --blue-wash: rgba(111, 168, 255, 0.11);
+          --signal: #fb923c;
+          --signal-2: #fdba74;
+          --signal-wash: rgba(251, 146, 60, 0.12);
+          --agent: #c4b5fd;
+          --agent-2: #ddd6fe;
+          --agent-wash: rgba(196, 181, 253, 0.12);
+          --good: #4ade80;
+          --warn: #fbbf24;
+          --grid: rgba(111, 168, 255, 0.06);
+          --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 30px -14px rgba(0, 0, 0, 0.6);
+          --shadow-lg: 0 2px 6px rgba(0, 0, 0, 0.4), 0 30px 70px -28px rgba(0, 0, 0, 0.7);
+        }
+      }
+      :root[data-theme='light'] {
+        --paper: #e8ecf1;
+        --paper-2: #dee5ed;
+        --surface: #f5f8fb;
+        --surface-2: #ffffff;
+        --ink: #172236;
+        --ink-soft: #4a5873;
+        --ink-faint: #5e6e88;
+        --line: rgba(23, 34, 54, 0.14);
+        --line-soft: rgba(23, 34, 54, 0.08);
+        --blue: #1e56a8;
+        --blue-2: #2f72ce;
+        --blue-wash: rgba(30, 86, 168, 0.08);
+        --signal: #c2410c;
+        --signal-2: #ea580c;
+        --signal-wash: rgba(194, 65, 12, 0.09);
+        --agent: #6d28d9;
+        --agent-2: #7c3aed;
+        --agent-wash: rgba(109, 40, 217, 0.08);
+        --good: #15803d;
+        --warn: #b45309;
+        --grid: rgba(30, 86, 168, 0.055);
+        --shadow: 0 1px 2px rgba(23, 34, 54, 0.06), 0 8px 24px -12px rgba(23, 34, 54, 0.18);
+        --shadow-lg: 0 2px 4px rgba(23, 34, 54, 0.05), 0 24px 60px -24px rgba(23, 34, 54, 0.28);
+      }
+      :root[data-theme='dark'] {
+        --paper: #0b1220;
+        --paper-2: #0e1626;
+        --surface: #121b2e;
+        --surface-2: #16213a;
+        --ink: #e4e9f2;
+        --ink-soft: #9fb0c9;
+        --ink-faint: #7e8caa;
+        --line: rgba(160, 180, 210, 0.16);
+        --line-soft: rgba(160, 180, 210, 0.09);
+        --blue: #6fa8ff;
+        --blue-2: #8cbbff;
+        --blue-wash: rgba(111, 168, 255, 0.11);
+        --signal: #fb923c;
+        --signal-2: #fdba74;
+        --signal-wash: rgba(251, 146, 60, 0.12);
+        --agent: #c4b5fd;
+        --agent-2: #ddd6fe;
+        --agent-wash: rgba(196, 181, 253, 0.12);
+        --good: #4ade80;
+        --warn: #fbbf24;
+        --grid: rgba(111, 168, 255, 0.06);
+        --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 30px -14px rgba(0, 0, 0, 0.6);
+        --shadow-lg: 0 2px 6px rgba(0, 0, 0, 0.4), 0 30px 70px -28px rgba(0, 0, 0, 0.7);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+      }
+      body {
+        margin: 0;
+        font-family: var(--font-body);
+        font-size: 17px;
+        line-height: 1.65;
+        color: var(--ink);
+        background-color: var(--paper);
+        background-image:
+          linear-gradient(var(--grid) 1px, transparent 1px),
+          linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+        background-size: 30px 30px;
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
+      }
+      h1,
+      h2,
+      h3 {
+        font-family: var(--font-display);
+        font-weight: 600;
+        text-wrap: balance;
+        line-height: 1.12;
+        margin: 0;
+      }
+      p {
+        margin: 0 0 1.1em;
+      }
+      a {
+        color: var(--blue);
+        text-decoration-color: var(--line);
+        text-underline-offset: 3px;
+      }
+      a:focus-visible {
+        outline: 2px solid var(--blue);
+        outline-offset: 2px;
+      }
+      code,
+      .mono {
+        font-family: var(--font-mono);
+      }
+      ::selection {
+        background: var(--signal-solid);
+        color: #fff;
+      }
+
+      .wrap {
+        max-width: var(--maxw);
+        margin: 0 auto;
+        padding: 0 clamp(20px, 5vw, 56px);
+      }
+      .prose {
+        max-width: var(--prose);
+      }
+
+      .eyebrow {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        font-weight: 600;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--signal);
+        display: inline-flex;
+        align-items: baseline;
+        gap: 0.6em;
+      }
+      .eyebrow .num {
+        color: var(--blue);
+      }
+
+      .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 11px clamp(20px, 5vw, 56px);
+        background: color-mix(in srgb, var(--paper) 82%, transparent);
+        backdrop-filter: blur(12px) saturate(1.4);
+        border-bottom: 1px solid var(--line-soft);
+      }
+      .topbar .brand {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        letter-spacing: 0.04em;
+        color: var(--ink-soft);
+        display: flex;
+        align-items: center;
+        gap: 0.6em;
+        text-decoration: none;
+      }
+      .topbar .brand b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .topbar .mark {
+        width: 16px;
+        height: 16px;
+        border: 1.5px solid var(--blue);
+        border-radius: 3px;
+        position: relative;
+        flex: none;
+      }
+      .topbar .mark::after {
+        content: '';
+        position: absolute;
+        inset: 3px;
+        border: 1.5px solid var(--agent);
+        border-radius: 1px;
+      }
+      .topnav {
+        display: flex;
+        gap: 4px;
+        align-items: center;
+      }
+      .topnav a {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        letter-spacing: 0.03em;
+        color: var(--ink-faint);
+        text-decoration: none;
+        padding: 5px 9px;
+        border-radius: 6px;
+      }
+      .topnav a:hover {
+        color: var(--ink);
+        background: var(--blue-wash);
+      }
+      @media (max-width: 900px) {
+        .topnav {
+          display: none;
+        }
+      }
+      .themebtn {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        letter-spacing: 0.05em;
+        cursor: pointer;
+        border: 1px solid var(--line);
+        background: var(--surface);
+        color: var(--ink-soft);
+        padding: 6px 11px;
+        border-radius: 7px;
+        display: flex;
+        gap: 0.5em;
+        align-items: center;
+      }
+      .themebtn:hover {
+        border-color: var(--blue);
+        color: var(--ink);
+      }
+      .themebtn:focus-visible {
+        outline: 2px solid var(--blue);
+        outline-offset: 2px;
+      }
+
+      .hero {
+        position: relative;
+        padding: clamp(60px, 12vh, 130px) 0 clamp(48px, 8vh, 90px);
+        overflow: hidden;
+      }
+      .hero .kicker {
+        margin-bottom: 26px;
+      }
+      .hero h1 {
+        font-size: clamp(2.5rem, 6.6vw, 5.2rem);
+        letter-spacing: -0.015em;
+      }
+      .hero h1 em {
+        font-style: italic;
+        color: var(--blue);
+      }
+      .hero h1 .sig {
+        color: var(--signal);
+        font-style: normal;
+      }
+      .hero .lede {
+        font-size: clamp(1.06rem, 2vw, 1.32rem);
+        color: var(--ink-soft);
+        max-width: 60ch;
+        margin-top: 28px;
+        line-height: 1.55;
+      }
+      .hero .lede b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .hero-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px 10px;
+        margin-top: 36px;
+      }
+      .chip {
+        font-family: var(--font-mono);
+        font-size: 0.74rem;
+        letter-spacing: 0.02em;
+        padding: 7px 12px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        color: var(--ink-soft);
+        background: var(--surface);
+        display: inline-flex;
+        gap: 0.55em;
+        align-items: center;
+      }
+      .chip b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .chip .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--signal);
+        flex: none;
+      }
+      .chip.agent .dot {
+        background: var(--agent);
+      }
+
+      .pipe {
+        margin-top: 54px;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0;
+        align-items: stretch;
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        overflow: hidden;
+        background: var(--surface);
+        box-shadow: var(--shadow);
+      }
+      .pipe .node {
+        position: relative;
+        padding: 22px 20px;
+        border-right: 1px solid var(--line);
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      .pipe .node:last-child {
+        border-right: 0;
+      }
+      .reveal-pipe .node {
+        animation: pipeIn 0.6s cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+      }
+      .pipe .node:nth-child(1) {
+        animation-delay: 0.1s;
+      }
+      .pipe .node:nth-child(2) {
+        animation-delay: 0.3s;
+      }
+      .pipe .node:nth-child(3) {
+        animation-delay: 0.5s;
+      }
+      .pipe .node:nth-child(4) {
+        animation-delay: 0.7s;
+      }
+      .pipe .node .n {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        letter-spacing: 0.12em;
+        color: var(--signal);
+        text-transform: uppercase;
+      }
+      .pipe .node h3 {
+        font-family: var(--font-display);
+        font-size: 1.14rem;
+        margin: 8px 0 5px;
+      }
+      .pipe .node p {
+        font-size: 0.85rem;
+        color: var(--ink-soft);
+        margin: 0;
+        line-height: 1.45;
+      }
+      .pipe .node .arw {
+        position: absolute;
+        right: -8px;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 2;
+        width: 16px;
+        height: 16px;
+        color: var(--blue);
+        background: var(--surface);
+        display: grid;
+        place-items: center;
+      }
+      .pipe .node:last-child .arw {
+        display: none;
+      }
+      @media (max-width: 760px) {
+        .pipe {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+      @media (max-width: 460px) {
+        .pipe {
+          grid-template-columns: 1fr;
+        }
+        .pipe .node {
+          border-right: 0;
+          border-bottom: 1px solid var(--line);
+        }
+        .pipe .node .arw {
+          display: none;
+        }
+      }
+      @keyframes pipeIn {
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .pipe .node {
+          opacity: 1;
+          transform: none;
+          animation: none !important;
+        }
+      }
+
+      section.band {
+        padding: clamp(56px, 9vh, 96px) 0;
+        border-top: 1px solid var(--line-soft);
+      }
+      .sec-head {
+        max-width: 62ch;
+        margin-bottom: 40px;
+      }
+      .sec-head h2 {
+        font-size: clamp(1.9rem, 4vw, 2.9rem);
+        letter-spacing: -0.012em;
+        margin-top: 16px;
+      }
+      .sec-head p.sub {
+        font-size: 1.1rem;
+        color: var(--ink-soft);
+        margin-top: 18px;
+      }
+
+      .r {
+        opacity: 0;
+        transform: translateY(18px);
+        transition:
+          opacity 0.7s ease,
+          transform 0.7s cubic-bezier(0.2, 0.7, 0.3, 1);
+      }
+      .r.in {
+        opacity: 1;
+        transform: none;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .r {
+          opacity: 1;
+          transform: none;
+          transition: none;
+        }
+      }
+
+      .planes {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+      }
+      @media (max-width: 780px) {
+        .planes {
+          grid-template-columns: 1fr;
+        }
+      }
+      .plane {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface);
+        padding: 26px 26px 24px;
+        box-shadow: var(--shadow);
+        position: relative;
+        overflow: hidden;
+      }
+      .plane::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 3px;
+        background: var(--blue);
+      }
+      .plane.sig::before {
+        background: var(--signal);
+      }
+      .plane.agent::before {
+        background: var(--agent);
+      }
+      .plane .tag {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+      }
+      .plane h3 {
+        font-size: 1.32rem;
+        margin: 8px 0 4px;
+      }
+      .plane .path {
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        color: var(--blue);
+        background: var(--blue-wash);
+        padding: 3px 8px;
+        border-radius: 5px;
+        display: inline-block;
+        margin-bottom: 12px;
+      }
+      .plane.sig .path {
+        color: var(--signal);
+        background: var(--signal-wash);
+      }
+      .plane.agent .path {
+        color: var(--agent);
+        background: var(--agent-wash);
+      }
+      .plane ul {
+        margin: 12px 0 0;
+        padding: 0;
+        list-style: none;
+      }
+      .plane li {
+        position: relative;
+        padding-left: 20px;
+        margin-bottom: 8px;
+        font-size: 0.93rem;
+        color: var(--ink-soft);
+      }
+      .plane li::before {
+        content: '-';
+        position: absolute;
+        left: 0;
+        color: var(--ink-faint);
+      }
+      .plane li b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+
+      .callout {
+        border: 1px solid var(--line);
+        border-left: 3px solid var(--signal);
+        background: var(--signal-wash);
+        border-radius: var(--r-sm);
+        padding: 16px 20px;
+        font-size: 0.93rem;
+        color: var(--ink);
+        margin: 22px 0 0;
+      }
+      .callout b {
+        color: var(--signal);
+      }
+      .callout.blue {
+        border-left-color: var(--blue);
+        background: var(--blue-wash);
+      }
+      .callout.blue b {
+        color: var(--blue);
+      }
+      .callout.agent {
+        border-left-color: var(--agent);
+        background: var(--agent-wash);
+      }
+      .callout.agent b {
+        color: var(--agent);
+      }
+
+      .steps {
+        display: grid;
+        gap: 2px;
+        margin-top: 8px;
+        counter-reset: st;
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        overflow: hidden;
+        background: var(--line-soft);
+      }
+      .step {
+        background: var(--surface);
+        padding: 20px 22px 20px 66px;
+        position: relative;
+      }
+      .step::before {
+        counter-increment: st;
+        content: counter(st, decimal-leading-zero);
+        position: absolute;
+        left: 20px;
+        top: 20px;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: var(--signal);
+      }
+      .step h3 {
+        font-family: var(--font-display);
+        font-size: 1.16rem;
+        margin: 0 0 5px;
+      }
+      .step p {
+        margin: 0;
+        font-size: 0.93rem;
+        color: var(--ink-soft);
+      }
+      .step p + p {
+        margin-top: 8px;
+      }
+      .step .say {
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        color: var(--ink);
+        background: var(--blue-wash);
+        border: 1px solid var(--line-soft);
+        border-radius: 7px;
+        padding: 8px 12px;
+        margin-top: 12px;
+        display: block;
+      }
+      .step .say .who {
+        color: var(--signal);
+        font-weight: 600;
+      }
+
+      .figwrap {
+        margin-top: 8px;
+      }
+      .figcap {
+        font-family: var(--font-mono);
+        font-size: 0.74rem;
+        color: var(--ink-faint);
+        margin-top: 12px;
+        text-align: center;
+        letter-spacing: 0.02em;
+      }
+      .win {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        overflow: hidden;
+        background: var(--surface-2);
+        box-shadow: var(--shadow-lg);
+      }
+      .win-bar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 9px 13px;
+        background: var(--surface);
+        border-bottom: 1px solid var(--line);
+      }
+      .win-dots {
+        display: flex;
+        gap: 6px;
+      }
+      .win-dots i {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--line);
+        display: block;
+      }
+      .win-url {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        color: var(--ink-soft);
+        background: var(--paper-2);
+        border-radius: 6px;
+        padding: 4px 10px;
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .win-btn {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        padding: 4px 9px;
+        border-radius: 6px;
+        border: 1px solid var(--line);
+        color: var(--ink-soft);
+        white-space: nowrap;
+      }
+      .win-btn.exp {
+        color: #fff;
+        background: var(--signal-solid);
+        border-color: var(--signal-solid);
+      }
+      .win-btn.mcp {
+        color: #fff;
+        background: var(--agent-solid);
+        border-color: var(--agent-solid);
+      }
+      .win-nav {
+        display: flex;
+        gap: 3px;
+        padding: 7px 13px;
+        border-bottom: 1px solid var(--line);
+        background: var(--surface);
+        overflow-x: auto;
+      }
+      .win-nav span {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        color: var(--ink-faint);
+        padding: 3px 9px;
+        border-radius: 5px;
+        white-space: nowrap;
+      }
+      .win-nav span.on {
+        color: var(--ink);
+        background: var(--blue-wash);
+      }
+      .win-nav .gear {
+        margin-left: auto;
+        color: var(--ink-faint);
+      }
+
+      .win-body {
+        display: grid;
+        min-height: 260px;
+      }
+      .win-body.two {
+        grid-template-columns: 40% 60%;
+      }
+      .win-body.three {
+        grid-template-columns: 30% 30% 40%;
+      }
+      @media (max-width: 600px) {
+        .win-body.two,
+        .win-body.three {
+          grid-template-columns: 1fr;
+        }
+        .win-body .pane {
+          border-right: 0 !important;
+          border-bottom: 1px solid var(--line);
+        }
+      }
+      .pane {
+        padding: 15px;
+        border-right: 1px solid var(--line);
+        position: relative;
+      }
+      .pane:last-child {
+        border-right: 0;
+      }
+      .pane-label {
+        position: absolute;
+        top: 8px;
+        right: 10px;
+        font-family: var(--font-mono);
+        font-size: 0.6rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        opacity: 0.8;
+      }
+      .pane.chat {
+        background: var(--surface);
+      }
+      .bub {
+        border-radius: 9px;
+        padding: 8px 11px;
+        margin-bottom: 9px;
+        font-size: 0.76rem;
+        line-height: 1.4;
+        max-width: 92%;
+      }
+      .bub.me {
+        background: var(--blue-solid);
+        color: #fff;
+        margin-left: auto;
+      }
+      .bub.ai {
+        background: var(--paper-2);
+        color: var(--ink-soft);
+        border: 1px solid var(--line-soft);
+      }
+      .bub.tool {
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        color: var(--good);
+        background: transparent;
+        border: 0;
+        padding: 2px 0;
+      }
+      .bub.mcp {
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        color: var(--agent);
+        background: transparent;
+        border: 0;
+        padding: 2px 0;
+      }
+      .promptbox {
+        margin-top: 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface-2);
+        padding: 8px 10px;
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        color: var(--ink-faint);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+      }
+      .promptbox .send {
+        color: #fff;
+        background: var(--blue-solid);
+        border-radius: 5px;
+        padding: 3px 8px;
+        font-size: 0.64rem;
+      }
+
+      .canvas {
+        background: var(--paper);
+        background-image:
+          linear-gradient(var(--grid) 1px, transparent 1px),
+          linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+        background-size: 16px 16px;
+        display: grid;
+        place-items: center;
+      }
+      .mini {
+        width: 82%;
+        max-width: 260px;
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        position: relative;
+      }
+      .mini .mtop {
+        height: 26px;
+        background: var(--blue);
+        display: flex;
+        align-items: center;
+        padding: 0 8px;
+        gap: 5px;
+      }
+      .mini .mtop i {
+        width: 24px;
+        height: 5px;
+        border-radius: 3px;
+        background: rgba(255, 255, 255, 0.55);
+        display: block;
+      }
+      .mini .mtop i.sm {
+        width: 12px;
+        margin-left: auto;
+      }
+      .mini .mbody {
+        padding: 10px;
+        display: grid;
+        gap: 7px;
+      }
+      .mini .line {
+        height: 6px;
+        border-radius: 3px;
+        background: var(--line);
+      }
+      .mini .line.w1 {
+        width: 70%;
+      }
+      .mini .line.w2 {
+        width: 45%;
+        background: var(--signal);
+        opacity: 0.8;
+      }
+      .mini .cards {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 6px;
+        margin-top: 4px;
+      }
+      .mini .cards i {
+        height: 30px;
+        border-radius: 5px;
+        background: var(--blue-wash);
+        border: 1px solid var(--line-soft);
+        display: block;
+      }
+      .mini .btn {
+        height: 16px;
+        width: 60px;
+        border-radius: 5px;
+        background: var(--signal);
+        margin-top: 2px;
+      }
+      .mini .pin {
+        position: absolute;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: var(--signal-solid);
+        color: #fff;
+        font-family: var(--font-mono);
+        font-size: 0.58rem;
+        display: grid;
+        place-items: center;
+        top: 40px;
+        right: 14px;
+        box-shadow: 0 0 0 3px var(--signal-wash);
+      }
+      .sliders {
+        position: absolute;
+        bottom: 10px;
+        left: 12px;
+        right: 12px;
+        display: grid;
+        gap: 5px;
+      }
+      .sliders .sl {
+        height: 4px;
+        border-radius: 3px;
+        background: var(--line);
+        position: relative;
+      }
+      .sliders .sl::after {
+        content: '';
+        position: absolute;
+        top: -3px;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--blue);
+        border: 2px solid var(--surface-2);
+      }
+      .sliders .sl.a::after {
+        left: 30%;
+      }
+      .sliders .sl.b::after {
+        left: 62%;
+      }
+
+      .tree {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        color: var(--ink-soft);
+        line-height: 1.9;
+      }
+      .tree .f {
+        color: var(--ink);
+      }
+      .tree .on {
+        color: var(--signal);
+      }
+      .tree .mut {
+        color: var(--ink-faint);
+      }
+      .verpill {
+        display: inline-block;
+        font-size: 0.58rem;
+        padding: 1px 5px;
+        border-radius: 4px;
+        background: var(--blue-wash);
+        color: var(--blue);
+        margin-left: 6px;
+      }
+
+      .preview {
+        background: var(--paper);
+        background-image:
+          linear-gradient(var(--grid) 1px, transparent 1px),
+          linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+        background-size: 14px 14px;
+        display: grid;
+        place-items: center;
+        position: relative;
+      }
+      .exp-fab {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        color: #fff;
+        background: var(--agent-solid);
+        padding: 4px 9px;
+        border-radius: 6px;
+      }
+
+      .tablewrap {
+        overflow-x: auto;
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        box-shadow: var(--shadow);
+      }
+      table.cmp {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 760px;
+        background: var(--surface);
+        font-size: 0.9rem;
+      }
+      table.cmp th,
+      table.cmp td {
+        text-align: left;
+        padding: 14px 16px;
+        border-bottom: 1px solid var(--line-soft);
+        vertical-align: top;
+      }
+      table.cmp thead th {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        background: var(--paper-2);
+        position: sticky;
+        top: 0;
+      }
+      table.cmp tbody th {
+        font-family: var(--font-body);
+        font-weight: 600;
+        color: var(--ink);
+        font-size: 0.9rem;
+        width: 20%;
+      }
+      table.cmp td {
+        color: var(--ink-soft);
+      }
+      table.cmp tr:last-child td,
+      table.cmp tr:last-child th {
+        border-bottom: 0;
+      }
+      .badge {
+        font-family: var(--font-mono);
+        font-size: 0.64rem;
+        padding: 2px 7px;
+        border-radius: 5px;
+        letter-spacing: 0.03em;
+        white-space: nowrap;
+      }
+      .badge.free {
+        color: var(--good);
+        background: color-mix(in srgb, var(--good) 14%, transparent);
+      }
+      .badge.paid {
+        color: var(--warn);
+        background: color-mix(in srgb, var(--warn) 16%, transparent);
+      }
+      .badge.local {
+        color: var(--blue);
+        background: var(--blue-wash);
+      }
+      .badge.mcp {
+        color: var(--agent);
+        background: var(--agent-wash);
+      }
+
+      .code {
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.7;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+        padding: 16px 18px;
+        overflow-x: auto;
+        color: var(--ink);
+      }
+      .code .c {
+        color: var(--ink-faint);
+      }
+      .code .k {
+        color: var(--signal);
+      }
+      .code .s {
+        color: var(--blue);
+      }
+
+      .alts {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 18px;
+        margin-top: 8px;
+      }
+      @media (max-width: 720px) {
+        .alts {
+          grid-template-columns: 1fr;
+        }
+      }
+      .alt {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface);
+        padding: 22px 22px;
+        box-shadow: var(--shadow);
+      }
+      .alt h3 {
+        font-size: 1.18rem;
+        margin: 0 0 4px;
+        display: flex;
+        align-items: center;
+        gap: 0.5em;
+      }
+      .alt .kk {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        color: var(--signal);
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      .alt p {
+        font-size: 0.9rem;
+        color: var(--ink-soft);
+        margin: 8px 0 0;
+      }
+
+      .check {
+        display: grid;
+        gap: 10px;
+        margin-top: 8px;
+      }
+      .check .it {
+        display: flex;
+        gap: 14px;
+        align-items: flex-start;
+        padding: 15px 18px;
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+        background: var(--surface);
+      }
+      .check .bx {
+        flex: none;
+        width: 22px;
+        height: 22px;
+        border-radius: 6px;
+        border: 2px solid var(--blue);
+        position: relative;
+        margin-top: 1px;
+      }
+      .check .bx::after {
+        content: '';
+        position: absolute;
+        left: 6px;
+        top: 2px;
+        width: 6px;
+        height: 11px;
+        border: solid var(--signal);
+        border-width: 0 2.5px 2.5px 0;
+        transform: rotate(42deg);
+      }
+      .check .it b {
+        color: var(--ink);
+      }
+      .check .it span {
+        color: var(--ink-soft);
+        font-size: 0.92rem;
+      }
+      .check .it .mono {
+        color: var(--blue);
+        font-size: 0.84rem;
+      }
+
+      .facts {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+        margin-top: 8px;
+      }
+      @media (max-width: 700px) {
+        .facts {
+          grid-template-columns: 1fr;
+        }
+      }
+      .fact {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface);
+        padding: 20px 22px;
+      }
+      .fact .big {
+        font-family: var(--font-display);
+        font-size: 2rem;
+        color: var(--blue);
+        font-variant-numeric: tabular-nums;
+      }
+      .fact .lbl {
+        font-size: 0.88rem;
+        color: var(--ink-soft);
+        margin-top: 4px;
+      }
+
+      .gotchas {
+        display: grid;
+        gap: 10px;
+        margin-top: 8px;
+      }
+      .gotchas .g {
+        border: 1px solid var(--line);
+        border-left: 3px solid var(--agent);
+        background: var(--surface);
+        border-radius: var(--r-sm);
+        padding: 14px 18px;
+      }
+      .gotchas .g b {
+        color: var(--agent);
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        letter-spacing: 0.02em;
+        display: block;
+        margin-bottom: 4px;
+      }
+      .gotchas .g span {
+        color: var(--ink-soft);
+        font-size: 0.89rem;
+      }
+
+      footer {
+        padding: 60px 0 80px;
+        border-top: 1px solid var(--line-soft);
+      }
+      footer .prose {
+        color: var(--ink-soft);
+        font-size: 0.95rem;
+      }
+      footer .sig {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        color: var(--ink-faint);
+        letter-spacing: 0.04em;
+        margin-top: 26px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px 14px;
+      }
+
+      .lead-in {
+        font-size: 1.14rem;
+        color: var(--ink);
+        line-height: 1.6;
+      }
+      .lead-in b {
+        color: var(--blue);
+      }
+
+      /* ============================================================
+     Deck-local: shell compartido con project-bootstrap y product-management.
+     ============================================================ */
+      .pipe.five {
+        grid-template-columns: repeat(5, 1fr);
+      }
+      .pipe .node:nth-child(5) {
+        animation-delay: 0.9s;
+      }
+      @media (max-width: 960px) {
+        .pipe.five {
+          grid-template-columns: 1fr 1fr;
+        }
+        .pipe.five .node .arw {
+          display: none;
+        }
+      }
+      @media (max-width: 460px) {
+        .pipe.five {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .lanes {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 18px;
+      }
+      @media (max-width: 860px) {
+        .lanes {
+          grid-template-columns: 1fr;
+        }
+      }
+      .lane {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+      }
+      .lane-head {
+        padding: 12px 18px;
+        border-bottom: 1px solid var(--line);
+        background: var(--paper-2);
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+      }
+      .wf {
+        display: flex;
+        gap: 14px;
+        align-items: flex-start;
+        padding: 14px 18px;
+        border-bottom: 1px solid var(--line-soft);
+        text-decoration: none;
+        color: inherit;
+      }
+      .wf:last-child {
+        border-bottom: 0;
+      }
+      .wf:hover {
+        background: var(--blue-wash);
+      }
+      .wf .lt {
+        flex: none;
+        width: 30px;
+        height: 30px;
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+        font-family: var(--font-mono);
+        font-weight: 700;
+        font-size: 0.9rem;
+        color: #fff;
+        background: var(--blue-solid);
+      }
+      .wf .lt.sig {
+        background: var(--signal-solid);
+      }
+      .wf .lt.agent {
+        background: var(--agent-solid);
+      }
+      .wf b {
+        display: block;
+        color: var(--ink);
+        font-size: 0.97rem;
+      }
+      .wf span {
+        display: block;
+        color: var(--ink-soft);
+        font-size: 0.86rem;
+        line-height: 1.45;
+        margin-top: 2px;
+      }
+
+      .trio {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+        margin-top: 22px;
+      }
+      @media (max-width: 820px) {
+        .trio {
+          grid-template-columns: 1fr;
+        }
+      }
+      .trio > div {
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+        background: var(--surface);
+        padding: 16px 18px;
+        border-top: 3px solid var(--agent);
+      }
+      .trio > div.hum {
+        border-top-color: var(--signal);
+      }
+      .trio > div.out {
+        border-top-color: var(--blue);
+      }
+      .trio .k {
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        display: block;
+        margin-bottom: 6px;
+      }
+      .trio p {
+        margin: 0;
+        font-size: 0.9rem;
+        color: var(--ink-soft);
+      }
+      .trio p + p {
+        margin-top: 8px;
+      }
+      .trio b {
+        color: var(--ink);
+      }
+
+      .gate {
+        margin-top: 14px;
+        font-size: 0.9rem;
+        color: var(--ink);
+        border: 1px dashed var(--blue);
+        border-radius: var(--r-sm);
+        padding: 12px 16px;
+        background: var(--surface);
+      }
+      .gate b {
+        color: var(--blue);
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        margin-right: 0.6em;
+      }
+
+      .levels {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+      }
+      @media (max-width: 860px) {
+        .levels {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .title-demo {
+        font-family: var(--font-mono);
+        font-size: clamp(0.82rem, 2.4vw, 1.05rem);
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+        padding: 14px 16px;
+        overflow-wrap: anywhere;
+      }
+      .title-demo .f {
+        color: var(--blue);
+        font-weight: 600;
+      }
+      .title-demo .p {
+        color: var(--signal);
+        font-weight: 700;
+      }
+      .title-demo .a {
+        color: var(--ink);
+      }
+      .title-demo.bad {
+        text-decoration: line-through;
+        text-decoration-color: var(--signal);
+        color: var(--ink-faint);
+      }
+
+      .code.gk {
+        white-space: pre;
+      }
+      .code .g {
+        color: var(--agent);
+        font-weight: 600;
+      }
+
+      .sprints {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        margin-top: 8px;
+      }
+      @media (max-width: 700px) {
+        .sprints {
+          grid-template-columns: 1fr;
+        }
+      }
+      .sprint {
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+        background: var(--surface);
+        padding: 14px 16px;
+      }
+      .sprint .n {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--signal);
+      }
+      .sprint .ks {
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        color: var(--ink);
+        margin-top: 6px;
+      }
+      .sprint p {
+        margin: 6px 0 0;
+        font-size: 0.85rem;
+        color: var(--ink-soft);
+      }
+
+      .hosts {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 14px;
+      }
+      @media (max-width: 820px) {
+        .hosts {
+          grid-template-columns: 1fr;
+        }
+      }
+      .host {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface);
+        padding: 18px 20px;
+        box-shadow: var(--shadow);
+      }
+      .host h3 {
+        font-size: 1.12rem;
+        margin: 0 0 10px;
+      }
+      .host .say {
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        background: var(--blue-wash);
+        border: 1px solid var(--line-soft);
+        border-radius: 7px;
+        padding: 8px 12px;
+        display: block;
+        overflow-wrap: anywhere;
+      }
+      .host p {
+        font-size: 0.86rem;
+        color: var(--ink-soft);
+        margin: 10px 0 0;
+      }
+      .planes > *,
+      .lanes > *,
+      .levels > *,
+      .hosts > * {
+        min-width: 0;
+      }
+      .plane .mono,
+      .callout .mono {
+        overflow-wrap: anywhere;
+      }
+      table.cmp.narrow {
+        min-width: 0;
+      }
+      /* Deck-local (tooling): long command tokens wrap inside steps on narrow screens. */
+      .steps > * {
+        min-width: 0;
+      }
+      .step .mono {
+        overflow-wrap: anywhere;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="topbar">
+      <a class="brand" href="../../index.html"
+        ><span class="mark"></span> <b>Blueprints</b> · agentic-dev-boilerplate</a
+      >
+      <nav class="topnav">
+        <a href="#cuando">When</a>
+        <a href="#regla">Rule</a>
+        <a href="#acli">acli</a>
+        <a href="#texto">Rich text</a>
+        <a href="#scripts">jira:*</a>
+        <a href="#deploy">Deploy</a>
+        <a href="#vercel-ops">Env and rollback</a>
+        <a href="#arranque">Startup</a>
+        <a href="#invocar">Invoke</a>
+      </nav>
+      <button class="themebtn" id="themebtn" aria-label="Cambiar tema">
+        <span id="themeicon">◐</span> theme
+      </button>
+    </div>
+
+    <!-- ============ HERO ============ -->
+    <header class="hero">
+      <div class="wrap">
+        <div class="kicker eyebrow"><span class="num">00</span> · tooling</div>
+        <h1>Before the binary, <em>the skill</em> that knows how to <span class="sig">use it</span>.</h1>
+        <p class="lede">
+          <span class="mono">/acli</span> and <span class="mono">/vercel-cli</span> are skills of type
+          <span class="mono">utility</span>: they don't run a workflow, they teach the AI to use a
+          binary the workflow needs. This deck puts those two together with the
+          <span class="mono">bun run jira:*</span> scripts that live around <span class="mono">acli</span>, and
+          the <span class="mono">.env</span> loader and the startup and credentials commands
+          (<span class="mono">setup:doctor</span>, <span class="mono">harness:env</span>) that decide whether an
+          MCP server starts with its key or without it.
+        </p>
+
+        <div class="hero-meta">
+          <span class="chip"><span class="dot"></span> for whoever <b>develops</b> or <b>maintains</b></span>
+          <span class="chip"><span class="dot"></span> exact commands, not theory</span>
+          <span class="chip agent"
+            ><span class="dot"></span> a green receipt proves <b>nothing</b></span
+          >
+        </div>
+
+        <div class="pipe" id="pipe">
+          <div class="node">
+            <div class="n">Binary</div>
+            <h3>Shows up in the plan</h3>
+            <p><span class="mono">acli</span>, <span class="mono">vercel</span>, <span class="mono">gh</span>, <span class="mono">bun</span>…</p>
+            <div class="arw">→</div>
+          </div>
+          <div class="node">
+            <div class="n">Skill</div>
+            <h3>Loads first</h3>
+            <p>The one with that binary's syntax, flags, auth and traps.</p>
+            <div class="arw">→</div>
+          </div>
+          <div class="node">
+            <div class="n">Command</div>
+            <h3>In its exact form</h3>
+            <p>Values resolved from their owners: <span class="mono">.agents/project.yaml</span>, the catalogs, <span class="mono">.env</span>.</p>
+            <div class="arw">→</div>
+          </div>
+          <div class="node">
+            <div class="n">Verify</div>
+            <h3>At the destination</h3>
+            <p>Re-read the issue, the deploy or the file. The green receipt doesn't count.</p>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- ============ §01 CUÁNDO ============ -->
+    <section class="band" id="cuando">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">01</span> · when they apply</div>
+          <h2>When the work touches Jira or Vercel from the terminal</h2>
+          <p class="sub">
+            Neither one decides what to do: that belongs to the workflow skill that calls them. They
+            answer <b>how</b> to do it without breaking anything.
+          </p>
+        </div>
+
+        <div class="planes r">
+          <div class="plane">
+            <div class="tag">They apply when</div>
+            <h3>A binary is involved</h3>
+            <ul>
+              <li>
+                <b><span class="mono">/acli</span></b>: create, transition, comment, link or bulk-operate on
+                Jira issues; authenticate against an Atlassian site from the shell or CI.
+              </li>
+              <li>
+                <b><span class="mono">/vercel-cli</span></b>: "is my deploy live yet?", sync env
+                vars with Vercel, read build or runtime logs, roll back, detect whether the directory is
+                linked.
+              </li>
+              <li>
+                Both load on their own when a command names their binary (§02), even if nobody says their
+                name.
+              </li>
+            </ul>
+          </div>
+          <div class="plane sig">
+            <div class="tag">They don't apply to</div>
+            <h3>What belongs to another skill</h3>
+            <ul>
+              <li>
+                <b>Reading a ticket's content</b> (ACs, plan, bug fields): that is
+                <span class="mono">bun run jira:sync-issues get &lt;KEY&gt;</span>, not
+                <span class="mono">acli</span>.
+              </li>
+              <li>
+                <b>Choosing how to deploy or link for the first time</b>: the community skill
+                <span class="mono">/deploy-to-vercel</span>.
+              </li>
+              <li>
+                <b>Running a story's deploy stage</b>:
+                <span class="mono">/sprint-development</span>, stages 4 and 5. <span class="mono">/vercel-cli</span>
+                lends it the verbs.
+              </li>
+              <li>
+                <b>The Atlassian MCP server</b>: it is opt-in and documented in
+                <span class="mono">docs/mcp/</span>.
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §02 LA REGLA ============ -->
+    <section class="band" id="regla">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">02</span> · the rule that orders everything</div>
+          <h2>Binary named, skill loaded. Before, not after</h2>
+          <p class="sub">
+            <span class="mono">.agents/instructions/agent-tool-resolution.md</span> §6.5 calls it a hard gate, not a suggestion: before
+            any Bash call that names a binary from that table, the AI checks that its skill is
+            loaded in the session and loads it if not. Skipping the step means flying blind on syntax,
+            flags, auth and error semantics.
+          </p>
+        </div>
+
+        <div class="tablewrap r">
+          <table class="cmp">
+            <thead>
+              <tr>
+                <th>If the command names</th>
+                <th>Loads</th>
+                <th>What the skill brings</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th><span class="mono">acli</span> · <span class="mono">jq</span></th>
+                <td><span class="mono">/acli</span></td>
+                <td>Slug syntax, custom field IDs, and parsing of the <span class="mono">--json</span> output</td>
+              </tr>
+              <tr>
+                <th><span class="mono">vercel</span></th>
+                <td><span class="mono">/vercel-cli</span> (+ <span class="mono">/deploy-to-vercel</span>, <span class="mono">/sprint-development</span>)</td>
+                <td>Verification, env, debug and rollback; the deploy method; the deploy stages</td>
+              </tr>
+              <tr>
+                <th>any other one in the table</th>
+                <td>the skill that <span class="mono">.agents/instructions/agent-tool-resolution.md</span> §6.5 names</td>
+                <td>The table is the only list; this deck doesn't copy it</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="steps r" style="margin-top: 26px">
+          <div class="step">
+            <h3>CLI first, MCP as fallback</h3>
+            <p>
+              <span class="mono">.agents/instructions/agent-tool-resolution.md</span> §6 resolves tool labels with the CLI as
+              the primary option because it spends fewer tokens. <span class="mono">[ISSUE_TRACKER_TOOL]</span> is
+              <span class="mono">/acli</span>; the Atlassian MCP stays as an opt-in fallback.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Workflow skills don't call the binary</h3>
+            <p>
+              They write the label (<span class="mono">[ISSUE_TRACKER_TOOL]</span>) and the AI resolves it.
+              That indirection is what lets you swap the tool without rewriting the methodology.
+            </p>
+          </div>
+          <div class="step">
+            <h3>When in doubt, <span class="mono">--help</span></h3>
+            <p>
+              It is the authoritative source and is tied to the installed binary. Watch out with
+              <span class="mono">acli</span>: a subcommand that doesn't exist falls back to the parent's help with
+              exit 0. Read the body of the help, not the exit code.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §03 ACLI ============ -->
+    <section class="band" id="acli">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">03</span> · /acli</div>
+          <h2>Authenticate, read the right way, write with slugs</h2>
+          <p class="sub">
+            <span class="mono">acli</span> is Atlassian's official CLI. What is specific to this repo lives in
+            <span class="mono">agentic-dev-core/references/acli-integration.md</span>.
+          </p>
+        </div>
+
+        <div class="trio r">
+          <div>
+            <span class="k">before mutating</span>
+            <p><b>Fresh auth.</b> <span class="mono">acli jira auth status</span> before any bulk mutation and before every <span class="mono">bun run jira:sync-*</span>.</p>
+            <p>An expired session cuts a batch in half with a 401 and no clean rollback; in a sync, it silently poisons the catalogs.</p>
+          </div>
+          <div class="hum">
+            <span class="k">your call</span>
+            <p><b>Production Jira from your machine.</b> Transitions, deletions and bulk edits can't be undone.</p>
+            <p><span class="mono">--yes</span> is fine in CI against an agreed scope; <span class="mono">--yes</span> by hand against production is not: every operation asks for your confirmation.</p>
+          </div>
+          <div class="out">
+            <span class="k">the site</span>
+            <p><b>Comes from the yaml.</b> <span class="mono">--site "$(bun run --silent jira:url --slug)"</span>, with email and token from <span class="mono">.env</span>.</p>
+            <p>Auth is per product: <span class="mono">jira auth</span> doesn't authenticate <span class="mono">confluence</span> or <span class="mono">admin</span>.</p>
+          </div>
+        </div>
+
+        <div class="tablewrap r" style="margin-top: 26px">
+          <table class="cmp">
+            <thead>
+              <tr>
+                <th>Operation</th>
+                <th>Tool</th>
+                <th>Why</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th>Detail read (ACs, scope, plan, bug fields, comments)</th>
+                <td><span class="mono">bun run jira:sync-issues get &lt;KEY&gt; --include-comments</span></td>
+                <td><span class="mono">acli</span> <span class="mono">view</span> returns <span class="mono">null</span> in custom fields; the sync resolves slugs and writes one <span class="mono">.md</span> per field</td>
+              </tr>
+              <tr>
+                <th>Write (create, transition, comment, link, assign)</th>
+                <td><span class="mono">/acli</span></td>
+                <td>The sync is read-only; every mutation goes through <span class="mono">acli</span></td>
+              </tr>
+              <tr>
+                <th>Trivial search (key, summary, status)</th>
+                <td><span class="mono">acli ... search --paginate --json</span></td>
+                <td>Without <span class="mono">--paginate</span> it returns the first page and doesn't warn you</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="steps r" style="margin-top: 26px">
+          <div class="step">
+            <h3>Slugs, never IDs</h3>
+            <p>
+              A custom field is <span class="mono">{{jira.&lt;slug&gt;}}</span>, resolved against
+              <span class="mono">.agents/jira-fields.json</span>; a status or a transition, against
+              <span class="mono">.agents/jira-workflows.json</span>. IDs change per workspace, slugs
+              travel. If a slug doesn't resolve: stop, report and run the matching sync. Never a
+              placeholder literal.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Links: the flags are inverted</h3>
+            <p>
+              <span class="mono">link create --out X --in Y</span> leaves "Y depends on X", the opposite of what the
+              names suggest. <span class="mono">--out</span> carries the prerequisite,
+              <span class="mono">--in</span> the dependent. After every link,
+              <span class="mono">link list --key &lt;dependent&gt; --json</span> has to show the
+              prerequisite as <span class="mono">outwardIssueKey</span>; if not, delete it and recreate it.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Errors: keep the trace id</h3>
+            <p>
+              <span class="mono">unexpected error, trace id: …</span> is the only debugging signal the
+              backend gives, and the only one Atlassian support accepts. Always capture it and report it.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §04 TEXTO RICO ============ -->
+    <section class="band" id="texto">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">04</span> · /acli · rich text</div>
+          <h2>Markdown in, ADF out, and the size measured first</h2>
+          <p class="sub">
+            Jira stores descriptions, comments and rich text fields as ADF, a JSON tree.
+            <span class="mono">acli</span> never converts Markdown: a <span class="mono"># Title</span>
+            passed as is gets stored as that literal text.
+          </p>
+        </div>
+
+        <pre class="code r"><span class="c"># 1. write in Markdown · 2. convert (validates by default)</span>
+bun .agents/skills/acli/scripts/md-to-adf.ts <span class="s">body.md body.adf.json</span>
+
+<span class="c"># 3. measure the FULL value as it will be stored</span>
+jq -c . <span class="s">body.adf.json</span> | wc -m <span class="c"># must stay at 30000 or less</span>
+
+<span class="c"># ADF built outside the converter (create payload, PUT body): validate it anyway</span>
+bun .agents/skills/acli/scripts/md-to-adf.ts --check <span class="s">field.adf.json</span></pre>
+
+        <div class="trio r">
+          <div>
+            <span class="k">the AI does it</span>
+            <p><b>Never hand-written ADF.</b> The converter is deterministic, diffable, respects snake_case and stops the combined-marks bug (inline code next to bold or italic gives HTTP 400).</p>
+          </div>
+          <div class="hum">
+            <span class="k">your call</span>
+            <p><b>If it goes over budget.</b> Jira cuts at 32,767 characters of the serialized ADF, not of the Markdown. Past the limit the AI stops and proposes which sections to move and where.</p>
+            <p>It never truncates or splits a value across two fields.</p>
+          </div>
+          <div class="out">
+            <span class="k">where it goes</span>
+            <p><b>Depends on the surface.</b> <span class="mono">--from-json</span> on <span class="mono">workitem create</span>; <span class="mono">--description-file</span> on <span class="mono">edit</span>; <span class="mono">comment create -F</span>; <span class="mono">comment update --body-adf</span>.</p>
+          </div>
+        </div>
+
+        <div class="callout r">
+          <b><span class="mono">workitem edit</span> rejects custom fields.</b> Any form
+          (<span class="mono">additionalAttributes</span>, <span class="mono">fields</span>,
+          <span class="mono">customfield_X</span> flat) ends in exit 1. To fix a rich text field
+          on an issue that already exists, the only way is REST:
+          <span class="mono">PUT "$(bun run --silent jira:url)/rest/api/3/issue/&lt;KEY&gt;"</span> con
+          <span class="mono">{"fields": {...}}</span> and <span class="mono">ATLASSIAN_EMAIL</span> /
+          <span class="mono">ATLASSIAN_API_TOKEN</span> from the session. Success is HTTP 204, and you still
+          re-read the field: Jira silently drops some invalid nodes.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §05 SCRIPTS JIRA ============ -->
+    <section class="band" id="scripts">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">05</span> · the scripts around acli</div>
+          <h2><span class="mono">bun run jira:*</span>: the host, the catalogs and the check</h2>
+          <p class="sub">
+            The exact names come from <span class="mono">package.json</span>, the only source.
+            These scripts talk to Jira's REST API using the same credentials from
+            <span class="mono">.env</span>.
+          </p>
+        </div>
+
+        <div class="tablewrap r">
+          <table class="cmp">
+            <thead>
+              <tr>
+                <th>Script</th>
+                <th>Does</th>
+                <th>Watch out</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th><span class="mono">jira:url</span></th>
+                <td>Prints the active host from <span class="mono">.agents/project.yaml</span> → <span class="mono">issue_tracker.atlassian_url</span>. With <span class="mono">--slug</span>, no scheme, for <span class="mono">acli --site</span></td>
+                <td>Use it with <span class="mono">--silent</span> inside <span class="mono">$(...)</span>. Never trim the <span class="mono">https://</span> by hand</td>
+              </tr>
+              <tr>
+                <th><span class="mono">jira:sync-fields</span></th>
+                <td>Writes <span class="mono">.agents/jira-fields.json</span>: slug → custom field ID and its options</td>
+                <td>If the catalog is already populated, it asks for <span class="mono">--force</span></td>
+              </tr>
+              <tr>
+                <th><span class="mono">jira:sync-workflows</span></th>
+                <td>Writes <span class="mono">.agents/jira-workflows.json</span>: statuses and transitions per work type</td>
+                <td>Reads the project key from <span class="mono">.agents/project.yaml</span></td>
+              </tr>
+              <tr>
+                <th><span class="mono">jira:sync-link-types</span></th>
+                <td>Writes <span class="mono">.agents/jira-link-types.json</span>: link types between issues</td>
+                <td>By hand only: neither <span class="mono">setup</span> nor CI runs it</td>
+              </tr>
+              <tr>
+                <th><span class="mono">jira:check</span></th>
+                <td>Compares <span class="mono">.agents/jira-required.yaml</span> against the catalog: a missing required field = exit 1</td>
+                <td><span class="mono">--live</span> also compares the workflows cache against live Jira (warnings only)</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="planes r" style="margin-top: 26px">
+          <div class="plane">
+            <div class="tag">The host anchor</div>
+            <h3><span class="mono">ATLASSIAN_URL</span> is not a <span class="mono">.env</span> variable</h3>
+            <ul>
+              <li>
+                The host lives in the yaml and nowhere else: a second copy is the one that goes stale and
+                points the scripts at a dead site while reporting success.
+              </li>
+              <li>
+                If an inherited variable disagrees, the yaml wins and the resolver warns with both values.
+                <span class="mono">setup:doctor</span> flags it for deletion.
+              </li>
+            </ul>
+          </div>
+          <div class="plane agent">
+            <div class="tag">They live in another deck</div>
+            <h3>Two families with their own owner</h3>
+            <ul>
+              <li>
+                <span class="mono">jira:sync-issues</span> and <span class="mono">context:hydrate</span>, the cache
+                of <span class="mono">.context/PBI/</span>:
+                <a href="../agentic-dev-core/pbi-jira-cache.en.html">PBI as a Jira cache</a>.
+              </li>
+              <li>
+                <span class="mono">jira:components</span> and regenerating catalogs after moving
+                instances: <a href="../jira-administration/how-it-works.en.html#components">jira-administration</a>.
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §06 DEPLOY ============ -->
+    <section class="band" id="deploy">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">06</span> · /vercel-cli · verify</div>
+          <h2>Is <em>my</em> deploy live? By SHA, and really waiting</h2>
+          <p class="sub">
+            An accepted push or a queued build doesn't say the deploy finished (Critical Rule #16). The
+            question has only one correct form: find this commit's deploy and block until a final
+            state.
+          </p>
+        </div>
+
+        <pre class="code r"><span class="c"># the SHA of the commit you expect to see deployed</span>
+SHA=$(git rev-parse <span class="s">HEAD</span>)
+
+<span class="c"># 1. find ITS deploy: metadata filter + JSON, never grep (retry for a few seconds until it shows up)</span>
+vercel ls -m githubCommitSha=<span class="s">"$SHA"</span> --format json | jq -r <span class="s">'.deployments[0].url // empty'</span>
+
+<span class="c"># 2. block until READY / ERROR / CANCELED · exit 0 only on READY</span>
+vercel inspect <span class="s">"https://$URL"</span> --wait --timeout=10m</pre>
+
+        <div class="steps r">
+          <div class="step">
+            <h3><span class="mono">--no-wait</span> on deploy, <span class="mono">--wait</span> on inspect</h3>
+            <p>
+              This is the asymmetry that confuses most: <span class="mono">vercel deploy</span> blocks by default and
+              <span class="mono">vercel inspect</span> doesn't. Get it backwards and you either wait ten minutes for a URL you
+              needed already, or run the smoke test against an unfinished build.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Uppercase states</h3>
+            <p>
+              <span class="mono">--status READY</span> works; <span class="mono">--status ready</span>
+              returns empty and gives no error. And always <span class="mono">--format json</span>: the human table
+              carries ANSI colors that break any regex.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Which commit to look at</h3>
+            <p>
+              Stage 4: the commit on the integration branch, <span class="mono">git_strategy.branches.integration</span>
+              in <span class="mono">.agents/project.yaml</span>. If it is <span class="mono">null</span>, as in
+              <span class="mono">solo-main</span>, the staging surface is the PR branch's Preview.
+              Stage 5: the production deploy.
+            </p>
+          </div>
+        </div>
+
+        <div class="callout blue r">
+          <b>If the URL never shows up</b>, it isn't a script problem: the Vercel webhook didn't
+          fire, the production branch is misconfigured in the Vercel project, or the directory
+          isn't linked (<span class="mono">.vercel/project.json</span> or
+          <span class="mono">.vercel/repo.json</span>). To link for the first time:
+          <span class="mono">/deploy-to-vercel</span>.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §07 ENV, LOGS, ROLLBACK ============ -->
+    <section class="band" id="vercel-ops">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">07</span> · /vercel-cli · operate</div>
+          <h2>Env vars by scope, logs and rollback</h2>
+          <p class="sub">
+            The operations around the deploy. The only safe probe in an unlinked directory is
+            <span class="mono">vercel whoami</span>; <span class="mono">ls</span> or <span class="mono">link</span>
+            ask questions, or with <span class="mono">--yes</span> they link as a side effect.
+          </p>
+        </div>
+
+        <div class="tablewrap r">
+          <table class="cmp">
+            <thead>
+              <tr>
+                <th>Scope (CLI)</th>
+                <th>Used in</th>
+                <th>Rule</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th><span class="mono">production</span></th>
+                <td>The production branch</td>
+                <td rowspan="2">Every runtime key that <span class="mono">.env.example</span> declares has to exist in both before the deploy</td>
+              </tr>
+              <tr>
+                <th><span class="mono">preview</span></th>
+                <td>Any other branch</td>
+              </tr>
+              <tr>
+                <th><span class="mono">development</span></th>
+                <td><span class="mono">vercel dev</span> and <span class="mono">vercel env pull</span></td>
+                <td>The pull writes <span class="mono">.env.local</span>, gitignored: it is never committed</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="trio r" style="margin-top: 26px">
+          <div>
+            <span class="k">env vars</span>
+            <p><b>Diff before pushing.</b> Local keys against <span class="mono">vercel env ls preview --format json</span>; a blind push overwrites values that were different on purpose.</p>
+            <p>Never <span class="mono">ATLASSIAN_*</span>, <span class="mono">N8N_*</span> or <span class="mono">SUPABASE_ACCESS_TOKEN</span> in Vercel: they are the agent's credentials, not the runtime's.</p>
+          </div>
+          <div class="hum">
+            <span class="k">your call</span>
+            <p><b>Rollback or forward-fix.</b> If the fix is clear, commit and push; if the bug only shows in production, roll back and debug calmly.</p>
+            <p>A rollback doesn't undo database migrations, sent emails or changed flags.</p>
+          </div>
+          <div class="out">
+            <span class="k">logs</span>
+            <p><b>Build:</b> <span class="mono">vercel inspect &lt;url&gt; --logs</span>.</p>
+            <p><b>Runtime:</b> <span class="mono">vercel logs &lt;url&gt; --follow</span>.</p>
+            <p>An env change doesn't redeploy by itself: a new deploy is needed.</p>
+          </div>
+        </div>
+
+        <pre class="code r"><span class="c"># rollback: the previous production deploy, promoted; then verify the alias</span>
+vercel ls --prod --status READY --format json
+vercel rollback <span class="s">&lt;healthy-deploy-url&gt;</span>
+vercel inspect <span class="s">&lt;production-alias&gt;</span> --wait --timeout=2m</pre>
+
+        <div class="callout r">
+          <b>Accounts with several teams:</b> <span class="mono">--scope &lt;team-slug&gt;</span> on every
+          command that modifies. With the directory linked, the <span class="mono">orgId</span> in
+          <span class="mono">.vercel/project.json</span> resolves the team and the flag is not needed. The full
+          rollback procedure (Jira transitions, incident note) belongs to
+          <span class="mono">/sprint-development</span>, stage 5; this skill provides the execution.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §08 ARRANQUE Y CREDENCIALES ============ -->
+    <section class="band" id="arranque">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">08</span> · startup and credentials</div>
+          <h2>A missing credential doesn't announce itself: you have to go looking for it</h2>
+          <p class="sub">
+            The harness reads its config and launches the MCP servers before any hook runs. Every
+            server that needs a key starts with the <span class="mono">.env</span> loader
+            (<span class="mono">varlock run --filter</span>), which reads it from <span class="mono">.env</span> at
+            that moment, however the harness was launched. If the key is missing, the server starts anyway
+            and only fails on its first authenticated call (Critical Rule #9).
+          </p>
+        </div>
+
+        <div class="tablewrap r">
+          <table class="cmp">
+            <thead>
+              <tr>
+                <th>Command</th>
+                <th>What it solves</th>
+                <th>When</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th><span class="mono">claude</span> · <span class="mono">opencode</span> · <span class="mono">codex</span></th>
+                <td>The bare binary, with no wrapper script: nothing loads <span class="mono">.env</span> into the agent's process, so no secret reaches the AI's shell. Each MCP server reads <span class="mono">.env</span> with the <span class="mono">.env</span> loader</td>
+                <td>Every time you open the agent from the terminal (or its desktop app)</td>
+              </tr>
+              <tr>
+                <th><span class="mono">bun run vars:env:check</span></th>
+                <td>Names the variable the shell exports with a value different from the one in <span class="mono">.env</span> (under varlock the inherited one wins). Names and lengths only</td>
+                <td>When an MCP behaves as if <span class="mono">.env</span> didn't exist</td>
+              </tr>
+              <tr>
+                <th><span class="mono">bun run harness:env</span></th>
+                <td>Removes the plain-text copies an old install used to write (the <span class="mono">env</span> block of <span class="mono">.claude/settings.local.json</span>, <span class="mono">.auth/opencode/&lt;VAR&gt;</span>): if it matches <span class="mono">.env</span> it deletes it, if not it moves it to <span class="mono">.auth/harness-env-backup/</span> and names it. Never prints a value</td>
+                <td>Once, on a machine that ran the old version. After a change in <span class="mono">.env</span>, restarting the session is enough</td>
+              </tr>
+              <tr>
+                <th><span class="mono">bun run harness:env:check</span></th>
+                <td>Exits with 1 while one of those copies is left</td>
+                <td>To confirm none is left</td>
+              </tr>
+              <tr>
+                <th><span class="mono">bun run setup:doctor</span></th>
+                <td>Read-only check: env vars, the Atlassian host, dependencies, the contract between harnesses, the plain-text copies left over, where the secrets come from (<span class="mono">.env</span> or the secret manager), the harness-level MCPs this machine declares. With <span class="mono">--json</span>, a list of pending actions</td>
+                <td>When setting up, and on any odd tool failure</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="planes r" style="margin-top: 26px">
+          <div class="plane sig">
+            <div class="tag">The signal</div>
+            <h3>A 401, a 403 or a mysterious failure</h3>
+            <ul>
+              <li>Don't wait for a parse error: it isn't coming.</li>
+              <li>
+                The loader hands the server the variable empty or undefined, and nobody says anything. The check is
+                <span class="mono">/mcp</span> inside the session; <span class="mono">bunx varlock load --agent</span>
+                shows, redacted, which value fails the schema.
+              </li>
+            </ul>
+          </div>
+          <div class="plane">
+            <div class="tag">What the AI does</div>
+            <h3>Stop, no shortcuts</h3>
+            <ul>
+              <li>It tells you the exact variable and sends you to <span class="mono">.env</span> / <span class="mono">.env.example</span>.</li>
+              <li>
+                It asks you to <b>restart the agent session</b>: the environment was fixed when the MCPs started.
+                In OpenCode, also <span class="mono">opencode service restart</span>.
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §09 OTRAS HERRAMIENTAS ============ -->
+    <section class="band" id="otros">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">09</span> · tools with their own deck</div>
+          <h2>The ones this deck only names</h2>
+          <p class="sub">
+            Each one has an owner skill that already explains its workflow. Here is a pointer, not a copy.
+          </p>
+        </div>
+
+        <div class="tablewrap r">
+          <table class="cmp">
+            <thead>
+              <tr>
+                <th>Tool</th>
+                <th>Owner</th>
+                <th>Where to read it</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th><span class="mono">bun run context:map</span></th>
+                <td>the business map skills (<span class="mono">business-*-context</span>)</td>
+                <td><a href="../context-skills/how-it-works.en.html#leer">context-skills · reading the map</a>; how it is generated: <a href="../project-context/how-it-works.en.html#skill">project-context</a></td>
+              </tr>
+              <tr>
+                <th><span class="mono">bun run git:policy</span></th>
+                <td><span class="mono">/git-flow-master</span></td>
+                <td><a href="../git-flow-master/how-it-works.en.html#paridad">git-flow-master · parity</a></td>
+              </tr>
+              <tr>
+                <th><span class="mono">bun run worktree:provision</span> · <span class="mono">worktree:audit</span></th>
+                <td><span class="mono">/git-flow-master</span> (and the <span class="mono">/orca-orchestration</span> fleet)</td>
+                <td><a href="../git-flow-master/how-it-works.en.html#worktrees">git-flow-master · worktrees</a></td>
+              </tr>
+              <tr>
+                <th><span class="mono">orca</span></th>
+                <td><span class="mono">/orca-orchestration</span></td>
+                <td><a href="../orca-orchestration/how-it-works.en.html#gate">orca-orchestration · the gate</a></td>
+              </tr>
+              <tr>
+                <th><span class="mono">playwright-cli</span></th>
+                <td><span class="mono">/playwright-cli</span>, with the repo's own rules in <span class="mono">/sprint-development</span></td>
+                <td><a href="../sprint-development/how-it-works.en.html#app-viva">sprint-development · live app</a></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §10 INVOCAR ============ -->
+    <section class="band" id="invocar">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">10</span> · what you tell the AI</div>
+          <h2>Invoking them in each terminal</h2>
+          <p class="sub">
+            They are skills without modes. You almost never need to name them: they load on their own when the command
+            names their binary. When you want to force them, like this:
+          </p>
+        </div>
+
+        <div class="hosts r">
+          <div class="host">
+            <h3>Claude Code</h3>
+            <span class="say">/acli · /vercel-cli</span>
+            <p>The skill's slash command, through the generated alias <span class="mono">.claude/skills</span>.</p>
+          </div>
+          <div class="host">
+            <h3>OpenCode</h3>
+            <span class="say">load the acli skill</span>
+            <p>No slash command: you name the skill in the sentence. It reads <span class="mono">.agents/skills/</span> natively.</p>
+          </div>
+          <div class="host">
+            <h3>Codex</h3>
+            <span class="say">load the vercel-cli skill</span>
+            <p>Same pattern as OpenCode, in the CLI or Desktop.</p>
+          </div>
+          <div class="host">
+            <h3>Pi</h3>
+            <span class="say">/skill:acli</span>
+            <p>Slash command with the <span class="mono">/skill:</span> prefix. In a new folder, <span class="mono">/trust</span> once.</p>
+          </div>
+        </div>
+
+        <pre class="code r"><span class="c"># phrases that trigger them without naming them</span>
+<span class="s">"transition these stories to In Review"</span>      <span class="c"># → /acli</span>
+<span class="s">"is this commit's deploy live yet?"</span>     <span class="c"># → /vercel-cli</span>
+<span class="s">"sync the env vars with Vercel Preview"</span>  <span class="c"># → /vercel-cli</span></pre>
+      </div>
+    </section>
+
+    <!-- ============ §11 HANDOFFS ============ -->
+    <section class="band" id="handoffs">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">11</span> · around these skills</div>
+          <h2>Who calls them</h2>
+          <p class="sub">
+            They provide the verbs; another skill runs the workflow. Both resolve their complementary categories
+            from <span class="mono">.agents/skills/REGISTRY.md</span>.
+          </p>
+        </div>
+
+        <div class="alts r">
+          <div class="alt">
+            <div class="kk">Calls both</div>
+            <h3>/sprint-development</h3>
+            <p>
+              Jira transitions (stages 1, 3 and 4) and deploy verification in stages 4 and 5. Deck:
+              <a href="../sprint-development/how-it-works.en.html#staging">staging</a> and
+              <a href="../sprint-development/how-it-works.en.html#produccion">production</a>.
+            </p>
+          </div>
+          <div class="alt">
+            <div class="kk">Calls /acli</div>
+            <h3>/product-management</h3>
+            <p>
+              Bulk creation from CSV and the sprint report by JQL. Deck:
+              <a href="../product-management/how-it-works.en.html">product-management</a>.
+            </p>
+          </div>
+          <div class="alt">
+            <div class="kk">Before the push that triggers Vercel</div>
+            <h3>/git-flow-master</h3>
+            <p>
+              Owner of the push, branch protection and the PR. You push there first, then come back here to
+              verify. Deck: <a href="../git-flow-master/how-it-works.en.html">git-flow-master</a>.
+            </p>
+          </div>
+        </div>
+
+        <div class="callout blue r">
+          <b>To read more:</b>
+          <a href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/.agents/skills/acli/SKILL.md"
+            >.agents/skills/acli/SKILL.md</a
+          >,
+          <a href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/.agents/skills/agentic-dev-core/references/acli-integration.md"
+            >acli-integration.md</a
+          >
+          y
+          <a href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/.agents/skills/vercel-cli/SKILL.md"
+            >.agents/skills/vercel-cli/SKILL.md</a
+          >, each with its own <span class="mono">references/</span>. The loading rule is in
+          <span class="mono">.agents/instructions/agent-tool-resolution.md</span> §6.5; the startup per harness, in <span class="mono">.agents/instructions/agent-harnesses.md</span> §5.5.
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <div class="wrap">
+        <div class="prose">
+          <p>
+            <b style="color: var(--ink)">The underlying idea.</b> Each of these tools has a
+            way of failing silently: a page truncated without warning, a dropped field, a deploy that
+            is still building, an MCP server without its key. That is why the skill loads before the
+            binary, and why the result is verified at the destination.
+          </p>
+        </div>
+        <div class="sig">
+          <span>Source: <span class="mono">.agents/skills/acli/</span> · <span class="mono">.agents/skills/vercel-cli/</span></span>
+          <span>·</span>
+          <span><a href="../../index.html">← back to Blueprints</a></span>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      // theme toggle
+      (function () {
+        var root = document.documentElement;
+        var btn = document.getElementById('themebtn');
+        var icon = document.getElementById('themeicon');
+        function current() {
+          var t = root.getAttribute('data-theme');
+          if (t) return t;
+          return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+            ? 'dark'
+            : 'light';
+        }
+        function setIcon() {
+          icon.textContent = current() === 'dark' ? '☾' : '☀';
+        }
+        setIcon();
+        btn.addEventListener('click', function () {
+          var next = current() === 'dark' ? 'light' : 'dark';
+          root.setAttribute('data-theme', next);
+          setIcon();
+        });
+        if (window.matchMedia) {
+          window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', setIcon);
+        }
+      })();
+
+      // hero pipeline animation
+      (function () {
+        var reduce =
+          window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var pipe = document.getElementById('pipe');
+        if (pipe && !reduce) {
+          var io = new IntersectionObserver(
+            function (es) {
+              es.forEach(function (e) {
+                if (e.isIntersecting) {
+                  pipe.classList.add('reveal-pipe');
+                  io.disconnect();
+                }
+              });
+            },
+            { threshold: 0.3 }
+          );
+          io.observe(pipe);
+        } else if (pipe) {
+          pipe.classList.add('reveal-pipe');
+        }
+      })();
+
+      // scroll reveal
+      (function () {
+        var reduce =
+          window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var els = document.querySelectorAll('.r');
+        if (reduce) {
+          els.forEach(function (el) {
+            el.classList.add('in');
+          });
+          return;
+        }
+        var io = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (e) {
+              if (e.isIntersecting) {
+                e.target.classList.add('in');
+                io.unobserve(e.target);
+              }
+            });
+          },
+          { threshold: 0.12, rootMargin: '0px 0px -8% 0px' }
+        );
+        els.forEach(function (el) {
+          io.observe(el);
+        });
+      })();
+    </script>
+    <!-- ============ MOBILE (UPEX): scroll deck, reflow by CSS, no scale-to-fit or swipe ============
+         The decks in this repo are pages read by scrolling and rearranged with @media.
+         There are no slides to scale or swipe through: this block only declares the mobile mode.
+         The site that serves the deck validates the id `upex-mobile-nav`. -->
+    <script id="upex-mobile-nav">
+      (function () {
+        var mobile =
+          window.matchMedia &&
+          window.matchMedia('(pointer: coarse)').matches &&
+          window.matchMedia('(max-width: 768px)').matches;
+        document.documentElement.setAttribute('data-mobile', mobile ? 'reflow' : 'off');
+      })();
+    </script>
+  </body>
+</html>

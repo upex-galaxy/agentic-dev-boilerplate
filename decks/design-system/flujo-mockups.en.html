@@ -1,0 +1,3028 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>From blueprint to product: tokens and mockups with AI</title>
+    <meta
+      name="description"
+      content="How /design-system sets the DESIGN.md tokens once per project and then, story by story, commissions the mockup that gets mapped into the master-design-plan.md that /sprint-development reads."
+    />
+    <style>
+      /* ============================================================
+     Self-contained deck: zero external requests, not even
+     fonts. Designed to survive for years as a loose file.
+     Tokens: "Planos", see packages/decks/README.md (single source).
+     ============================================================ */
+      :root {
+        --paper: #e8ecf1;
+        --paper-2: #dee5ed;
+        --surface: #f5f8fb;
+        --surface-2: #ffffff;
+        --ink: #172236;
+        --ink-soft: #4a5873;
+        --ink-faint: #5e6e88;
+        --line: rgba(23, 34, 54, 0.14);
+        --line-soft: rgba(23, 34, 54, 0.08);
+        --blue: #1e56a8;
+        --blue-2: #2f72ce;
+        --blue-wash: rgba(30, 86, 168, 0.08);
+        --blue-solid: #1e56a8;
+        --signal: #c2410c;
+        --signal-2: #ea580c;
+        --signal-wash: rgba(194, 65, 12, 0.09);
+        --signal-solid: #9a3412;
+        --agent: #6d28d9;
+        --agent-2: #7c3aed;
+        --agent-wash: rgba(109, 40, 217, 0.08);
+        --agent-solid: #6d28d9;
+        --good: #15803d;
+        --warn: #b45309;
+        --grid: rgba(30, 86, 168, 0.055);
+        --shadow: 0 1px 2px rgba(23, 34, 54, 0.06), 0 8px 24px -12px rgba(23, 34, 54, 0.18);
+        --shadow-lg: 0 2px 4px rgba(23, 34, 54, 0.05), 0 24px 60px -24px rgba(23, 34, 54, 0.28);
+        /* -solid tokens: fixed across both themes, reserved for solid-fill
+           + white-text UI (buttons, bubbles, ::selection): the plain
+           --blue/--signal/--agent above lighten in dark mode for on-paper
+           text/links and fail contrast as a white-text fill. Never themed. */
+
+        --font-display:
+          'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
+        --font-body:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', system-ui, sans-serif;
+        --font-mono:
+          ui-monospace, 'SF Mono', 'JetBrains Mono', 'Cascadia Code', Menlo, Consolas, monospace;
+
+        --maxw: 1120px;
+        --prose: 66ch;
+        --r: 14px;
+        --r-sm: 9px;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --paper: #0b1220;
+          --paper-2: #0e1626;
+          --surface: #121b2e;
+          --surface-2: #16213a;
+          --ink: #e4e9f2;
+          --ink-soft: #9fb0c9;
+          --ink-faint: #7e8caa;
+          --line: rgba(160, 180, 210, 0.16);
+          --line-soft: rgba(160, 180, 210, 0.09);
+          --blue: #6fa8ff;
+          --blue-2: #8cbbff;
+          --blue-wash: rgba(111, 168, 255, 0.11);
+          --signal: #fb923c;
+          --signal-2: #fdba74;
+          --signal-wash: rgba(251, 146, 60, 0.12);
+          --agent: #c4b5fd;
+          --agent-2: #ddd6fe;
+          --agent-wash: rgba(196, 181, 253, 0.12);
+          --good: #4ade80;
+          --warn: #fbbf24;
+          --grid: rgba(111, 168, 255, 0.06);
+          --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 30px -14px rgba(0, 0, 0, 0.6);
+          --shadow-lg: 0 2px 6px rgba(0, 0, 0, 0.4), 0 30px 70px -28px rgba(0, 0, 0, 0.7);
+        }
+      }
+      :root[data-theme='light'] {
+        --paper: #e8ecf1;
+        --paper-2: #dee5ed;
+        --surface: #f5f8fb;
+        --surface-2: #ffffff;
+        --ink: #172236;
+        --ink-soft: #4a5873;
+        --ink-faint: #5e6e88;
+        --line: rgba(23, 34, 54, 0.14);
+        --line-soft: rgba(23, 34, 54, 0.08);
+        --blue: #1e56a8;
+        --blue-2: #2f72ce;
+        --blue-wash: rgba(30, 86, 168, 0.08);
+        --signal: #c2410c;
+        --signal-2: #ea580c;
+        --signal-wash: rgba(194, 65, 12, 0.09);
+        --agent: #6d28d9;
+        --agent-2: #7c3aed;
+        --agent-wash: rgba(109, 40, 217, 0.08);
+        --good: #15803d;
+        --warn: #b45309;
+        --grid: rgba(30, 86, 168, 0.055);
+        --shadow: 0 1px 2px rgba(23, 34, 54, 0.06), 0 8px 24px -12px rgba(23, 34, 54, 0.18);
+        --shadow-lg: 0 2px 4px rgba(23, 34, 54, 0.05), 0 24px 60px -24px rgba(23, 34, 54, 0.28);
+      }
+      :root[data-theme='dark'] {
+        --paper: #0b1220;
+        --paper-2: #0e1626;
+        --surface: #121b2e;
+        --surface-2: #16213a;
+        --ink: #e4e9f2;
+        --ink-soft: #9fb0c9;
+        --ink-faint: #7e8caa;
+        --line: rgba(160, 180, 210, 0.16);
+        --line-soft: rgba(160, 180, 210, 0.09);
+        --blue: #6fa8ff;
+        --blue-2: #8cbbff;
+        --blue-wash: rgba(111, 168, 255, 0.11);
+        --signal: #fb923c;
+        --signal-2: #fdba74;
+        --signal-wash: rgba(251, 146, 60, 0.12);
+        --agent: #c4b5fd;
+        --agent-2: #ddd6fe;
+        --agent-wash: rgba(196, 181, 253, 0.12);
+        --good: #4ade80;
+        --warn: #fbbf24;
+        --grid: rgba(111, 168, 255, 0.06);
+        --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 30px -14px rgba(0, 0, 0, 0.6);
+        --shadow-lg: 0 2px 6px rgba(0, 0, 0, 0.4), 0 30px 70px -28px rgba(0, 0, 0, 0.7);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+      }
+      body {
+        margin: 0;
+        font-family: var(--font-body);
+        font-size: 17px;
+        line-height: 1.65;
+        color: var(--ink);
+        background-color: var(--paper);
+        background-image:
+          linear-gradient(var(--grid) 1px, transparent 1px),
+          linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+        background-size: 30px 30px;
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
+      }
+      h1,
+      h2,
+      h3 {
+        font-family: var(--font-display);
+        font-weight: 600;
+        text-wrap: balance;
+        line-height: 1.12;
+        margin: 0;
+      }
+      p {
+        margin: 0 0 1.1em;
+      }
+      a {
+        color: var(--blue);
+        text-decoration-color: var(--line);
+        text-underline-offset: 3px;
+      }
+      a:focus-visible {
+        outline: 2px solid var(--blue);
+        outline-offset: 2px;
+      }
+      code,
+      .mono {
+        font-family: var(--font-mono);
+      }
+      ::selection {
+        background: var(--signal-solid);
+        color: #fff;
+      }
+
+      .wrap {
+        max-width: var(--maxw);
+        margin: 0 auto;
+        padding: 0 clamp(20px, 5vw, 56px);
+      }
+      .prose {
+        max-width: var(--prose);
+      }
+
+      .eyebrow {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        font-weight: 600;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--signal);
+        display: inline-flex;
+        align-items: baseline;
+        gap: 0.6em;
+      }
+      .eyebrow .num {
+        color: var(--blue);
+      }
+
+      .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 11px clamp(20px, 5vw, 56px);
+        background: color-mix(in srgb, var(--paper) 82%, transparent);
+        backdrop-filter: blur(12px) saturate(1.4);
+        border-bottom: 1px solid var(--line-soft);
+      }
+      .topbar .brand {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        letter-spacing: 0.04em;
+        color: var(--ink-soft);
+        display: flex;
+        align-items: center;
+        gap: 0.6em;
+        text-decoration: none;
+      }
+      .topbar .brand b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .topbar .mark {
+        width: 16px;
+        height: 16px;
+        border: 1.5px solid var(--blue);
+        border-radius: 3px;
+        position: relative;
+        flex: none;
+      }
+      .topbar .mark::after {
+        content: '';
+        position: absolute;
+        inset: 3px;
+        border: 1.5px solid var(--agent);
+        border-radius: 1px;
+      }
+      .topnav {
+        display: flex;
+        gap: 4px;
+        align-items: center;
+      }
+      .topnav a {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        letter-spacing: 0.03em;
+        color: var(--ink-faint);
+        text-decoration: none;
+        padding: 5px 9px;
+        border-radius: 6px;
+      }
+      .topnav a:hover {
+        color: var(--ink);
+        background: var(--blue-wash);
+      }
+      @media (max-width: 900px) {
+        .topnav {
+          display: none;
+        }
+      }
+      .themebtn {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        letter-spacing: 0.05em;
+        cursor: pointer;
+        border: 1px solid var(--line);
+        background: var(--surface);
+        color: var(--ink-soft);
+        padding: 6px 11px;
+        border-radius: 7px;
+        display: flex;
+        gap: 0.5em;
+        align-items: center;
+      }
+      .themebtn:hover {
+        border-color: var(--blue);
+        color: var(--ink);
+      }
+      .themebtn:focus-visible {
+        outline: 2px solid var(--blue);
+        outline-offset: 2px;
+      }
+
+      .hero {
+        position: relative;
+        padding: clamp(60px, 12vh, 130px) 0 clamp(48px, 8vh, 90px);
+        overflow: hidden;
+      }
+      .hero .kicker {
+        margin-bottom: 26px;
+      }
+      .hero h1 {
+        font-size: clamp(2.5rem, 6.6vw, 5.2rem);
+        letter-spacing: -0.015em;
+      }
+      .hero h1 em {
+        font-style: italic;
+        color: var(--blue);
+      }
+      .hero h1 .sig {
+        color: var(--signal);
+        font-style: normal;
+      }
+      .hero .lede {
+        font-size: clamp(1.06rem, 2vw, 1.32rem);
+        color: var(--ink-soft);
+        max-width: 60ch;
+        margin-top: 28px;
+        line-height: 1.55;
+      }
+      .hero .lede b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .hero-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px 10px;
+        margin-top: 36px;
+      }
+      .chip {
+        font-family: var(--font-mono);
+        font-size: 0.74rem;
+        letter-spacing: 0.02em;
+        padding: 7px 12px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        color: var(--ink-soft);
+        background: var(--surface);
+        display: inline-flex;
+        gap: 0.55em;
+        align-items: center;
+      }
+      .chip b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .chip .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--signal);
+        flex: none;
+      }
+      .chip.agent .dot {
+        background: var(--agent);
+      }
+
+      .pipe {
+        margin-top: 54px;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0;
+        align-items: stretch;
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        overflow: hidden;
+        background: var(--surface);
+        box-shadow: var(--shadow);
+      }
+      .pipe .node {
+        position: relative;
+        padding: 22px 20px;
+        border-right: 1px solid var(--line);
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      .pipe .node:last-child {
+        border-right: 0;
+      }
+      .reveal-pipe .node {
+        animation: pipeIn 0.6s cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+      }
+      .pipe .node:nth-child(1) {
+        animation-delay: 0.1s;
+      }
+      .pipe .node:nth-child(2) {
+        animation-delay: 0.3s;
+      }
+      .pipe .node:nth-child(3) {
+        animation-delay: 0.5s;
+      }
+      .pipe .node:nth-child(4) {
+        animation-delay: 0.7s;
+      }
+      .pipe .node .n {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        letter-spacing: 0.12em;
+        color: var(--signal);
+        text-transform: uppercase;
+      }
+      .pipe .node h3 {
+        font-family: var(--font-display);
+        font-size: 1.14rem;
+        margin: 8px 0 5px;
+      }
+      .pipe .node p {
+        font-size: 0.85rem;
+        color: var(--ink-soft);
+        margin: 0;
+        line-height: 1.45;
+      }
+      .pipe .node .arw {
+        position: absolute;
+        right: -8px;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 2;
+        width: 16px;
+        height: 16px;
+        color: var(--blue);
+        background: var(--surface);
+        display: grid;
+        place-items: center;
+      }
+      .pipe .node:last-child .arw {
+        display: none;
+      }
+      @media (max-width: 760px) {
+        .pipe {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+      @media (max-width: 460px) {
+        .pipe {
+          grid-template-columns: 1fr;
+        }
+        .pipe .node {
+          border-right: 0;
+          border-bottom: 1px solid var(--line);
+        }
+        .pipe .node .arw {
+          display: none;
+        }
+      }
+      @keyframes pipeIn {
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .pipe .node {
+          opacity: 1;
+          transform: none;
+          animation: none !important;
+        }
+      }
+
+      section.band {
+        padding: clamp(56px, 9vh, 96px) 0;
+        border-top: 1px solid var(--line-soft);
+      }
+      .sec-head {
+        max-width: 62ch;
+        margin-bottom: 40px;
+      }
+      .sec-head h2 {
+        font-size: clamp(1.9rem, 4vw, 2.9rem);
+        letter-spacing: -0.012em;
+        margin-top: 16px;
+      }
+      .sec-head p.sub {
+        font-size: 1.1rem;
+        color: var(--ink-soft);
+        margin-top: 18px;
+      }
+
+      .r {
+        opacity: 0;
+        transform: translateY(18px);
+        transition:
+          opacity 0.7s ease,
+          transform 0.7s cubic-bezier(0.2, 0.7, 0.3, 1);
+      }
+      .r.in {
+        opacity: 1;
+        transform: none;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .r {
+          opacity: 1;
+          transform: none;
+          transition: none;
+        }
+      }
+
+      .planes {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+      }
+      @media (max-width: 780px) {
+        .planes {
+          grid-template-columns: 1fr;
+        }
+      }
+      .plane {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface);
+        padding: 26px 26px 24px;
+        box-shadow: var(--shadow);
+        position: relative;
+        overflow: hidden;
+      }
+      .plane::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 3px;
+        background: var(--blue);
+      }
+      .plane.sig::before {
+        background: var(--signal);
+      }
+      .plane.agent::before {
+        background: var(--agent);
+      }
+      .plane .tag {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+      }
+      .plane h3 {
+        font-size: 1.32rem;
+        margin: 8px 0 4px;
+      }
+      .plane .path {
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        color: var(--blue);
+        background: var(--blue-wash);
+        padding: 3px 8px;
+        border-radius: 5px;
+        display: inline-block;
+        margin-bottom: 12px;
+      }
+      .plane.sig .path {
+        color: var(--signal);
+        background: var(--signal-wash);
+      }
+      .plane.agent .path {
+        color: var(--agent);
+        background: var(--agent-wash);
+      }
+      .plane ul {
+        margin: 12px 0 0;
+        padding: 0;
+        list-style: none;
+      }
+      .plane li {
+        position: relative;
+        padding-left: 20px;
+        margin-bottom: 8px;
+        font-size: 0.93rem;
+        color: var(--ink-soft);
+      }
+      .plane li::before {
+        content: '-';
+        position: absolute;
+        left: 0;
+        color: var(--ink-faint);
+      }
+      .plane li b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+
+      .callout {
+        border: 1px solid var(--line);
+        border-left: 3px solid var(--signal);
+        background: var(--signal-wash);
+        border-radius: var(--r-sm);
+        padding: 16px 20px;
+        font-size: 0.93rem;
+        color: var(--ink);
+        margin: 22px 0 0;
+      }
+      .callout b {
+        color: var(--signal);
+      }
+      .callout.blue {
+        border-left-color: var(--blue);
+        background: var(--blue-wash);
+      }
+      .callout.blue b {
+        color: var(--blue);
+      }
+      .callout.agent {
+        border-left-color: var(--agent);
+        background: var(--agent-wash);
+      }
+      .callout.agent b {
+        color: var(--agent);
+      }
+
+      .steps {
+        display: grid;
+        gap: 2px;
+        margin-top: 8px;
+        counter-reset: st;
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        overflow: hidden;
+        background: var(--line-soft);
+      }
+      .step {
+        background: var(--surface);
+        padding: 20px 22px 20px 66px;
+        position: relative;
+      }
+      .step::before {
+        counter-increment: st;
+        content: counter(st, decimal-leading-zero);
+        position: absolute;
+        left: 20px;
+        top: 20px;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: var(--signal);
+      }
+      .step h3 {
+        font-family: var(--font-display);
+        font-size: 1.16rem;
+        margin: 0 0 5px;
+      }
+      .step p {
+        margin: 0;
+        font-size: 0.93rem;
+        color: var(--ink-soft);
+      }
+      .step p + p {
+        margin-top: 8px;
+      }
+      .step .say {
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        color: var(--ink);
+        background: var(--blue-wash);
+        border: 1px solid var(--line-soft);
+        border-radius: 7px;
+        padding: 8px 12px;
+        margin-top: 12px;
+        display: block;
+      }
+      .step .say .who {
+        color: var(--signal);
+        font-weight: 600;
+      }
+
+      .figwrap {
+        margin-top: 8px;
+      }
+      .figcap {
+        font-family: var(--font-mono);
+        font-size: 0.74rem;
+        color: var(--ink-faint);
+        margin-top: 12px;
+        text-align: center;
+        letter-spacing: 0.02em;
+      }
+      .win {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        overflow: hidden;
+        background: var(--surface-2);
+        box-shadow: var(--shadow-lg);
+      }
+      .win-bar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 9px 13px;
+        background: var(--surface);
+        border-bottom: 1px solid var(--line);
+      }
+      .win-dots {
+        display: flex;
+        gap: 6px;
+      }
+      .win-dots i {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--line);
+        display: block;
+      }
+      .win-url {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        color: var(--ink-soft);
+        background: var(--paper-2);
+        border-radius: 6px;
+        padding: 4px 10px;
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .win-btn {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        padding: 4px 9px;
+        border-radius: 6px;
+        border: 1px solid var(--line);
+        color: var(--ink-soft);
+        white-space: nowrap;
+      }
+      .win-btn.exp {
+        color: #fff;
+        background: var(--signal-solid);
+        border-color: var(--signal-solid);
+      }
+      .win-btn.mcp {
+        color: #fff;
+        background: var(--agent-solid);
+        border-color: var(--agent-solid);
+      }
+      .win-nav {
+        display: flex;
+        gap: 3px;
+        padding: 7px 13px;
+        border-bottom: 1px solid var(--line);
+        background: var(--surface);
+        overflow-x: auto;
+      }
+      .win-nav span {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        color: var(--ink-faint);
+        padding: 3px 9px;
+        border-radius: 5px;
+        white-space: nowrap;
+      }
+      .win-nav span.on {
+        color: var(--ink);
+        background: var(--blue-wash);
+      }
+      .win-nav .gear {
+        margin-left: auto;
+        color: var(--ink-faint);
+      }
+
+      .win-body {
+        display: grid;
+        min-height: 260px;
+      }
+      .win-body.two {
+        grid-template-columns: 40% 60%;
+      }
+      .win-body.three {
+        grid-template-columns: 30% 30% 40%;
+      }
+      @media (max-width: 600px) {
+        .win-body.two,
+        .win-body.three {
+          grid-template-columns: 1fr;
+        }
+        .win-body .pane {
+          border-right: 0 !important;
+          border-bottom: 1px solid var(--line);
+        }
+      }
+      .pane {
+        padding: 15px;
+        border-right: 1px solid var(--line);
+        position: relative;
+      }
+      .pane:last-child {
+        border-right: 0;
+      }
+      .pane-label {
+        position: absolute;
+        top: 8px;
+        right: 10px;
+        font-family: var(--font-mono);
+        font-size: 0.6rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        opacity: 0.8;
+      }
+      .pane.chat {
+        background: var(--surface);
+      }
+      .bub {
+        border-radius: 9px;
+        padding: 8px 11px;
+        margin-bottom: 9px;
+        font-size: 0.76rem;
+        line-height: 1.4;
+        max-width: 92%;
+      }
+      .bub.me {
+        background: var(--blue-solid);
+        color: #fff;
+        margin-left: auto;
+      }
+      .bub.ai {
+        background: var(--paper-2);
+        color: var(--ink-soft);
+        border: 1px solid var(--line-soft);
+      }
+      .bub.tool {
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        color: var(--good);
+        background: transparent;
+        border: 0;
+        padding: 2px 0;
+      }
+      .bub.mcp {
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        color: var(--agent);
+        background: transparent;
+        border: 0;
+        padding: 2px 0;
+      }
+      .promptbox {
+        margin-top: 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface-2);
+        padding: 8px 10px;
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        color: var(--ink-faint);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+      }
+      .promptbox .send {
+        color: #fff;
+        background: var(--blue-solid);
+        border-radius: 5px;
+        padding: 3px 8px;
+        font-size: 0.64rem;
+      }
+
+      .canvas {
+        background: var(--paper);
+        background-image:
+          linear-gradient(var(--grid) 1px, transparent 1px),
+          linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+        background-size: 16px 16px;
+        display: grid;
+        place-items: center;
+      }
+      .mini {
+        width: 82%;
+        max-width: 260px;
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        position: relative;
+      }
+      .mini .mtop {
+        height: 26px;
+        background: var(--blue);
+        display: flex;
+        align-items: center;
+        padding: 0 8px;
+        gap: 5px;
+      }
+      .mini .mtop i {
+        width: 24px;
+        height: 5px;
+        border-radius: 3px;
+        background: rgba(255, 255, 255, 0.55);
+        display: block;
+      }
+      .mini .mtop i.sm {
+        width: 12px;
+        margin-left: auto;
+      }
+      .mini .mbody {
+        padding: 10px;
+        display: grid;
+        gap: 7px;
+      }
+      .mini .line {
+        height: 6px;
+        border-radius: 3px;
+        background: var(--line);
+      }
+      .mini .line.w1 {
+        width: 70%;
+      }
+      .mini .line.w2 {
+        width: 45%;
+        background: var(--signal);
+        opacity: 0.8;
+      }
+      .mini .cards {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 6px;
+        margin-top: 4px;
+      }
+      .mini .cards i {
+        height: 30px;
+        border-radius: 5px;
+        background: var(--blue-wash);
+        border: 1px solid var(--line-soft);
+        display: block;
+      }
+      .mini .btn {
+        height: 16px;
+        width: 60px;
+        border-radius: 5px;
+        background: var(--signal);
+        margin-top: 2px;
+      }
+      .mini .pin {
+        position: absolute;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: var(--signal-solid);
+        color: #fff;
+        font-family: var(--font-mono);
+        font-size: 0.58rem;
+        display: grid;
+        place-items: center;
+        top: 40px;
+        right: 14px;
+        box-shadow: 0 0 0 3px var(--signal-wash);
+      }
+      .sliders {
+        position: absolute;
+        bottom: 10px;
+        left: 12px;
+        right: 12px;
+        display: grid;
+        gap: 5px;
+      }
+      .sliders .sl {
+        height: 4px;
+        border-radius: 3px;
+        background: var(--line);
+        position: relative;
+      }
+      .sliders .sl::after {
+        content: '';
+        position: absolute;
+        top: -3px;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--blue);
+        border: 2px solid var(--surface-2);
+      }
+      .sliders .sl.a::after {
+        left: 30%;
+      }
+      .sliders .sl.b::after {
+        left: 62%;
+      }
+
+      .tree {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        color: var(--ink-soft);
+        line-height: 1.9;
+      }
+      .tree .f {
+        color: var(--ink);
+      }
+      .tree .on {
+        color: var(--signal);
+      }
+      .tree .mut {
+        color: var(--ink-faint);
+      }
+      .verpill {
+        display: inline-block;
+        font-size: 0.58rem;
+        padding: 1px 5px;
+        border-radius: 4px;
+        background: var(--blue-wash);
+        color: var(--blue);
+        margin-left: 6px;
+      }
+
+      .preview {
+        background: var(--paper);
+        background-image:
+          linear-gradient(var(--grid) 1px, transparent 1px),
+          linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+        background-size: 14px 14px;
+        display: grid;
+        place-items: center;
+        position: relative;
+      }
+      .exp-fab {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        color: #fff;
+        background: var(--agent-solid);
+        padding: 4px 9px;
+        border-radius: 6px;
+      }
+
+      .tablewrap {
+        overflow-x: auto;
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        box-shadow: var(--shadow);
+      }
+      table.cmp {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 760px;
+        background: var(--surface);
+        font-size: 0.9rem;
+      }
+      table.cmp th,
+      table.cmp td {
+        text-align: left;
+        padding: 14px 16px;
+        border-bottom: 1px solid var(--line-soft);
+        vertical-align: top;
+      }
+      table.cmp thead th {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        background: var(--paper-2);
+        position: sticky;
+        top: 0;
+      }
+      table.cmp tbody th {
+        font-family: var(--font-body);
+        font-weight: 600;
+        color: var(--ink);
+        font-size: 0.9rem;
+        width: 20%;
+      }
+      table.cmp td {
+        color: var(--ink-soft);
+      }
+      table.cmp tr:last-child td,
+      table.cmp tr:last-child th {
+        border-bottom: 0;
+      }
+      .badge {
+        font-family: var(--font-mono);
+        font-size: 0.64rem;
+        padding: 2px 7px;
+        border-radius: 5px;
+        letter-spacing: 0.03em;
+        white-space: nowrap;
+      }
+      .badge.free {
+        color: var(--good);
+        background: color-mix(in srgb, var(--good) 14%, transparent);
+      }
+      .badge.paid {
+        color: var(--warn);
+        background: color-mix(in srgb, var(--warn) 16%, transparent);
+      }
+      .badge.local {
+        color: var(--blue);
+        background: var(--blue-wash);
+      }
+      .badge.mcp {
+        color: var(--agent);
+        background: var(--agent-wash);
+      }
+
+      .code {
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.7;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+        padding: 16px 18px;
+        overflow-x: auto;
+        color: var(--ink);
+      }
+      .code .c {
+        color: var(--ink-faint);
+      }
+      .code .k {
+        color: var(--signal);
+      }
+      .code .s {
+        color: var(--blue);
+      }
+
+      .alts {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 18px;
+        margin-top: 8px;
+      }
+      @media (max-width: 720px) {
+        .alts {
+          grid-template-columns: 1fr;
+        }
+      }
+      .alt {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface);
+        padding: 22px 22px;
+        box-shadow: var(--shadow);
+      }
+      .alt h3 {
+        font-size: 1.18rem;
+        margin: 0 0 4px;
+        display: flex;
+        align-items: center;
+        gap: 0.5em;
+      }
+      .alt .kk {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        color: var(--signal);
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      .alt p {
+        font-size: 0.9rem;
+        color: var(--ink-soft);
+        margin: 8px 0 0;
+      }
+
+      .check {
+        display: grid;
+        gap: 10px;
+        margin-top: 8px;
+      }
+      .check .it {
+        display: flex;
+        gap: 14px;
+        align-items: flex-start;
+        padding: 15px 18px;
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+        background: var(--surface);
+      }
+      .check .bx {
+        flex: none;
+        width: 22px;
+        height: 22px;
+        border-radius: 6px;
+        border: 2px solid var(--blue);
+        position: relative;
+        margin-top: 1px;
+      }
+      .check .bx::after {
+        content: '';
+        position: absolute;
+        left: 6px;
+        top: 2px;
+        width: 6px;
+        height: 11px;
+        border: solid var(--signal);
+        border-width: 0 2.5px 2.5px 0;
+        transform: rotate(42deg);
+      }
+      .check .it b {
+        color: var(--ink);
+      }
+      .check .it span {
+        color: var(--ink-soft);
+        font-size: 0.92rem;
+      }
+      .check .it .mono {
+        color: var(--blue);
+        font-size: 0.84rem;
+      }
+
+      .facts {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+        margin-top: 8px;
+      }
+      @media (max-width: 700px) {
+        .facts {
+          grid-template-columns: 1fr;
+        }
+      }
+      .fact {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface);
+        padding: 20px 22px;
+      }
+      .fact .big {
+        font-family: var(--font-display);
+        font-size: 2rem;
+        color: var(--blue);
+        font-variant-numeric: tabular-nums;
+      }
+      .fact .lbl {
+        font-size: 0.88rem;
+        color: var(--ink-soft);
+        margin-top: 4px;
+      }
+
+      .gotchas {
+        display: grid;
+        gap: 10px;
+        margin-top: 8px;
+      }
+      .gotchas .g {
+        border: 1px solid var(--line);
+        border-left: 3px solid var(--agent);
+        background: var(--surface);
+        border-radius: var(--r-sm);
+        padding: 14px 18px;
+      }
+      .gotchas .g b {
+        color: var(--agent);
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        letter-spacing: 0.02em;
+        display: block;
+        margin-bottom: 4px;
+      }
+      .gotchas .g span {
+        color: var(--ink-soft);
+        font-size: 0.89rem;
+      }
+
+      footer {
+        padding: 60px 0 80px;
+        border-top: 1px solid var(--line-soft);
+      }
+      footer .prose {
+        color: var(--ink-soft);
+        font-size: 0.95rem;
+      }
+      footer .sig {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        color: var(--ink-faint);
+        letter-spacing: 0.04em;
+        margin-top: 26px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px 14px;
+      }
+
+      .lead-in {
+        font-size: 1.14rem;
+        color: var(--ink);
+        line-height: 1.6;
+      }
+      .lead-in b {
+        color: var(--blue);
+      }
+
+      .hosts {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 14px;
+        margin-bottom: 26px;
+      }
+      @media (max-width: 820px) {
+        .hosts {
+          grid-template-columns: 1fr;
+        }
+      }
+      .hosts > *,
+      .planes > *,
+      .steps > * {
+        min-width: 0;
+      }
+      .step .say {
+        overflow-wrap: anywhere;
+      }
+      table.cmp.narrow {
+        min-width: 0;
+      }
+      table.cmp.narrow td {
+        overflow-wrap: anywhere;
+      }
+      table.cmp.narrow th {
+        hyphens: auto;
+        overflow-wrap: break-word;
+      }
+      @media (max-width: 600px) {
+        table.cmp.narrow th,
+        table.cmp.narrow td {
+          padding: 10px 10px;
+          font-size: 0.84rem;
+        }
+        table.cmp.narrow tr > :first-child {
+          width: 34%;
+        }
+      }
+      .host {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface);
+        padding: 18px 20px;
+        box-shadow: var(--shadow);
+      }
+      .host h3 {
+        font-size: 1.12rem;
+        margin: 0 0 10px;
+      }
+      .host .say {
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        background: var(--blue-wash);
+        border: 1px solid var(--line-soft);
+        border-radius: 7px;
+        padding: 8px 12px;
+        display: block;
+        overflow-wrap: anywhere;
+      }
+      .host p {
+        font-size: 0.86rem;
+        color: var(--ink-soft);
+        margin: 10px 0 0;
+      }
+      .plane .mono,
+      .callout .mono,
+      .step .mono {
+        overflow-wrap: anywhere;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="topbar">
+      <a class="brand" href="../../index.html"
+        ><span class="mark"></span> <b>Blueprints</b> · agentic-dev-boilerplate</a
+      >
+      <nav class="topnav">
+        <a href="#modelo">Model</a>
+        <a href="#tokens">Tokens</a>
+        <a href="#extract">Extract</a>
+        <a href="#bucle">Gate</a>
+        <a href="#handoff">Handoff</a>
+        <a href="#claude">Claude Design</a>
+        <a href="#open">Open Design</a>
+        <a href="#otras">Other routes</a>
+        <a href="#comandos">Invoke</a>
+        <a href="#empezar">Start</a>
+      </nav>
+      <button class="themebtn" id="themebtn" aria-label="Cambiar tema">
+        <span id="themeicon">◐</span> theme
+      </button>
+    </div>
+
+    <!-- ============ HERO ============ -->
+    <header class="hero">
+      <div class="wrap">
+        <div class="kicker eyebrow"><span class="num">00</span> · the blueprint before the build</div>
+        <h1>From <em>blueprint</em> to <span class="sig">product</span>, with AI in between.</h1>
+        <p class="lede">
+          <span class="mono">/design-system</span> works in two moments. First, once per
+          project, it fixes the <b>system</b>: the tokens in <span class="mono">DESIGN.md</span>
+          (<span class="mono">tokens</span> mode). Then, story by story and right before
+          building it, it commissions the <b>mockup</b> of that screen from a design tool, you
+          ratify it, and the AI maps it into the plan that <b>guides
+          <span class="mono">/sprint-development</span></b> (mode
+          <span class="mono">screen</span>). If the app already exists and has its own look, the
+          <span class="mono">extract</span> mode writes that <span class="mono">DESIGN.md</span> from the
+          live theme instead of choosing it.
+        </p>
+
+        <div class="hero-meta">
+          <span class="chip"
+            ><span class="dot"></span> for <b>whoever shapes the story</b>, not only whoever
+            codes it</span
+          >
+          <span class="chip"
+            ><span class="dot"></span> modes: <b>tokens · extract · screen</b></span
+          >
+          <span class="chip"
+            ><span class="dot"></span> tools:
+            <b>Claude Design · Open Design · Figma · manual HTML · design skill (Mode C)</b></span
+          >
+          <span class="chip agent"
+            ><span class="dot"></span> engine: <b>Claude Code · OpenCode · Codex · Pi + skills</b></span
+          >
+        </div>
+
+        <div class="pipe" id="pipe">
+          <div class="node">
+            <div class="n">System</div>
+            <h3>DESIGN.md</h3>
+            <p>Frozen tokens, once per project.</p>
+            <div class="arw">→</div>
+          </div>
+          <div class="node">
+            <div class="n">Blueprint</div>
+            <h3>Mockup per story</h3>
+            <p>A design tool produces it (or the AI with a design skill loaded) and a human ratifies it. The AI never writes it by hand without a design skill.</p>
+            <div class="arw">→</div>
+          </div>
+          <div class="node">
+            <div class="n">Contract</div>
+            <h3>Master design plan</h3>
+            <p>The AI maps the mockup to the story.</p>
+            <div class="arw">→</div>
+          </div>
+          <div class="node">
+            <div class="n">Build</div>
+            <h3>Sprint dev</h3>
+            <p>It is built against the live UI and the tokens, with the mockup as inspiration.</p>
+
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- ============ §01 MODELO MENTAL ============ -->
+    <section class="band" id="modelo">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">01</span> · mental model</div>
+          <h2>Two blueprints that never get mixed up</h2>
+          <p class="sub">
+            The most common mistake is mixing the <em>design system</em> with the
+            <em>screen design</em>. They are two artifacts, with two owners and two different
+            consumers, and in fact two different physical "drop zones" in the repo.
+          </p>
+        </div>
+
+        <div class="planes r">
+          <div class="plane">
+            <div class="tag">System · defined once</div>
+            <h3>DESIGN.md</h3>
+            <span class="path">./DESIGN.md</span>
+            <p style="font-size: 0.93rem; color: var(--ink-soft); margin: 4px 0 0">
+              The <b>tokens</b>: palette, typography, spacing, radii, components. The "visual voice"
+              of the whole product.
+            </p>
+            <ul>
+              <li>
+                <b>/design-system</b> generates it in <span class="mono">tokens</span> mode, through one
+                of five paths, A to E (manual gallery, <span class="mono">getdesign</span> +
+                matcher, Open Design, Claude Design or custom). Details in §02. In an app that already
+                exists, the <span class="mono">extract</span> mode writes it from its live theme (§02·c).
+              </li>
+              <li>Open format (Google Labs), any agent can read it.</li>
+              <li><b>/project-bootstrap</b> consumes it when it sets up the frontend.</li>
+              <li>
+                Its bundle drop zone is
+                <span class="mono">design/handoff/&lt;slug&gt;/</span> (repo root):
+                <b>do not</b> confuse it with the screens one.
+              </li>
+            </ul>
+          </div>
+          <div class="plane sig">
+            <div class="tag">Screens · done per story</div>
+            <h3>master-design-plan.md</h3>
+            <span class="path">.context/design/master-design-plan.md</span>
+            <p style="font-size: 0.93rem; color: var(--ink-soft); margin: 4px 0 0">
+              The <b>spec per screen</b> (§4) + the <b>Story → Screen</b> map (§8). It says which
+              screen each story renders and how it should look.
+            </p>
+            <ul>
+              <li>
+                <b>/design-system</b> builds it in <span class="mono">screen</span> mode (opt-in,
+                it always asks) from mockups that <b>you ratify</b>.
+              </li>
+              <li>
+                The AI <b>never</b> writes a mockup by hand without a design skill loaded: it
+                commissions it from a design tool, writes it through that skill (Mode C) or you
+                bring it.
+              </li>
+              <li>
+                <b>/sprint-development</b> consumes it in every UI story (repo Rule 14).
+              </li>
+              <li>
+                Its drop zone for raw mockups is
+                <span class="mono">.context/designs/&lt;project&gt;/&lt;batch&gt;/</span>, plural
+                "designs", different from the singular "design" of the plan.
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="callout blue r">
+          <b>Golden rule:</b> DESIGN.md rules over <em>tokens</em>; the master design plan rules
+          over <em>screens</em>. Values are never duplicated: the screens plan points to
+          DESIGN.md as the authority for color and typography. And watch the folder names:
+          <span class="mono">design/handoff/</span> (tokens bundle) vs.
+          <span class="mono">.context/designs/</span> (screen mockups) vs.
+          <span class="mono">.context/design/</span> (the finished plan): three folders, three
+          different payloads.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §02 FASE DE TOKENS ============ -->
+    <section class="band" id="tokens">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">02</span> · tokens phase</div>
+          <h2>The system, once per project</h2>
+          <p class="sub">
+            <span class="mono">tokens</span> mode. It runs once, after the PRD and before the SRS
+            (<span class="mono">/project-foundation</span> calls it in its phase 2.5), and again only
+            if the business pivots or wants to rebrand without re-scaffolding. It leaves
+            <span class="mono">DESIGN.md</span> at the root: the frozen contract that everything
+            else respects.
+          </p>
+        </div>
+
+        <div class="tablewrap r" style="margin-bottom: 30px">
+          <table class="cmp narrow">
+            <thead>
+              <tr>
+                <th>Path</th>
+                <th>When to pick it</th>
+                <th>What the AI does · what you do</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th>B · <span class="mono">getdesign</span> + matcher <span class="badge free">default</span></th>
+                <td>There is a PRD and you want something from a catalog, good quality, no manual effort.</td>
+                <td>
+                  The AI ranks three candidates from the catalog that
+                  <span class="mono">npx getdesign list</span> returns; you pick one or ask for another batch.
+                </td>
+              </tr>
+              <tr>
+                <th>A · Gallery manual</th>
+                <td>You want to explore and choose without the AI deciding, or the matcher does not convince you.</td>
+                <td>
+                  You browse <span class="mono">designmd.ai/explore</span> or
+                  <span class="mono">npx getdesign list</span>; the AI downloads and lints what
+                  you picked.
+                </td>
+              </tr>
+              <tr>
+                <th>C · Open Design app</th>
+                <td>You want to iterate visually in a local UI before fixing tokens.</td>
+                <td>
+                  You iterate in the desktop app (Docker is an alternative, not a requirement); the AI waits and
+                  then converts the result via E.
+                </td>
+              </tr>
+              <tr>
+                <th>D · Claude Design</th>
+                <td>You have a Pro plan or higher and want the best visual quality.</td>
+                <td>
+                  You design in <span class="mono">claude.ai/design</span> and export the bundle to
+                  <span class="mono">design/handoff/</span>; the AI converts it via E.
+                </td>
+              </tr>
+              <tr>
+                <th>E · LLM-authored</th>
+                <td>The business is very specific and nothing in the catalog fits.</td>
+                <td>
+                  The AI writes <span class="mono">DESIGN.md</span> from scratch following the spec,
+                  with the Constitution and the PRD as input.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="sec-head r" style="margin: 10px 0 22px 0">
+          <div class="eyebrow"><span class="num">02·b</span> · the default path, step by step</div>
+        </div>
+        <div class="steps r">
+          <div class="step">
+            <h3>Reads the business context</h3>
+            <p>
+              <span class="mono">business-model.md</span>, <span class="mono">personas.md</span> and
+              <span class="mono">executive-summary.md</span>. If they do not exist and the app has no
+              theme in the code either, it asks you five questions: industry, tone, target, competitors and
+              keywords. With a theme in the code, the path is the <span class="mono">extract</span> mode.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Ranks the catalog</h3>
+            <p>
+              It fetches the catalog with <span class="mono">npx getdesign list --json</span> and runs
+              <span class="mono">scripts/match-brand.ts</span>: three candidates with a score and a reason.
+            </p>
+          </div>
+          <div class="step">
+            <h3>You choose</h3>
+            <p>
+              Name, tagline and preview hint for each one. You pick one, or ask for
+              <em>"more options"</em> and the next batch of three arrives.
+            </p>
+            <span class="say"><span class="who">you →</span> "the second one"</span>
+          </div>
+          <div class="step">
+            <h3>Download and lint</h3>
+            <p>
+              <span class="mono">npx getdesign add &lt;slug&gt;</span> leaves
+              <span class="mono">DESIGN.md</span> at the root and
+              <span class="mono">npx @google/design.md lint DESIGN.md</span> validates it. If it fails, it
+              shows you the error and offers to fix it by hand or retry.
+            </p>
+          </div>
+        </div>
+
+        <div class="planes r" style="margin-top: 34px">
+          <div class="plane">
+            <div class="tag">The format</div>
+            <h3>Google Labs spec</h3>
+            <span class="path">google-labs-code/design.md · Apache-2.0</span>
+            <ul>
+              <li>YAML frontmatter with the tokens: at minimum colors, typography, spacing and rounded.</li>
+              <li>Markdown prose with the why behind each decision.</li>
+              <li>
+                Eight sections in a fixed order: Overview, Colors, Typography, Layout, Elevation &amp;
+                Depth, Shapes, Components, Do's and Don'ts. They can be omitted, never reordered.
+              </li>
+              <li>
+                Path configurable in <span class="mono">.agents/project.yaml</span> →
+                <span class="mono">design_md_path</span> (default
+                <span class="mono">./DESIGN.md</span>).
+              </li>
+            </ul>
+          </div>
+          <div class="plane sig">
+            <div class="tag">The exit gate</div>
+            <h3>Lint before closing</h3>
+            <span class="path">npx @google/design.md lint &lt;path&gt;</span>
+            <ul>
+              <li>Exits 0, with the WCAG AA contrast included in the check.</li>
+              <li>The frontmatter parses and all eight sections are there.</li>
+              <li>
+                If something fails, the report says so. The AI does not invent fixes: it asks you how
+                to go on.
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="callout blue r">
+          <b>If <span class="mono">DESIGN.md</span> already exists,</b> the skill offers you
+          <b>skip</b> (leaves it), <b>overwrite</b> (replaces it) or <b>variant</b> (writes
+          <span class="mono">DESIGN.&lt;slug&gt;.md</span> next to it, for light/dark or an
+          A/B test). A surgical rebrand updates tokens in place and keeps the order and the prose;
+          it never regenerates the file from scratch.
+        </div>
+
+        <div class="callout agent r">
+          <b>Pauses that survive the session:</b> paths C and D wait for work of yours outside.
+          The AI leaves the checkpoint in <span class="mono">.session/design-system/progress.md</span>;
+          when you return, it shows you the chosen path and the next step, and offers to resume, restart
+          or abort.
+        </div>
+
+        <div class="callout r">
+          <b>After the lint:</b> it goes back to <span class="mono">/project-foundation</span> (phase 3,
+          SRS) if it came from there. <span class="mono">/project-bootstrap</span> reads
+          <span class="mono">DESIGN.md</span> when it sets up the frontend, and without it, it stops. And the AI
+          asks whether you also want to map screens: that is already the
+          <span class="mono">screen</span> phase, always opt-in.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §02·c MODO EXTRACT ============ -->
+    <section class="band" id="extract">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">02·c</span> · extract mode</div>
+          <h2>Three modes, not two: the app already has a look</h2>
+          <p class="sub">
+            An app that adopts agentic-dev already looks some way. Picking a brand from the catalog
+            would contradict what its users see every day. <span class="mono">/design-system
+            extract</span> reads the live theme (the Tailwind config, the stylesheet the layout
+            imports, <span class="mono">components.json</span>) and writes it as
+            <span class="mono">DESIGN.md</span>, value by value, each one with the file it
+            came from.
+          </p>
+        </div>
+
+        <div class="tablewrap r" style="margin-bottom: 30px">
+          <table class="cmp narrow">
+            <thead>
+              <tr>
+                <th>Mode</th>
+                <th>When</th>
+                <th>What it leaves</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th><span class="mono">tokens</span></th>
+                <td>New product: choose or write an identity.</td>
+                <td><span class="mono">DESIGN.md</span> through one of the five paths (§02).</td>
+              </tr>
+              <tr>
+                <th><span class="mono">extract</span></th>
+                <td>Existing app: record the identity it already has.</td>
+                <td><span class="mono">DESIGN.md</span> mirroring the live theme, with its origin on every value.</td>
+              </tr>
+              <tr>
+                <th><span class="mono">screen</span></th>
+                <td>One story, one mockup, right before building it.</td>
+                <td>The spec and the Story → Screen row of the master design plan (§03).</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="planes r">
+          <div class="plane">
+            <div class="tag">What it does</div>
+            <h3>Code → <span class="mono">DESIGN.md</span>, in one direction only</h3>
+            <ul>
+              <li>
+                It resolves the <b>live</b> files by evidence: a dead copy (a
+                <span class="mono">globals.css</span> nobody imports) is listed and ignored.
+              </li>
+              <li>
+                It copies each value in its own color format: the linter accepts
+                <span class="mono">oklch()</span> and <span class="mono">hsl()</span>, so there is no
+                conversion or rounding.
+              </li>
+              <li>
+                It computes derived radii (<span class="mono">calc(...)</span>) to a flat dimension,
+                because the linter rejects them, and keeps the original expression in the comment.
+              </li>
+            </ul>
+          </div>
+          <div class="plane sig">
+            <div class="tag">What it never does</div>
+            <h3>Touch the app or make things up</h3>
+            <ul>
+              <li>
+                It does not touch the app code: it can only change <span class="mono">DESIGN.md</span>,
+                an accepted variant and <span class="mono">.session/design-system/</span>.
+              </li>
+              <li>It does not invent a token it cannot find: what is missing stays as a Discovery Gap.</li>
+              <li>
+                It does not "fix" a low-contrast pair: it reports it, because the fix is a UI change
+                with its own story.
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="callout r">
+          <b>After extract, never <span class="mono">/project-bootstrap</span> frontend.</b> That
+          phase generates the Tailwind config and the stylesheet from the tokens; on an app whose
+          theme is the source, it would overwrite the live config with its own echo. The extracted file is consumed
+          by reading it: <span class="mono">/sprint-development</span> uses it as the tokens contract in
+          every UI story. Details:
+          <span class="mono">.agents/skills/design-system/references/extract-from-code.md</span>.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §03 EL BUCLE POR HISTORIA ============ -->
+
+    <section class="band" id="bucle">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">03</span> · the loop</div>
+          <h2>One mockup per story, right before building it</h2>
+          <p class="sub">
+            Not all screens are designed at once at the start. They are designed <em>just-in-time</em>:
+            the screens of a feature are drawn right before its sprint. That way the blueprint arrives
+            fresh and already aligned with the live UI.
+          </p>
+        </div>
+
+        <div class="r" style="margin-bottom: 26px">
+          <p class="lead-in" style="max-width: 66ch">
+            Every new user story that renders interface
+            <b>should have its own mockup</b>, whenever possible. Purely backend
+            stories have no screen (they are marked with a dash in the map).
+            When <span class="mono">/sprint-development</span> hits a UI story with no row in
+            §8, it runs the <b>design gate</b>: it stops and lets you choose between three routes (below). It is
+            Rule 14 (UI Fidelity Contract) of the repo.
+          </p>
+        </div>
+
+        <div class="steps r">
+          <div class="step">
+            <h3>The story enters the sprint</h3>
+            <p>
+              You pick up a UI story. <span class="mono">/sprint-development</span> looks for it in the
+              <b>Story → Screen</b> map (§8 of the master design plan).
+            </p>
+          </div>
+          <div class="step">
+            <h3>Is there a mockup? If not, you pick a route</h3>
+            <p>
+              With no row in §8, or with the row marked 🔒 mockup-gated, the flow stops and
+              offers you three routes. The first is to go back to
+              <span class="mono">/design-system screen</span> to produce the mockup for
+              <em>that</em> batch of screens, with the handoff pattern of §04.
+            </p>
+          </div>
+          <div class="step">
+            <h3>The mockup becomes a contract</h3>
+            <p>
+              You ratify each mockup, whether the AI commissioned it or you brought it. The AI reads
+              the ratified ones, writes the screen spec (§4) and adds the row to the map (§8), and
+              shows you the list so you can <b>confirm</b> it before saving.
+            </p>
+          </div>
+          <div class="step">
+            <h3>It is built against the blueprint</h3>
+            <p>
+              Only then does <span class="mono">/sprint-development</span> implement the story,
+              opening the spec in §4 and the tokens in §2. The fidelity reference is the live UI
+              plus the DESIGN.md tokens: departing from them without ratifying it in §5 is a review
+              defect.
+            </p>
+          </div>
+        </div>
+
+        <div class="callout r">
+          <b>Live-UI-first:</b> the mockup is <em>inspiration</em>, not gospel. The current live UI
+          plus the DESIGN.md tokens are the source of truth for fidelity: the components that
+          already exist are reused and the mockup adapts to them, not the other way around. Following the live UI
+          where the mockup differs is not a defect. If the mockup brings something genuinely good that the
+          live UI does not have, it is not forced into the current story: it is filed as a future tech-story.
+        </div>
+
+        <div class="sec-head r" style="margin: 44px 0 22px 0">
+          <div class="eyebrow"><span class="num">03·b</span> · the design gate</div>
+          <p class="sub" style="font-size: 1rem">
+            It runs in Stage 1 of <span class="mono">/sprint-development</span>, on every story with
+            UI, before planning code. That skill does not design: it checks and routes.
+          </p>
+        </div>
+        <div class="tablewrap r">
+          <table class="cmp narrow">
+            <thead>
+              <tr>
+                <th>What it finds</th>
+                <th>What happens</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th>Row in §8 and its mockup</th>
+                <td>
+                  It gets built: spec in §4, tokens in §2. A deliberate deviation is ratified in §5
+                  before coding.
+                </td>
+              </tr>
+              <tr>
+                <th>Row in §8 marked 🔒 mockup-gated</th>
+                <td>The row already says what is missing. You pick one of the three routes.</td>
+              </tr>
+              <tr>
+                <th>No row in §8</th>
+                <td>The same three routes, and the row gets written too.</td>
+              </tr>
+              <tr>
+                <th>The project has no master design plan</th>
+                <td>
+                  Fidelity from <span class="mono">DESIGN.md</span> only: token check, no
+                  reference screen. The Stage 1 plan says so.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="tablewrap r" style="margin-top: 22px">
+          <table class="cmp narrow">
+            <thead>
+              <tr>
+                <th>Route</th>
+                <th>What it is</th>
+                <th>When</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th>(a) Just-in-time mockup</th>
+                <td>
+                  Goes to <span class="mono">/design-system screen</span>: brief, the highest method
+                  available (§04·b), bundle back.
+                </td>
+                <td>The default route, and the one offered first.</td>
+              </tr>
+              <tr>
+                <th>(b) Spec-only build, ratified in §5</th>
+                <td>
+                  It is built from the spec and recorded as a divergence in §5, plus an ADR
+                  if the deviation is architectural.
+                </td>
+                <td>
+                  No design tool is reachable, or the screen is trivial compared with
+                  patterns that already exist.
+                </td>
+              </tr>
+              <tr>
+                <th>(c) <span class="mono">DESIGN.md</span> only</th>
+                <td>Token fidelity for this story, with no reference screen.</td>
+                <td>With your explicit approval.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout blue r">
+          <b>You choose the route.</b> The AI stops and shows you the three; it never picks silently.
+        </div>
+
+        <div class="callout r">
+          <b>When the order is reversed:</b> if the screen encodes an irreversible decision or
+          one that changes the scope, that decision is ratified in an <b>ADR before</b> drawing the
+          mockup. A delete confirmation dialog <em>is</em> the delete policy: if it is
+          drawn first, the policy was chosen by whoever composed the screen. It is checked before
+          routing to (a).
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §04 EL PATRÓN UNIVERSAL DE HANDOFF ============ -->
+    <section class="band" id="handoff">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">04</span> · the universal pattern</div>
+          <h2>How a mockup is handed to the AI</h2>
+          <p class="sub">
+            This handoff is <em>identical</em> in shape for every tool; what
+            changes is <em>where</em> you draw the screens (step 2) and, for Open Design,
+            <em>who</em> does steps 3 and 4 (you, or the AI alone via MCP, see §06).
+          </p>
+        </div>
+
+        <div class="steps r">
+          <div class="step">
+            <h3>You give the opt-in</h3>
+            <p>
+              You run <span class="mono">/design-system screen</span>, or the design gate brings you here. The
+              phase <b>always asks</b>, it never runs on its own, with three options: yes I have/will
+              produce mockups, no (the tokens are enough), or not yet.
+            </p>
+            <span class="say"
+              ><span class="who">you →</span> "yes, I will produce mockups for these
+              stories"</span
+            >
+          </div>
+          <div class="step">
+            <h3>The AI hands you a BRIEF</h3>
+            <p>
+              The AI writes <span class="mono">BRIEF.md</span> seeded with the DESIGN.md tokens
+              (real values inline) + the stories and visible behaviors. It is the portable
+              prompt you will paste into the tool, or that the AI itself will use if the path
+              is MCP-driven.
+            </p>
+            <p class="mono" style="font-size: 0.8rem; color: var(--blue)">
+              .context/designs/&lt;project&gt;/&lt;batch&gt;/BRIEF.md
+            </p>
+          </div>
+          <div class="step">
+            <h3>You design in the external tool (or the AI commissions it via MCP)</h3>
+            <p>
+              You paste the brief into Claude Design / Open Design / whichever, iterate the screens
+              by chatting, and <b>export</b> the result. On the manual path, you do this step
+              yourself. In Open Design with MCP connected, the AI can trigger and poll the run on its own:
+              see Mode A in §06.
+            </p>
+          </div>
+          <div class="step">
+            <h3>The bundle lands in the "drop zone"</h3>
+            <p>
+              The exported files stay in the same folder as the brief. That is the
+              <em>delivery zone</em> the AI watches (or fills itself, in Mode A).
+            </p>
+            <p class="mono" style="font-size: 0.8rem; color: var(--blue)">
+              .context/designs/&lt;project&gt;/&lt;batch&gt;/
+            </p>
+          </div>
+          <div class="step">
+            <h3>The AI builds the contract</h3>
+            <p>
+              You tell it you are done (or it detects it when its run finishes). You ratify each
+              mockup; the AI reads the ratified ones, lists the screens, writes §4 + §8, and shows you the
+              map to review before saving it. Ready for the sprint.
+            </p>
+            <span class="say"
+              ><span class="who">you →</span> "I left the mockups in the folder, build the master
+              design plan"</span
+            >
+          </div>
+        </div>
+
+        <div class="callout blue r">
+          <b>Resume-safe:</b> while you design (manual Mode B), the AI leaves a checkpoint and
+          <em>pauses</em>. You can close the session: when you come back it resumes exactly where it was,
+          waiting for your bundle. It does not invent screens just to "keep going".
+        </div>
+
+        <div class="sec-head r" style="margin: 44px 0 22px 0">
+          <div class="eyebrow">
+            <span class="num">04·b</span> · who produces the screens, in order of preference
+          </div>
+          <p class="sub" style="font-size: 1rem">
+            The AI uses the highest method the session has and notes which one in the batch's
+            <span class="mono">BRIEF.md</span>.
+          </p>
+        </div>
+        <div class="steps r">
+          <div class="step">
+            <h3>Open Design via MCP (Mode A, preferred)</h3>
+            <p>
+              The AI commissions one run per screen, does QA and exports to the batch. The one that respects the
+              tokens most and asks you for the least back and forth. Details in §06.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Claude Design or any prototyper (Mode B)</h3>
+            <p>
+              It hands you the brief to paste into the tool and pauses with session resume. You
+              design and export to the batch.
+            </p>
+          </div>
+          <div class="step">
+            <h3>The Claude Code <span class="mono">design</span> skill</h3>
+            <p>
+              Where the session has it: a canvas of <span class="mono">.dc.html</span> artboards
+              that you can refine afterwards, by hand.
+            </p>
+          </div>
+          <div class="step">
+            <h3>AI-written HTML with a design skill (Mode C)</h3>
+            <p>
+              The AI writes the screen HTML, but only with the design set loaded before
+              the first line: <span class="mono">frontend-design</span>,
+              <span class="mono">ui-ux-pro-max</span>, <span class="mono">impeccable</span> and
+              <span class="mono">emil-design-eng</span>, plus <span class="mono">redesign-existing-projects</span>
+              if it redesigns a screen that already exists and <span class="mono">design-taste-frontend</span>
+              if it is a public marketing page. The skills are named in the
+              <span class="mono">BRIEF.md</span>, the values stay inside the tokens contract,
+              it is exported to the batch and you ratify it like any other mockup. If one is missing it says so
+              once and goes on with the rest; with none loaded, this method does not exist.
+            </p>
+          </div>
+        </div>
+
+        <div class="callout r">
+          <b>If none of the four is available: STOP.</b> The AI does not write the mockup by hand, without a
+          design skill loaded (D7). Markup written to fill the gap looks like a design artifact but was never designed, and then everyone
+          cites it as a spec. The legitimate way out is route (b) or (c) of the design gate: a
+          spec-only build ratified in §5, or <span class="mono">DESIGN.md</span> only with your OK. Building
+          from the tokens is fine; calling the result a mockup is not.
+        </div>
+        <div class="callout r">
+          <b>A logic prototype is inspiration only.</b> When a screen hides a rule that
+          cannot be judged by looking at an image (a state machine, a pricing or permissions model),
+          a throwaway prototype answers that question before the mockup is commissioned. Its result goes
+          to the ADR or the story; it never counts as a mockup or a spec.
+        </div>
+        <div class="callout blue r">
+          <b>In any method:</b> never a color, a font, a spacing step or a radius
+          outside the tokens contract of <span class="mono">DESIGN.md</span>.
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ============ §05 CLAUDE DESIGN ============ -->
+    <section class="band" id="claude">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">05</span> · tool A</div>
+          <h2>Claude Design</h2>
+          <p class="sub">
+            Anthropic's tool (<span class="mono">claude.ai/design</span>). You turn
+            text into <em>interactive</em> HTML/CSS/JS prototypes that you refine by chatting. It is
+            path D of the tokens phase (§02), and it also works for screen mockups by pasting the
+            BRIEF.md.
+          </p>
+        </div>
+
+        <div class="facts r" style="margin-bottom: 34px">
+          <div class="fact">
+            <div class="big">Pro+</div>
+            <div class="lbl">
+              Requires a Pro, Max, Team or Enterprise plan. On Enterprise, the admin must enable it
+              (default OFF).
+            </div>
+          </div>
+          <div class="fact">
+            <div class="big">Manual</div>
+            <div class="lbl">
+              There is no official CLI, API or MCP: everything happens in the browser. The AI waits for your export.
+            </div>
+          </div>
+          <div class="fact">
+            <div class="big">HTML</div>
+            <div class="lbl">
+              The medium is live <span class="mono">.dc.html</span> prototypes, not PNGs or Figma.
+            </div>
+          </div>
+        </div>
+
+        <div class="figwrap r">
+          <div class="win">
+            <div class="win-bar">
+              <div class="win-dots"><i></i><i></i><i></i></div>
+              <div class="win-url">claude.ai/design · login flow</div>
+              <div class="win-btn">Import</div>
+              <div class="win-btn exp">Export ▼</div>
+            </div>
+            <div class="win-body two">
+              <div class="pane chat">
+                <div class="pane-label">Chat</div>
+                <div class="bub ai">Here is a first version of the login. Shall we tweak anything?</div>
+                <div class="bub me">Make the primary button bigger and add an error state</div>
+                <div class="bub tool">✓ Editing · Login.dc.html</div>
+                <div class="bub tool">✓ Done</div>
+                <div class="promptbox">
+                  <span>Describe a change…</span><span class="send">▲</span>
+                </div>
+              </div>
+              <div class="pane canvas">
+                <div class="pane-label">Canvas · live preview</div>
+                <div class="mini">
+                  <div class="mtop"><i></i><i class="sm"></i></div>
+                  <div class="mbody">
+                    <div class="line w1"></div>
+                    <div class="line"></div>
+                    <div class="line w2"></div>
+                    <div class="btn"></div>
+                  </div>
+                  <div class="pin">2</div>
+                  <div class="sliders">
+                    <div class="sl a"></div>
+                    <div class="sl b"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="figcap">
+            Rough sketch, not faithful to the product. Chat on the left · live canvas on the
+            right · Export at the top right.
+          </div>
+        </div>
+
+        <div class="sec-head r" style="margin: 44px 0 22px 0">
+          <div class="eyebrow">
+            <span class="num">05·b</span> · step by step, for screen mockups
+          </div>
+        </div>
+        <div class="steps r">
+          <div class="step">
+            <h3>You open a project and paste the BRIEF</h3>
+            <p>
+              You create a project (it inherits your org's design system). You plug in context: GitHub
+              repo or local directory, existing assets. <b>You paste the whole BRIEF.md</b> as the
+              first chat message.
+            </p>
+          </div>
+          <div class="step">
+            <h3>You iterate in four ways</h3>
+            <p>
+              <b>Chat</b> for big changes · <b>inline comments</b> (click an element on the
+              canvas) · <b>direct editing</b> (drag / resize / align) ·
+              <b>sliders</b> that Claude generates for spacing, color and layout.
+            </p>
+          </div>
+          <div class="step">
+            <h3>You cover the states and several screens</h3>
+            <p>
+              One project holds the <b>complete flow</b> (several screens connected with
+              navigation). It generates the edge states (empty, loading, error) <em>before</em> the
+              handoff.
+            </p>
+          </div>
+          <div class="step">
+            <h3>You export: two routes</h3>
+            <p>
+              <b>Export</b> button (top right): <b>"Send to local coding agent"</b> pushes
+              the bundle straight to your local Claude Code running in the repo, or
+              <b>"Save as folder"</b> downloads it as a ZIP/folder for you to move by hand.
+            </p>
+          </div>
+          <div class="step">
+            <h3>You confirm the destination</h3>
+            <p>
+              With "Save as folder": unzip into
+              <span class="mono">.context/designs/&lt;project&gt;/&lt;batch&gt;/</span>. With "Send
+              to local coding agent": you tell the agent that same destination path; the scope of
+              this drop zone is <b>screen mockups</b>, not the DESIGN.md bundle (that one uses
+              <span class="mono">design/handoff/</span>).
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §06 OPEN DESIGN ============ -->
+    <section class="band" id="open">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">06</span> · tool B</div>
+          <h2>Open Design</h2>
+          <p class="sub">
+            The free, <em>open source</em> alternative to Claude Design (<span class="mono"
+              >nexu-io/open-design</span
+            >, Apache-2.0). It is a <b>desktop app</b> (no Docker) that uses
+            <em>your own</em> coding agent as the engine, and it can be operated <b>on its own</b> via MCP.
+          </p>
+        </div>
+
+        <div class="facts r" style="margin-bottom: 34px">
+          <div class="fact">
+            <div class="big">Desktop</div>
+            <div class="lbl">
+              Electron app, signed and notarized. <b>Dynamic</b> port, not fixed. Docker is an
+              alternative, not a requirement.
+            </div>
+          </div>
+          <div class="fact">
+            <div class="big">BYOK</div>
+            <div class="lbl">
+              Bring your CLI (Claude Code, Codex, OpenCode…) or your API keys. Free.
+            </div>
+          </div>
+          <div class="fact">
+            <div class="big">MCP</div>
+            <div class="lbl">
+              <span class="mono">mcp__open-design__*</span> tools: the AI can operate the app without you
+              opening the window.
+            </div>
+          </div>
+        </div>
+
+        <div class="figwrap r">
+          <div class="win">
+            <div class="win-bar">
+              <div class="win-dots"><i></i><i></i><i></i></div>
+              <div class="win-url">Open Design · Studio (desktop app, dynamic port)</div>
+            </div>
+            <div class="win-nav">
+              <span>Home</span><span class="on">Studio</span><span>Automation</span
+              ><span>Design System</span><span>Plugin</span><span class="gear">⚙</span>
+            </div>
+            <div class="win-body three">
+              <div class="pane chat">
+                <div class="pane-label">Chat / MCP</div>
+                <div class="bub me">Onboarding: welcome, plan selector, confirmation</div>
+                <div class="bub mcp">▌ start_run via MCP…</div>
+                <div class="bub tool">✓ get_run → succeeded</div>
+                <div class="promptbox"><span>Instruction…</span><span class="send">Send</span></div>
+              </div>
+              <div class="pane">
+                <div class="pane-label">Design files</div>
+                <div class="tree">
+                  <div class="mut">▾ onboarding/</div>
+                  <div class="f">&nbsp;&nbsp;welcome.html <span class="verpill">v3</span></div>
+                  <div class="on">&nbsp;&nbsp;plans.html <span class="verpill">v5</span></div>
+                  <div class="f">&nbsp;&nbsp;confirm.html <span class="verpill">v2</span></div>
+                  <div class="mut">▸ history</div>
+                </div>
+              </div>
+              <div class="pane preview">
+                <div class="pane-label">Preview</div>
+                <div class="exp-fab">cp → repo</div>
+                <div class="mini" style="width: 88%">
+                  <div class="mtop"><i></i><i class="sm"></i></div>
+                  <div class="mbody">
+                    <div class="line w1"></div>
+                    <div class="cards"><i></i><i></i><i></i></div>
+                    <div class="btn"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="figcap">
+            Rough sketch, not faithful to the product. In Mode A there is no Export button to press: the
+            AI locates the result with <span class="mono">get_artifact</span>/<span class="mono"
+              >list_files</span
+            >
+            and copies it (<span class="mono">cp</span>) to the repo; the MCP does not write outside its own
+            data directory.
+          </div>
+        </div>
+
+        <div class="sec-head r" style="margin: 44px 0 22px 0">
+          <div class="eyebrow"><span class="num">06·b</span> · two modes, same destination</div>
+        </div>
+        <div class="planes r" style="margin-bottom: 30px">
+          <div class="plane agent">
+            <div class="tag">Mode A · preferred</div>
+            <h3>MCP-driven</h3>
+            <span class="path">mcp__open-design__*</span>
+            <p style="font-size: 0.93rem; color: var(--ink-soft); margin: 4px 0 0">
+              With the Open Design daemon connected as an MCP server, the AI itself calls
+              <span class="mono">create_project</span> + <span class="mono">start_run</span> with the
+              BRIEF.md content, polls <span class="mono">get_run</span> every 30–60s in a
+              foreground loop, and on seeing <span class="mono">status: succeeded</span> it locates the
+              result with <span class="mono">get_artifact</span> /
+              <span class="mono">list_files</span> and copies it (<span class="mono">cp</span>) from
+              the Open Design data root to the repo's drop zone, without you touching the window.
+              You ratify the exported screens before they enter the map.
+            </p>
+          </div>
+          <div class="plane">
+            <div class="tag">Mode B · fallback</div>
+            <h3>Manual + PAUSE</h3>
+            <span class="path">manual handoff</span>
+            <p style="font-size: 0.93rem; color: var(--ink-soft); margin: 4px 0 0">
+              If the MCP is not connected: the AI leaves the BRIEF.md and <b>pauses</b>. You open the desktop
+              app, paste the brief into <b>Studio → New Project</b> (skill/template + DESIGN.md +
+              brief), iterate, and copy the final file from the project's data folder (or
+              run <span class="mono">od export</span>) to the drop zone, and tell it when it is there.
+            </p>
+          </div>
+        </div>
+
+        <div class="sec-head r" style="margin: 34px 0 18px 0">
+          <div class="eyebrow"><span class="num">06·c</span> · install and connect the engine</div>
+        </div>
+        <div class="r" style="margin-bottom: 22px">
+          <div class="code">
+            <span class="c"># Recommended route: no Docker, signed binary</span> Download the
+            installer from the <span class="k">nexu-io/open-design</span> releases (macOS/Win/Linux) and
+            open the app. No fixed port or
+            <span class="mono">host.docker.internal</span> needed.
+
+            <span class="c"># Docker still exists, but it is no longer the recommended route,</span>
+            <span class="c"># only if you already live in containers or need remote access.</span>
+          </div>
+        </div>
+
+        <div class="steps r">
+          <div class="step">
+            <h3>You configure the engine</h3>
+            <p>
+              In <b>Settings</b> you choose how it generates: pointing to your already-authenticated CLI (Claude Code
+              / Codex / OpenCode, <em>without</em> an extra key) or loading an API key for any
+              endpoint compatible with the OpenAI API (BYOK).
+            </p>
+          </div>
+          <div class="step">
+            <h3>You connect the MCP to your agent</h3>
+            <p>
+              You register the Open Design daemon as an MCP server in your coding agent (Claude Code,
+              etc.). Once connected, the
+              <span class="mono">mcp__open-design__*</span> tools become available and Mode A becomes
+              the default path.
+            </p>
+          </div>
+          <div class="step">
+            <h3>You pick the 3 inputs and fire</h3>
+            <p>
+              An OD skill (for application screens use
+              <span class="mono">frontend-design</span>) + design system (your real
+              <span class="mono">DESIGN.md</span>) +
+              a natural-language brief (the BRIEF.md). <b>Send</b>, by hand in Studio, or via
+              <span class="mono">start_run</span> if the AI is the one firing.
+            </p>
+          </div>
+          <div class="step">
+            <h3>The artifact streams live</h3>
+            <p>
+              Open Design's internal agent emits a complete, self-contained HTML; the right
+              panel <b>streams</b> it as a navigable prototype: buttons, tabs and modals
+              work. Each follow-up creates a <b>new version</b>, the previous ones stay in the
+              history.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Closing the handoff</h3>
+            <p>
+              Mode A: the AI locates the file with <span class="mono">get_artifact</span> and copies it
+              (<span class="mono">cp</span>) to the drop zone; the MCP does not write outside its own
+              data root. Mode B: you copy the file (or run <span class="mono">od export</span>) to
+              <span class="mono">.context/designs/&lt;project&gt;/&lt;batch&gt;/</span> and tell it.
+            </p>
+          </div>
+        </div>
+
+        <div class="sec-head r" style="margin: 40px 0 18px 0">
+          <div class="eyebrow">
+            <span class="num">06·d</span> · gotchas verified in production
+          </div>
+          <p class="sub" style="font-size: 1rem">
+            If you are going to operate Open Design via MCP (Mode A), these four signals are confusing if you do not
+            know them beforehand.
+          </p>
+        </div>
+        <div class="gotchas r">
+          <div class="g">
+            <b>The agent's message lies before the file does</b
+            ><span
+              >The self-report (<span class="mono">agentMessage</span>) can report the wrong language or
+              result even though the generated HTML is correct. The file on disk is the
+              ground truth: grep it, do not react to the message.</span
+            >
+          </div>
+          <div class="g">
+            <b>"produced no files" can be a false hint</b
+            ><span
+              >With <span class="mono">artifactCount: 1</span> and the file already written, the
+              <span class="mono">get_run</span> hint sometimes says otherwise. The filesystem
+              rules.</span
+            >
+          </div>
+          <div class="g">
+            <b><span class="mono">updatedAt</span> freezes during extended thinking</b
+            ><span
+              >Minutes without movement in the run timestamp are not a hang: it is the model
+              thinking. Check real liveness against the last event in
+              <span class="mono">events.jsonl</span>.</span
+            >
+          </div>
+          <div class="g">
+            <b>Poll foreground only, never a bare sleep in the background</b
+            ><span
+              >A subagent that waits for a run with a long <span class="mono">sleep</span> in the
+              background stalls itself. Proven pattern: a foreground loop with a timeout and a short
+              <span class="mono">sleep</span> inside, never a
+              loose <span class="mono">sleep</span>.</span
+            >
+          </div>
+        </div>
+
+        <div class="callout blue r">
+          <b>Key detail:</b> Open Design <em>consumes</em> DESIGN.md, it does not replace it, but it is not
+          automatic. First you have to install the repo's design system as a user package
+          (<span class="mono">user:&lt;slug&gt;</span>) and <b>publish it</b> (it starts as
+          <span class="mono">draft</span>, projects cannot use it until it is published). Without
+          that, screens may come out with invented values instead of your real palette and
+          typography.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §07 OTRAS VÍAS ============ -->
+    <section class="band" id="otras">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">07</span> · other routes</div>
+          <h2>Any prototyper works</h2>
+          <p class="sub">
+            The repo treats <em>anything</em> that lands in the drop zone as a screen source.
+            Claude Design and Open Design are the recommended ones, but the universal pattern (§04)
+            also accepts:
+          </p>
+        </div>
+
+        <div class="alts r">
+          <div class="alt">
+            <h3>Figma</h3>
+            <div class="kk">static export</div>
+            <p>
+              You design in Figma as always and <b>export the screens</b> (images / HTML /
+              specs) to the drop zone. The AI reads them as a visual reference. Ideal if your team already
+              lives in Figma. The downside: they are not live HTML prototypes, so the AI infers layout
+              from the image + your brief.
+            </p>
+          </div>
+          <div class="alt">
+            <h3>Manual HTML</h3>
+            <div class="kk">no visual tool</div>
+            <p>
+              You write it yourself, by hand, or by pasting the output of any AI chat you use
+              as a notepad, in <b>another session</b>, with no connection to the one running
+              <span class="mono">/design-system</span>. Fast and without leaving the terminal. The
+              downside: no visual canvas to iterate comfortably, refinement is by chat in that other
+              session and by checking the rendered HTML.
+            </p>
+          </div>
+        </div>
+
+        <div class="callout agent r">
+          <b>Hard rule, delegate and do not generate:</b> the session that runs
+          <span class="mono">/design-system</span> <b>never</b> writes the mockup itself without
+          a design skill loaded (no <span class="mono">Write</span> /
+          <span class="mono">write_file</span> on design HTML: anti-patterns S1 of
+          <span class="mono">screen-design-mapping.md</span>, D7 of
+          <span class="mono">SKILL.md</span>, B4 of
+          <span class="mono">screen-design-brief.md</span>). If the HTML comes from an AI, there are two
+          paths: it comes from <b>another session</b>, treated exactly like a Figma export (a
+          an external file that you drop into the drop zone), or this same session writes it through
+          a <span class="mono">frontend-ui</span> design skill (Mode C), named in the
+          <span class="mono">BRIEF.md</span>. What never exists is markup that the orchestrating
+          session writes "while it waits", with no design skill at all.
+        </div>
+
+        <div class="sec-head r" style="margin: 40px 0 22px 0">
+          <div class="eyebrow"><span class="num">07·b</span> · the manual route, step by step</div>
+          <p class="sub" style="font-size: 1rem">
+            The fastest option when you do not want to start any app. It works well for simple screens
+            and for iterating quickly before polishing in a visual tool, as long as the
+            file is produced and moved by you, not by the
+            <span class="mono">/design-system</span> session.
+          </p>
+        </div>
+        <div class="steps r">
+          <div class="step">
+            <h3>You produce the first screen, separately</h3>
+            <p>
+              In another window or session (or by hand), a prompt that anchors three things: which screen, which
+              story, and that it uses the <span class="mono">DESIGN.md</span> tokens. You ask for a
+              self-contained file (openable in the browser right away).
+            </p>
+            <span class="say"
+              ><span class="who">you, in that other session →</span> "Generate a self-contained HTML mockup
+              of the login screen for story PROJ-14. Use the tokens from
+              DESIGN.md. A single file."</span
+            >
+          </div>
+          <div class="step">
+            <h3>You save it in the drop zone yourself</h3>
+            <p>
+              You copy the resulting <span class="mono">.html</span> to
+              <span class="mono">.context/designs/&lt;project&gt;/&lt;batch&gt;/login.html</span>:
+              your own action, just like unzipping a Claude Design zip. You open it and look at it in the
+              browser: that render is your canvas.
+            </p>
+          </div>
+          <div class="step">
+            <h3>You iterate in that other session</h3>
+            <p>
+              You describe the change in words there; that session rewrites the file; you copy it
+              back to the drop zone and refresh the browser. Repeat until it is right.
+            </p>
+            <span class="say"
+              ><span class="who">you, in that other session →</span> "the primary button bigger,
+              add the error state and a forgot-password link"</span
+            >
+          </div>
+          <div class="step">
+            <h3>You cover the edge states</h3>
+            <p>
+              Ask explicitly for empty, loading and error: they are not added on their own. They are part of the
+              screen contract.
+            </p>
+          </div>
+          <div class="step">
+            <h3>You return to the /design-system session and close the handoff</h3>
+            <p>
+              The file is already in the drop zone (you put it there in step 2). You ask
+              <span class="mono">/design-system</span> to build the plan. Same ending as Claude
+              Design or Open Design.
+            </p>
+            <span class="say"
+              ><span class="who">you →</span> "the mockup is ready, build the master design plan for
+              PROJ-14"</span
+            >
+          </div>
+        </div>
+
+        <div class="callout r">
+          <b>The principle does not change:</b> wherever the mockup comes from, it ends up in
+          <span class="mono">.context/designs/&lt;project&gt;/&lt;batch&gt;/</span> placed there by
+          you, and the AI turns it into a screen spec + a row in the Story→Screen map. The
+          tool is interchangeable; who produces it may vary; the contract (and who
+          moves it to the drop zone) is always the same.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §08 COMPARACIÓN ============ -->
+    <section class="band" id="comparacion">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">08</span> · comparison</div>
+          <h2>Which one to pick</h2>
+        </div>
+        <div class="tablewrap r">
+          <table class="cmp">
+            <thead>
+              <tr>
+                <th>&nbsp;</th>
+                <th>Claude Design</th>
+                <th>Open Design</th>
+                <th>Figma</th>
+                <th>Manual HTML</th>
+                <th>Design skill (Mode C)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th>Cost / access</th>
+                <td><span class="badge paid">Pro+</span> paid plan</td>
+                <td>
+                  <span class="badge free">free</span> <span class="badge local">local</span>
+                </td>
+                <td><span class="badge free">free/paid</span></td>
+                <td><span class="badge free">included</span></td>
+                <td><span class="badge free">included</span> in the skill you already have loaded</td>
+              </tr>
+              <tr>
+                <th>Where it runs</th>
+                <td>Web (claude.ai/design)</td>
+                <td>Your machine (desktop app, dynamic port)</td>
+                <td>Web / desktop</td>
+                <td>Another session, apart from the repo</td>
+                <td>The same session, with the skill loaded</td>
+              </tr>
+              <tr>
+                <th>Medium</th>
+                <td>Live HTML/CSS/JS prototype</td>
+                <td>Live HTML prototype</td>
+                <td>Vector design → export</td>
+                <td>Plain HTML</td>
+                <td>HTML that the AI writes through the skill</td>
+              </tr>
+              <tr>
+                <th>Iteration</th>
+                <td>Chat · inline · drag · sliders</td>
+                <td>Chat + versions · <span class="badge mcp">MCP</span> autonomous Mode A</td>
+                <td>Manual (you design)</td>
+                <td>Separate chat + you copy the render</td>
+                <td>Chat with the AI; you ratify each screen</td>
+              </tr>
+              <tr>
+                <th>Uses DESIGN.md</th>
+                <td>Via the org's design system</td>
+                <td>Yes, consumes it directly</td>
+                <td>Manual (tokens by hand)</td>
+                <td>Yes, you pass it in</td>
+                <td>Yes, with every value inside the tokens contract</td>
+              </tr>
+              <tr>
+                <th>Best for</th>
+                <td>Rich, fast visual refinement</td>
+                <td>Everything local, free, and automatable end-to-end</td>
+                <td>Teams already on Figma</td>
+                <td>Simple screens, no friction</td>
+                <td>No external tool but with a <span class="mono">frontend-ui</span> skill</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="figcap" style="text-align: left; margin-top: 14px">
+          Routes, drop zones and MCP commands: the source is
+          <span class="mono">.agents/skills/design-system/</span> (<span class="mono">SKILL.md</span>
+          and <span class="mono">references/</span>). The interaction mechanics of Claude Design
+          (chat, inline, drag, sliders) are general product knowledge, not documented
+          in the skill. Both tools change fast: check against the tool before
+          an important demo.
+        </p>
+      </div>
+    </section>
+
+    <!-- ============ §09 COMANDOS ============ -->
+    <section class="band" id="comandos">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">09</span> · what you tell the AI</div>
+          <h2>The exact commands</h2>
+          <p class="sub">
+            The skill name plus the mode, <span class="mono">tokens</span> or
+            <span class="mono">screen</span>. With no mode, the AI takes it from the request (a story that
+            needs a screen is <span class="mono">screen</span>; brand, tokens or DESIGN.md is
+            <span class="mono">tokens</span>) and, if it is still unclear, it asks.
+          </p>
+        </div>
+
+        <div class="hosts r">
+          <div class="host">
+            <h3>Claude Code</h3>
+            <span class="say">/design-system tokens</span>
+            <span class="say" style="margin-top: 8px">/design-system screen PROJ-14</span>
+            <p>Slash command for the skill, the mode and what follows (the story) arrive intact.</p>
+          </div>
+          <div class="host">
+            <h3>OpenCode</h3>
+            <span class="say">load the design-system skill, tokens mode</span>
+            <p>No slash command: you name the skill and the mode in the sentence.</p>
+          </div>
+          <div class="host">
+            <h3>Codex</h3>
+            <span class="say">load the design-system skill, screen mode, story PROJ-14</span>
+            <p>Same pattern as OpenCode, CLI or Desktop.</p>
+          </div>
+          <div class="host">
+            <h3>Pi</h3>
+            <span class="say">/skill:design-system tokens</span>
+            <p>Slash command with the <span class="mono">/skill:</span> prefix. In a new folder, <span class="mono">/trust</span> once.</p>
+          </div>
+        </div>
+
+        <div class="steps r">
+          <div class="step">
+            <h3>You start the screen phase</h3>
+            <span class="say"><span class="who">you →</span> /design-system screen PROJ-14</span>
+            <p style="margin-top: 10px">
+              And when it asks about the screen mapping:
+              <em>"yes, I will produce the mockups"</em>.
+            </p>
+          </div>
+          <div class="step">
+            <h3>You receive the brief, design outside (or let the AI operate Open Design)</h3>
+            <p>
+              The AI leaves <span class="mono">BRIEF.md</span> in the batch folder. Mode B: you paste it
+              into Claude Design or Open Design, iterate, export the bundle to that same folder. Mode A
+              (Open Design + MCP): you do not need to do anything else, the AI fires and polls on its own.
+            </p>
+          </div>
+          <div class="step">
+            <h3>You close the handoff</h3>
+            <span class="say"
+              ><span class="who">you →</span> "I already left the mockups in
+              .context/designs/&lt;project&gt;/&lt;batch&gt;/, build the master design plan"</span
+            >
+            <p style="margin-top: 10px">
+              The AI reads, writes §4 + §8 and shows you the Story→Screen map so you can
+              confirm it.
+            </p>
+          </div>
+          <div class="step">
+            <h3>You build the story</h3>
+            <span class="say"
+              ><span class="who">you →</span> "implement story PROJ-XX" &nbsp;·&nbsp;
+              /sprint-development</span
+            >
+            <p style="margin-top: 10px">
+              If that story had no mockup, the design gate stops and offers you the three routes;
+              (a) takes you back to step 1 with a brief only for that batch of screens.
+            </p>
+          </div>
+        </div>
+
+        <div class="callout blue r">
+          <b>In one sentence:</b> <span class="mono">/design-system tokens</span> once →
+          DESIGN.md. Per story: <span class="mono">/design-system screen</span> (opt-in) →
+          BRIEF.md → you design outside or the AI commissions Open Design via MCP → you ratify → the AI
+          builds the plan → <span class="mono">/sprint-development</span> builds against the live UI and
+          the tokens.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ CHECKLIST / CIERRE ============ -->
+    <section class="band">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">10</span> · before you start</div>
+          <h2>Preconditions, in a list</h2>
+          <p class="sub">Before you start producing mockups, have this ready:</p>
+        </div>
+        <div class="check r">
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>DESIGN.md exists.</b> Mockups are seeded with its frozen tokens. Without it there is no
+              visual contract: run <span class="mono">/design-system tokens</span>
+              first.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Backlog with user stories.</b> They are needed to seed the brief and build
+              the Story→Screen map.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Tool chosen and ready.</b> Claude Design (Pro+ plan) · Open Design (desktop
+              app installed, MCP connected if you want Mode A) · Figma · the Claude Code
+              <span class="mono">design</span> skill · or a
+              <span class="mono">frontend-ui</span> design skill loaded (Mode C). With none, the design gate
+              offers you (b) or (c), never a mockup written by the AI without a design skill.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Opt-in given.</b> The screens phase is always requested explicitly; it never runs
+              on its own.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Clear drop zone.</b> You know in which
+              <span class="mono">.context/designs/&lt;project&gt;/&lt;batch&gt;/</span> the
+              bundle will land, and that it is not the same folder as
+              <span class="mono">design/handoff/</span>.</span
+            >
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §11 EMPEZAR ============ -->
+    <section class="band" id="empezar">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">11</span> · start now</div>
+          <h2>Starting from zero</h2>
+          <p class="sub">
+            Literal runbook. Two paths depending on how much you want to set up. Both start by opening Claude
+            Code, OpenCode, Codex or Pi at the repo root; the skills live in
+            <span class="mono">.agents/skills/</span> and every terminal reads them the same way (Claude
+            Code through the generated alias <span class="mono">.claude/skills</span>), so
+            <span class="mono">/design-system</span> and
+            <span class="mono">/sprint-development</span> are available in any of the
+            three.
+          </p>
+        </div>
+
+        <div class="planes r" style="margin-bottom: 30px">
+          <div class="plane">
+            <div class="tag">Path A · full flow with the skill</div>
+            <h3>With a visual tool</h3>
+            <p style="font-size: 0.93rem; color: var(--ink-soft); margin: 4px 0 12px">
+              When you are going to design in Claude Design or Open Design and want the BRIEF seeded with your
+              tokens.
+            </p>
+            <div class="code" style="font-size: 0.78rem">
+              <span class="c"># repo root</span> claude <span class="c"># or: opencode, codex, pi</span>
+
+              <span class="c"># inside the session (in Pi: /skill:design-system screen; in OpenCode or Codex: "load the design-system skill, screen mode"):</span>
+              <span class="k">/design-system screen PROJ-XX</span>
+
+              <span class="c"># answer the screens opt-in:</span>
+              <span class="s">"yes, I will produce the mockups"</span>
+            </div>
+            <p style="font-size: 0.9rem; color: var(--ink-soft); margin: 14px 0 0">
+              The AI leaves the <span class="mono">BRIEF.md</span>, you paste it into your tool, export
+              the bundle to the drop zone, and close with <em>"build the master design plan"</em>.
+            </p>
+          </div>
+          <div class="plane sig">
+            <div class="tag">Path B · manual HTML, no external app</div>
+            <h3>You produce the HTML, separately</h3>
+            <p style="font-size: 0.93rem; color: var(--ink-soft); margin: 4px 0 12px">
+              The fastest to get going. You do not start anything, but you generate and move the
+              file yourself, in a <b>different</b> session from the one running
+              <span class="mono">/design-system</span>.
+            </p>
+            <div class="code" style="font-size: 0.78rem">
+              <span class="c"># in ANOTHER window/session, not the repo one with /design-system</span>
+              claude <span class="c"># or: opencode, or any AI chat</span>
+
+              <span class="c"># seed prompt (adjust screen + story):</span>
+              <span class="s"
+                >"Generate a self-contained HTML mockup of the &lt;X&gt; screen for story
+                PROJ-XX. Use the tokens from DESIGN.md. Include the empty, loading and error states. A
+                single file."</span
+              >
+
+              <span class="c"># you copy the result to the drop zone:</span>
+              <span class="k">cp</span> screen.html
+              .context/designs/&lt;project&gt;/&lt;batch&gt;/&lt;X&gt;.html
+            </div>
+            <p style="font-size: 0.9rem; color: var(--ink-soft); margin: 14px 0 0">
+              You open the <span class="mono">.html</span> in the browser, iterate by chat in that other
+              session, and only then go back to the <span class="mono">/design-system</span> session and
+              close with <em>"build the master design plan for PROJ-XX"</em>.
+            </p>
+          </div>
+        </div>
+
+        <div class="callout blue r">
+          <b>Rule for the prompt:</b> always anchor <em>screen</em> + <em>story (PROJ-XX)</em> +
+          <em>"use the DESIGN.md tokens"</em>. With those anchors the mockup comes out aligned, and you are the
+
+          one who brings it to the drop zone for the rest of the flow, never the orchestrating session.
+        </div>
+
+        <div class="callout agent r">
+          <b>When each path:</b> Path B for simple screens and for quick tests before
+          committing. Path A when the screen is rich and you want the visual refinement
+          (canvas, sliders, comments) of Claude Design, or the end-to-end automation of Open
+          Design in Mode A. You can start in B and move to A without losing anything: the same
+          <span class="mono">BRIEF.md</span> works for both.
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <div class="wrap">
+        <div class="prose">
+          <p>
+            <b style="color: var(--ink)">The core idea.</b> The system is fixed once, in
+            <span class="mono">DESIGN.md</span>. The blueprint of each screen comes later, story
+            by story: a design tool produces it (commissioned by the AI or used by
+            you), you ratify it, and the AI maps it to the story and builds against the live UI and
+            the tokens, with the mockup as inspiration. The AI never writes the blueprint by hand without a design skill.
+          </p>
+        </div>
+        <div class="sig">
+          <span
+            >Source: <span class="mono">.agents/skills/design-system/SKILL.md</span> and its
+            <span class="mono">references/</span></span
+          >
+          <span>·</span>
+          <span><a href="../../index.html">← back to Blueprints</a></span>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      // theme toggle
+      (function () {
+        var root = document.documentElement;
+        var btn = document.getElementById('themebtn');
+        var icon = document.getElementById('themeicon');
+        function current() {
+          var t = root.getAttribute('data-theme');
+          if (t) return t;
+          return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+            ? 'dark'
+            : 'light';
+        }
+        function setIcon() {
+          icon.textContent = current() === 'dark' ? '☾' : '☀';
+        }
+        setIcon();
+        btn.addEventListener('click', function () {
+          var next = current() === 'dark' ? 'light' : 'dark';
+          root.setAttribute('data-theme', next);
+          setIcon();
+        });
+        if (window.matchMedia) {
+          window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', setIcon);
+        }
+      })();
+
+      // hero pipeline animation
+      (function () {
+        var reduce =
+          window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var pipe = document.getElementById('pipe');
+        if (pipe && !reduce) {
+          var io = new IntersectionObserver(
+            function (es) {
+              es.forEach(function (e) {
+                if (e.isIntersecting) {
+                  pipe.classList.add('reveal-pipe');
+                  io.disconnect();
+                }
+              });
+            },
+            { threshold: 0.3 }
+          );
+          io.observe(pipe);
+        } else if (pipe) {
+          pipe.classList.add('reveal-pipe');
+        }
+      })();
+
+      // scroll reveal
+      (function () {
+        var reduce =
+          window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var els = document.querySelectorAll('.r');
+        if (reduce) {
+          els.forEach(function (el) {
+            el.classList.add('in');
+          });
+          return;
+        }
+        var io = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (e) {
+              if (e.isIntersecting) {
+                e.target.classList.add('in');
+                io.unobserve(e.target);
+              }
+            });
+          },
+          { threshold: 0.12, rootMargin: '0px 0px -8% 0px' }
+        );
+        els.forEach(function (el) {
+          io.observe(el);
+        });
+      })();
+    </script>
+    <!-- ============ MOBILE (UPEX) — scroll deck: reflow by CSS, no scale-to-fit or swipe ============
+         The decks in this repo are pages read by scrolling and rearranged with @media.
+         There are no slides to scale or swipe through: this block only declares the mobile mode.
+         The site that serves the deck validates the id `upex-mobile-nav`. -->
+    <script id="upex-mobile-nav">
+      (function () {
+        var mobile =
+          window.matchMedia &&
+          window.matchMedia('(pointer: coarse)').matches &&
+          window.matchMedia('(max-width: 768px)').matches;
+        document.documentElement.setAttribute('data-mobile', mobile ? 'reflow' : 'off');
+      })();
+    </script>
+  </body>
+</html>

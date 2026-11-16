@@ -1,0 +1,2941 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Product management: from the PRD to ready stories</title>
+    <meta
+      name="description"
+      content="How /product-management turns the PRD into epics and stories in Jira, refines them with INVEST and Gherkin, and works out the order in which they can start."
+    />
+    <style>
+      /* ============================================================
+     Self-contained deck: zero external requests, not even
+     fonts. Built to survive for years as a loose file.
+     Tokens: "Planos", see packages/decks/README.md (single source).
+     ============================================================ */
+      :root {
+        --paper: #e8ecf1;
+        --paper-2: #dee5ed;
+        --surface: #f5f8fb;
+        --surface-2: #ffffff;
+        --ink: #172236;
+        --ink-soft: #4a5873;
+        --ink-faint: #5e6e88;
+        --line: rgba(23, 34, 54, 0.14);
+        --line-soft: rgba(23, 34, 54, 0.08);
+        --blue: #1e56a8;
+        --blue-2: #2f72ce;
+        --blue-wash: rgba(30, 86, 168, 0.08);
+        --blue-solid: #1e56a8;
+        --signal: #c2410c;
+        --signal-2: #ea580c;
+        --signal-wash: rgba(194, 65, 12, 0.09);
+        --signal-solid: #9a3412;
+        --agent: #6d28d9;
+        --agent-2: #7c3aed;
+        --agent-wash: rgba(109, 40, 217, 0.08);
+        --agent-solid: #6d28d9;
+        --good: #15803d;
+        --warn: #b45309;
+        --grid: rgba(30, 86, 168, 0.055);
+        --shadow: 0 1px 2px rgba(23, 34, 54, 0.06), 0 8px 24px -12px rgba(23, 34, 54, 0.18);
+        --shadow-lg: 0 2px 4px rgba(23, 34, 54, 0.05), 0 24px 60px -24px rgba(23, 34, 54, 0.28);
+        /* -solid tokens: fixed across both themes, reserved for solid-fill
+           + white-text UI (buttons, bubbles, ::selection): the plain
+           --blue/--signal/--agent above lighten in dark mode for on-paper
+           text/links and fail contrast as a white-text fill. Never themed. */
+
+        --font-display:
+          'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
+        --font-body:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', system-ui, sans-serif;
+        --font-mono:
+          ui-monospace, 'SF Mono', 'JetBrains Mono', 'Cascadia Code', Menlo, Consolas, monospace;
+
+        --maxw: 1120px;
+        --prose: 66ch;
+        --r: 14px;
+        --r-sm: 9px;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --paper: #0b1220;
+          --paper-2: #0e1626;
+          --surface: #121b2e;
+          --surface-2: #16213a;
+          --ink: #e4e9f2;
+          --ink-soft: #9fb0c9;
+          --ink-faint: #7e8caa;
+          --line: rgba(160, 180, 210, 0.16);
+          --line-soft: rgba(160, 180, 210, 0.09);
+          --blue: #6fa8ff;
+          --blue-2: #8cbbff;
+          --blue-wash: rgba(111, 168, 255, 0.11);
+          --signal: #fb923c;
+          --signal-2: #fdba74;
+          --signal-wash: rgba(251, 146, 60, 0.12);
+          --agent: #c4b5fd;
+          --agent-2: #ddd6fe;
+          --agent-wash: rgba(196, 181, 253, 0.12);
+          --good: #4ade80;
+          --warn: #fbbf24;
+          --grid: rgba(111, 168, 255, 0.06);
+          --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 30px -14px rgba(0, 0, 0, 0.6);
+          --shadow-lg: 0 2px 6px rgba(0, 0, 0, 0.4), 0 30px 70px -28px rgba(0, 0, 0, 0.7);
+        }
+      }
+      :root[data-theme='light'] {
+        --paper: #e8ecf1;
+        --paper-2: #dee5ed;
+        --surface: #f5f8fb;
+        --surface-2: #ffffff;
+        --ink: #172236;
+        --ink-soft: #4a5873;
+        --ink-faint: #5e6e88;
+        --line: rgba(23, 34, 54, 0.14);
+        --line-soft: rgba(23, 34, 54, 0.08);
+        --blue: #1e56a8;
+        --blue-2: #2f72ce;
+        --blue-wash: rgba(30, 86, 168, 0.08);
+        --signal: #c2410c;
+        --signal-2: #ea580c;
+        --signal-wash: rgba(194, 65, 12, 0.09);
+        --agent: #6d28d9;
+        --agent-2: #7c3aed;
+        --agent-wash: rgba(109, 40, 217, 0.08);
+        --good: #15803d;
+        --warn: #b45309;
+        --grid: rgba(30, 86, 168, 0.055);
+        --shadow: 0 1px 2px rgba(23, 34, 54, 0.06), 0 8px 24px -12px rgba(23, 34, 54, 0.18);
+        --shadow-lg: 0 2px 4px rgba(23, 34, 54, 0.05), 0 24px 60px -24px rgba(23, 34, 54, 0.28);
+      }
+      :root[data-theme='dark'] {
+        --paper: #0b1220;
+        --paper-2: #0e1626;
+        --surface: #121b2e;
+        --surface-2: #16213a;
+        --ink: #e4e9f2;
+        --ink-soft: #9fb0c9;
+        --ink-faint: #7e8caa;
+        --line: rgba(160, 180, 210, 0.16);
+        --line-soft: rgba(160, 180, 210, 0.09);
+        --blue: #6fa8ff;
+        --blue-2: #8cbbff;
+        --blue-wash: rgba(111, 168, 255, 0.11);
+        --signal: #fb923c;
+        --signal-2: #fdba74;
+        --signal-wash: rgba(251, 146, 60, 0.12);
+        --agent: #c4b5fd;
+        --agent-2: #ddd6fe;
+        --agent-wash: rgba(196, 181, 253, 0.12);
+        --good: #4ade80;
+        --warn: #fbbf24;
+        --grid: rgba(111, 168, 255, 0.06);
+        --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 30px -14px rgba(0, 0, 0, 0.6);
+        --shadow-lg: 0 2px 6px rgba(0, 0, 0, 0.4), 0 30px 70px -28px rgba(0, 0, 0, 0.7);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+      }
+      body {
+        margin: 0;
+        font-family: var(--font-body);
+        font-size: 17px;
+        line-height: 1.65;
+        color: var(--ink);
+        background-color: var(--paper);
+        background-image:
+          linear-gradient(var(--grid) 1px, transparent 1px),
+          linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+        background-size: 30px 30px;
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
+      }
+      h1,
+      h2,
+      h3 {
+        font-family: var(--font-display);
+        font-weight: 600;
+        text-wrap: balance;
+        line-height: 1.12;
+        margin: 0;
+      }
+      p {
+        margin: 0 0 1.1em;
+      }
+      a {
+        color: var(--blue);
+        text-decoration-color: var(--line);
+        text-underline-offset: 3px;
+      }
+      a:focus-visible {
+        outline: 2px solid var(--blue);
+        outline-offset: 2px;
+      }
+      code,
+      .mono {
+        font-family: var(--font-mono);
+      }
+      ::selection {
+        background: var(--signal-solid);
+        color: #fff;
+      }
+
+      .wrap {
+        max-width: var(--maxw);
+        margin: 0 auto;
+        padding: 0 clamp(20px, 5vw, 56px);
+      }
+      .prose {
+        max-width: var(--prose);
+      }
+
+      .eyebrow {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        font-weight: 600;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--signal);
+        display: inline-flex;
+        align-items: baseline;
+        gap: 0.6em;
+      }
+      .eyebrow .num {
+        color: var(--blue);
+      }
+
+      .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 11px clamp(20px, 5vw, 56px);
+        background: color-mix(in srgb, var(--paper) 82%, transparent);
+        backdrop-filter: blur(12px) saturate(1.4);
+        border-bottom: 1px solid var(--line-soft);
+      }
+      .topbar .brand {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        letter-spacing: 0.04em;
+        color: var(--ink-soft);
+        display: flex;
+        align-items: center;
+        gap: 0.6em;
+        text-decoration: none;
+      }
+      .topbar .brand b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .topbar .mark {
+        width: 16px;
+        height: 16px;
+        border: 1.5px solid var(--blue);
+        border-radius: 3px;
+        position: relative;
+        flex: none;
+      }
+      .topbar .mark::after {
+        content: '';
+        position: absolute;
+        inset: 3px;
+        border: 1.5px solid var(--agent);
+        border-radius: 1px;
+      }
+      .topnav {
+        display: flex;
+        gap: 4px;
+        align-items: center;
+      }
+      .topnav a {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        letter-spacing: 0.03em;
+        color: var(--ink-faint);
+        text-decoration: none;
+        padding: 5px 9px;
+        border-radius: 6px;
+      }
+      .topnav a:hover {
+        color: var(--ink);
+        background: var(--blue-wash);
+      }
+      @media (max-width: 900px) {
+        .topnav {
+          display: none;
+        }
+      }
+      .themebtn {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        letter-spacing: 0.05em;
+        cursor: pointer;
+        border: 1px solid var(--line);
+        background: var(--surface);
+        color: var(--ink-soft);
+        padding: 6px 11px;
+        border-radius: 7px;
+        display: flex;
+        gap: 0.5em;
+        align-items: center;
+      }
+      .themebtn:hover {
+        border-color: var(--blue);
+        color: var(--ink);
+      }
+      .themebtn:focus-visible {
+        outline: 2px solid var(--blue);
+        outline-offset: 2px;
+      }
+
+      .hero {
+        position: relative;
+        padding: clamp(60px, 12vh, 130px) 0 clamp(48px, 8vh, 90px);
+        overflow: hidden;
+      }
+      .hero .kicker {
+        margin-bottom: 26px;
+      }
+      .hero h1 {
+        font-size: clamp(2.5rem, 6.6vw, 5.2rem);
+        letter-spacing: -0.015em;
+      }
+      .hero h1 em {
+        font-style: italic;
+        color: var(--blue);
+      }
+      .hero h1 .sig {
+        color: var(--signal);
+        font-style: normal;
+      }
+      .hero .lede {
+        font-size: clamp(1.06rem, 2vw, 1.32rem);
+        color: var(--ink-soft);
+        max-width: 60ch;
+        margin-top: 28px;
+        line-height: 1.55;
+      }
+      .hero .lede b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .hero-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px 10px;
+        margin-top: 36px;
+      }
+      .chip {
+        font-family: var(--font-mono);
+        font-size: 0.74rem;
+        letter-spacing: 0.02em;
+        padding: 7px 12px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        color: var(--ink-soft);
+        background: var(--surface);
+        display: inline-flex;
+        gap: 0.55em;
+        align-items: center;
+      }
+      .chip b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .chip .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--signal);
+        flex: none;
+      }
+      .chip.agent .dot {
+        background: var(--agent);
+      }
+
+      .pipe {
+        margin-top: 54px;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0;
+        align-items: stretch;
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        overflow: hidden;
+        background: var(--surface);
+        box-shadow: var(--shadow);
+      }
+      .pipe .node {
+        position: relative;
+        padding: 22px 20px;
+        border-right: 1px solid var(--line);
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      .pipe .node:last-child {
+        border-right: 0;
+      }
+      .reveal-pipe .node {
+        animation: pipeIn 0.6s cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+      }
+      .pipe .node:nth-child(1) {
+        animation-delay: 0.1s;
+      }
+      .pipe .node:nth-child(2) {
+        animation-delay: 0.3s;
+      }
+      .pipe .node:nth-child(3) {
+        animation-delay: 0.5s;
+      }
+      .pipe .node:nth-child(4) {
+        animation-delay: 0.7s;
+      }
+      .pipe .node .n {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        letter-spacing: 0.12em;
+        color: var(--signal);
+        text-transform: uppercase;
+      }
+      .pipe .node h3 {
+        font-family: var(--font-display);
+        font-size: 1.14rem;
+        margin: 8px 0 5px;
+      }
+      .pipe .node p {
+        font-size: 0.85rem;
+        color: var(--ink-soft);
+        margin: 0;
+        line-height: 1.45;
+      }
+      .pipe .node .arw {
+        position: absolute;
+        right: -8px;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 2;
+        width: 16px;
+        height: 16px;
+        color: var(--blue);
+        background: var(--surface);
+        display: grid;
+        place-items: center;
+      }
+      .pipe .node:last-child .arw {
+        display: none;
+      }
+      @media (max-width: 760px) {
+        .pipe {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+      @media (max-width: 460px) {
+        .pipe {
+          grid-template-columns: 1fr;
+        }
+        .pipe .node {
+          border-right: 0;
+          border-bottom: 1px solid var(--line);
+        }
+        .pipe .node .arw {
+          display: none;
+        }
+      }
+      @keyframes pipeIn {
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .pipe .node {
+          opacity: 1;
+          transform: none;
+          animation: none !important;
+        }
+      }
+
+      section.band {
+        padding: clamp(56px, 9vh, 96px) 0;
+        border-top: 1px solid var(--line-soft);
+      }
+      .sec-head {
+        max-width: 62ch;
+        margin-bottom: 40px;
+      }
+      .sec-head h2 {
+        font-size: clamp(1.9rem, 4vw, 2.9rem);
+        letter-spacing: -0.012em;
+        margin-top: 16px;
+      }
+      .sec-head p.sub {
+        font-size: 1.1rem;
+        color: var(--ink-soft);
+        margin-top: 18px;
+      }
+
+      .r {
+        opacity: 0;
+        transform: translateY(18px);
+        transition:
+          opacity 0.7s ease,
+          transform 0.7s cubic-bezier(0.2, 0.7, 0.3, 1);
+      }
+      .r.in {
+        opacity: 1;
+        transform: none;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .r {
+          opacity: 1;
+          transform: none;
+          transition: none;
+        }
+      }
+
+      .planes {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+      }
+      @media (max-width: 780px) {
+        .planes {
+          grid-template-columns: 1fr;
+        }
+      }
+      .plane {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface);
+        padding: 26px 26px 24px;
+        box-shadow: var(--shadow);
+        position: relative;
+        overflow: hidden;
+      }
+      .plane::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 3px;
+        background: var(--blue);
+      }
+      .plane.sig::before {
+        background: var(--signal);
+      }
+      .plane.agent::before {
+        background: var(--agent);
+      }
+      .plane .tag {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+      }
+      .plane h3 {
+        font-size: 1.32rem;
+        margin: 8px 0 4px;
+      }
+      .plane .path {
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        color: var(--blue);
+        background: var(--blue-wash);
+        padding: 3px 8px;
+        border-radius: 5px;
+        display: inline-block;
+        margin-bottom: 12px;
+      }
+      .plane.sig .path {
+        color: var(--signal);
+        background: var(--signal-wash);
+      }
+      .plane.agent .path {
+        color: var(--agent);
+        background: var(--agent-wash);
+      }
+      .plane ul {
+        margin: 12px 0 0;
+        padding: 0;
+        list-style: none;
+      }
+      .plane li {
+        position: relative;
+        padding-left: 20px;
+        margin-bottom: 8px;
+        font-size: 0.93rem;
+        color: var(--ink-soft);
+      }
+      .plane li::before {
+        content: '-';
+        position: absolute;
+        left: 0;
+        color: var(--ink-faint);
+      }
+      .plane li b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+
+      .callout {
+        border: 1px solid var(--line);
+        border-left: 3px solid var(--signal);
+        background: var(--signal-wash);
+        border-radius: var(--r-sm);
+        padding: 16px 20px;
+        font-size: 0.93rem;
+        color: var(--ink);
+        margin: 22px 0 0;
+      }
+      .callout b {
+        color: var(--signal);
+      }
+      .callout.blue {
+        border-left-color: var(--blue);
+        background: var(--blue-wash);
+      }
+      .callout.blue b {
+        color: var(--blue);
+      }
+      .callout.agent {
+        border-left-color: var(--agent);
+        background: var(--agent-wash);
+      }
+      .callout.agent b {
+        color: var(--agent);
+      }
+
+      .steps {
+        display: grid;
+        gap: 2px;
+        margin-top: 8px;
+        counter-reset: st;
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        overflow: hidden;
+        background: var(--line-soft);
+      }
+      .step {
+        background: var(--surface);
+        padding: 20px 22px 20px 66px;
+        position: relative;
+      }
+      .step::before {
+        counter-increment: st;
+        content: counter(st, decimal-leading-zero);
+        position: absolute;
+        left: 20px;
+        top: 20px;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: var(--signal);
+      }
+      .step h3 {
+        font-family: var(--font-display);
+        font-size: 1.16rem;
+        margin: 0 0 5px;
+      }
+      .step p {
+        margin: 0;
+        font-size: 0.93rem;
+        color: var(--ink-soft);
+      }
+      .step p + p {
+        margin-top: 8px;
+      }
+      .step .say {
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        color: var(--ink);
+        background: var(--blue-wash);
+        border: 1px solid var(--line-soft);
+        border-radius: 7px;
+        padding: 8px 12px;
+        margin-top: 12px;
+        display: block;
+      }
+      .step .say .who {
+        color: var(--signal);
+        font-weight: 600;
+      }
+
+      .figwrap {
+        margin-top: 8px;
+      }
+      .figcap {
+        font-family: var(--font-mono);
+        font-size: 0.74rem;
+        color: var(--ink-faint);
+        margin-top: 12px;
+        text-align: center;
+        letter-spacing: 0.02em;
+      }
+      .win {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        overflow: hidden;
+        background: var(--surface-2);
+        box-shadow: var(--shadow-lg);
+      }
+      .win-bar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 9px 13px;
+        background: var(--surface);
+        border-bottom: 1px solid var(--line);
+      }
+      .win-dots {
+        display: flex;
+        gap: 6px;
+      }
+      .win-dots i {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--line);
+        display: block;
+      }
+      .win-url {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        color: var(--ink-soft);
+        background: var(--paper-2);
+        border-radius: 6px;
+        padding: 4px 10px;
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .win-btn {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        padding: 4px 9px;
+        border-radius: 6px;
+        border: 1px solid var(--line);
+        color: var(--ink-soft);
+        white-space: nowrap;
+      }
+      .win-btn.exp {
+        color: #fff;
+        background: var(--signal-solid);
+        border-color: var(--signal-solid);
+      }
+      .win-btn.mcp {
+        color: #fff;
+        background: var(--agent-solid);
+        border-color: var(--agent-solid);
+      }
+      .win-nav {
+        display: flex;
+        gap: 3px;
+        padding: 7px 13px;
+        border-bottom: 1px solid var(--line);
+        background: var(--surface);
+        overflow-x: auto;
+      }
+      .win-nav span {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        color: var(--ink-faint);
+        padding: 3px 9px;
+        border-radius: 5px;
+        white-space: nowrap;
+      }
+      .win-nav span.on {
+        color: var(--ink);
+        background: var(--blue-wash);
+      }
+      .win-nav .gear {
+        margin-left: auto;
+        color: var(--ink-faint);
+      }
+
+      .win-body {
+        display: grid;
+        min-height: 260px;
+      }
+      .win-body.two {
+        grid-template-columns: 40% 60%;
+      }
+      .win-body.three {
+        grid-template-columns: 30% 30% 40%;
+      }
+      @media (max-width: 600px) {
+        .win-body.two,
+        .win-body.three {
+          grid-template-columns: 1fr;
+        }
+        .win-body .pane {
+          border-right: 0 !important;
+          border-bottom: 1px solid var(--line);
+        }
+      }
+      .pane {
+        padding: 15px;
+        border-right: 1px solid var(--line);
+        position: relative;
+      }
+      .pane:last-child {
+        border-right: 0;
+      }
+      .pane-label {
+        position: absolute;
+        top: 8px;
+        right: 10px;
+        font-family: var(--font-mono);
+        font-size: 0.6rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        opacity: 0.8;
+      }
+      .pane.chat {
+        background: var(--surface);
+      }
+      .bub {
+        border-radius: 9px;
+        padding: 8px 11px;
+        margin-bottom: 9px;
+        font-size: 0.76rem;
+        line-height: 1.4;
+        max-width: 92%;
+      }
+      .bub.me {
+        background: var(--blue-solid);
+        color: #fff;
+        margin-left: auto;
+      }
+      .bub.ai {
+        background: var(--paper-2);
+        color: var(--ink-soft);
+        border: 1px solid var(--line-soft);
+      }
+      .bub.tool {
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        color: var(--good);
+        background: transparent;
+        border: 0;
+        padding: 2px 0;
+      }
+      .bub.mcp {
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        color: var(--agent);
+        background: transparent;
+        border: 0;
+        padding: 2px 0;
+      }
+      .promptbox {
+        margin-top: 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface-2);
+        padding: 8px 10px;
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        color: var(--ink-faint);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+      }
+      .promptbox .send {
+        color: #fff;
+        background: var(--blue-solid);
+        border-radius: 5px;
+        padding: 3px 8px;
+        font-size: 0.64rem;
+      }
+
+      .canvas {
+        background: var(--paper);
+        background-image:
+          linear-gradient(var(--grid) 1px, transparent 1px),
+          linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+        background-size: 16px 16px;
+        display: grid;
+        place-items: center;
+      }
+      .mini {
+        width: 82%;
+        max-width: 260px;
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        position: relative;
+      }
+      .mini .mtop {
+        height: 26px;
+        background: var(--blue);
+        display: flex;
+        align-items: center;
+        padding: 0 8px;
+        gap: 5px;
+      }
+      .mini .mtop i {
+        width: 24px;
+        height: 5px;
+        border-radius: 3px;
+        background: rgba(255, 255, 255, 0.55);
+        display: block;
+      }
+      .mini .mtop i.sm {
+        width: 12px;
+        margin-left: auto;
+      }
+      .mini .mbody {
+        padding: 10px;
+        display: grid;
+        gap: 7px;
+      }
+      .mini .line {
+        height: 6px;
+        border-radius: 3px;
+        background: var(--line);
+      }
+      .mini .line.w1 {
+        width: 70%;
+      }
+      .mini .line.w2 {
+        width: 45%;
+        background: var(--signal);
+        opacity: 0.8;
+      }
+      .mini .cards {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 6px;
+        margin-top: 4px;
+      }
+      .mini .cards i {
+        height: 30px;
+        border-radius: 5px;
+        background: var(--blue-wash);
+        border: 1px solid var(--line-soft);
+        display: block;
+      }
+      .mini .btn {
+        height: 16px;
+        width: 60px;
+        border-radius: 5px;
+        background: var(--signal);
+        margin-top: 2px;
+      }
+      .mini .pin {
+        position: absolute;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: var(--signal-solid);
+        color: #fff;
+        font-family: var(--font-mono);
+        font-size: 0.58rem;
+        display: grid;
+        place-items: center;
+        top: 40px;
+        right: 14px;
+        box-shadow: 0 0 0 3px var(--signal-wash);
+      }
+      .sliders {
+        position: absolute;
+        bottom: 10px;
+        left: 12px;
+        right: 12px;
+        display: grid;
+        gap: 5px;
+      }
+      .sliders .sl {
+        height: 4px;
+        border-radius: 3px;
+        background: var(--line);
+        position: relative;
+      }
+      .sliders .sl::after {
+        content: '';
+        position: absolute;
+        top: -3px;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--blue);
+        border: 2px solid var(--surface-2);
+      }
+      .sliders .sl.a::after {
+        left: 30%;
+      }
+      .sliders .sl.b::after {
+        left: 62%;
+      }
+
+      .tree {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        color: var(--ink-soft);
+        line-height: 1.9;
+      }
+      .tree .f {
+        color: var(--ink);
+      }
+      .tree .on {
+        color: var(--signal);
+      }
+      .tree .mut {
+        color: var(--ink-faint);
+      }
+      .verpill {
+        display: inline-block;
+        font-size: 0.58rem;
+        padding: 1px 5px;
+        border-radius: 4px;
+        background: var(--blue-wash);
+        color: var(--blue);
+        margin-left: 6px;
+      }
+
+      .preview {
+        background: var(--paper);
+        background-image:
+          linear-gradient(var(--grid) 1px, transparent 1px),
+          linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+        background-size: 14px 14px;
+        display: grid;
+        place-items: center;
+        position: relative;
+      }
+      .exp-fab {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        color: #fff;
+        background: var(--agent-solid);
+        padding: 4px 9px;
+        border-radius: 6px;
+      }
+
+      .tablewrap {
+        overflow-x: auto;
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        box-shadow: var(--shadow);
+      }
+      table.cmp {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 760px;
+        background: var(--surface);
+        font-size: 0.9rem;
+      }
+      table.cmp th,
+      table.cmp td {
+        text-align: left;
+        padding: 14px 16px;
+        border-bottom: 1px solid var(--line-soft);
+        vertical-align: top;
+      }
+      table.cmp thead th {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        background: var(--paper-2);
+        position: sticky;
+        top: 0;
+      }
+      table.cmp tbody th {
+        font-family: var(--font-body);
+        font-weight: 600;
+        color: var(--ink);
+        font-size: 0.9rem;
+        width: 20%;
+      }
+      table.cmp td {
+        color: var(--ink-soft);
+      }
+      table.cmp tr:last-child td,
+      table.cmp tr:last-child th {
+        border-bottom: 0;
+      }
+      .badge {
+        font-family: var(--font-mono);
+        font-size: 0.64rem;
+        padding: 2px 7px;
+        border-radius: 5px;
+        letter-spacing: 0.03em;
+        white-space: nowrap;
+      }
+      .badge.free {
+        color: var(--good);
+        background: color-mix(in srgb, var(--good) 14%, transparent);
+      }
+      .badge.paid {
+        color: var(--warn);
+        background: color-mix(in srgb, var(--warn) 16%, transparent);
+      }
+      .badge.local {
+        color: var(--blue);
+        background: var(--blue-wash);
+      }
+      .badge.mcp {
+        color: var(--agent);
+        background: var(--agent-wash);
+      }
+
+      .code {
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.7;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+        padding: 16px 18px;
+        overflow-x: auto;
+        color: var(--ink);
+      }
+      .code .c {
+        color: var(--ink-faint);
+      }
+      .code .k {
+        color: var(--signal);
+      }
+      .code .s {
+        color: var(--blue);
+      }
+
+      .alts {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 18px;
+        margin-top: 8px;
+      }
+      @media (max-width: 720px) {
+        .alts {
+          grid-template-columns: 1fr;
+        }
+      }
+      .alt {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface);
+        padding: 22px 22px;
+        box-shadow: var(--shadow);
+      }
+      .alt h3 {
+        font-size: 1.18rem;
+        margin: 0 0 4px;
+        display: flex;
+        align-items: center;
+        gap: 0.5em;
+      }
+      .alt .kk {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        color: var(--signal);
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      .alt p {
+        font-size: 0.9rem;
+        color: var(--ink-soft);
+        margin: 8px 0 0;
+      }
+
+      .check {
+        display: grid;
+        gap: 10px;
+        margin-top: 8px;
+      }
+      .check .it {
+        display: flex;
+        gap: 14px;
+        align-items: flex-start;
+        padding: 15px 18px;
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+        background: var(--surface);
+      }
+      .check .bx {
+        flex: none;
+        width: 22px;
+        height: 22px;
+        border-radius: 6px;
+        border: 2px solid var(--blue);
+        position: relative;
+        margin-top: 1px;
+      }
+      .check .bx::after {
+        content: '';
+        position: absolute;
+        left: 6px;
+        top: 2px;
+        width: 6px;
+        height: 11px;
+        border: solid var(--signal);
+        border-width: 0 2.5px 2.5px 0;
+        transform: rotate(42deg);
+      }
+      .check .it b {
+        color: var(--ink);
+      }
+      .check .it span {
+        color: var(--ink-soft);
+        font-size: 0.92rem;
+      }
+      .check .it .mono {
+        color: var(--blue);
+        font-size: 0.84rem;
+      }
+
+      .facts {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+        margin-top: 8px;
+      }
+      @media (max-width: 700px) {
+        .facts {
+          grid-template-columns: 1fr;
+        }
+      }
+      .fact {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface);
+        padding: 20px 22px;
+      }
+      .fact .big {
+        font-family: var(--font-display);
+        font-size: 2rem;
+        color: var(--blue);
+        font-variant-numeric: tabular-nums;
+      }
+      .fact .lbl {
+        font-size: 0.88rem;
+        color: var(--ink-soft);
+        margin-top: 4px;
+      }
+
+      .gotchas {
+        display: grid;
+        gap: 10px;
+        margin-top: 8px;
+      }
+      .gotchas .g {
+        border: 1px solid var(--line);
+        border-left: 3px solid var(--agent);
+        background: var(--surface);
+        border-radius: var(--r-sm);
+        padding: 14px 18px;
+      }
+      .gotchas .g b {
+        color: var(--agent);
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        letter-spacing: 0.02em;
+        display: block;
+        margin-bottom: 4px;
+      }
+      .gotchas .g span {
+        color: var(--ink-soft);
+        font-size: 0.89rem;
+      }
+
+      footer {
+        padding: 60px 0 80px;
+        border-top: 1px solid var(--line-soft);
+      }
+      footer .prose {
+        color: var(--ink-soft);
+        font-size: 0.95rem;
+      }
+      footer .sig {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        color: var(--ink-faint);
+        letter-spacing: 0.04em;
+        margin-top: 26px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px 14px;
+      }
+
+      .lead-in {
+        font-size: 1.14rem;
+        color: var(--ink);
+        line-height: 1.6;
+      }
+      .lead-in b {
+        color: var(--blue);
+      }
+
+      /* ============================================================
+     Deck-local: product-management (flujos A a H).
+     ============================================================ */
+      .pipe.five {
+        grid-template-columns: repeat(5, 1fr);
+      }
+      .pipe .node:nth-child(5) {
+        animation-delay: 0.9s;
+      }
+      @media (max-width: 960px) {
+        .pipe.five {
+          grid-template-columns: 1fr 1fr;
+        }
+        .pipe.five .node .arw {
+          display: none;
+        }
+      }
+      @media (max-width: 460px) {
+        .pipe.five {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .lanes {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 18px;
+      }
+      @media (max-width: 860px) {
+        .lanes {
+          grid-template-columns: 1fr;
+        }
+      }
+      .lane {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+      }
+      .lane-head {
+        padding: 12px 18px;
+        border-bottom: 1px solid var(--line);
+        background: var(--paper-2);
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+      }
+      .wf {
+        display: flex;
+        gap: 14px;
+        align-items: flex-start;
+        padding: 14px 18px;
+        border-bottom: 1px solid var(--line-soft);
+        text-decoration: none;
+        color: inherit;
+      }
+      .wf:last-child {
+        border-bottom: 0;
+      }
+      .wf:hover {
+        background: var(--blue-wash);
+      }
+      .wf .lt {
+        flex: none;
+        width: 30px;
+        height: 30px;
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+        font-family: var(--font-mono);
+        font-weight: 700;
+        font-size: 0.9rem;
+        color: #fff;
+        background: var(--blue-solid);
+      }
+      .wf .lt.sig {
+        background: var(--signal-solid);
+      }
+      .wf .lt.agent {
+        background: var(--agent-solid);
+      }
+      .wf b {
+        display: block;
+        color: var(--ink);
+        font-size: 0.97rem;
+      }
+      .wf span {
+        display: block;
+        color: var(--ink-soft);
+        font-size: 0.86rem;
+        line-height: 1.45;
+        margin-top: 2px;
+      }
+
+      .trio {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+        margin-top: 22px;
+      }
+      @media (max-width: 820px) {
+        .trio {
+          grid-template-columns: 1fr;
+        }
+      }
+      .trio > div {
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+        background: var(--surface);
+        padding: 16px 18px;
+        border-top: 3px solid var(--agent);
+      }
+      .trio > div.hum {
+        border-top-color: var(--signal);
+      }
+      .trio > div.out {
+        border-top-color: var(--blue);
+      }
+      .trio .k {
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        display: block;
+        margin-bottom: 6px;
+      }
+      .trio p {
+        margin: 0;
+        font-size: 0.9rem;
+        color: var(--ink-soft);
+      }
+      .trio p + p {
+        margin-top: 8px;
+      }
+      .trio b {
+        color: var(--ink);
+      }
+
+      .gate {
+        margin-top: 14px;
+        font-size: 0.9rem;
+        color: var(--ink);
+        border: 1px dashed var(--blue);
+        border-radius: var(--r-sm);
+        padding: 12px 16px;
+        background: var(--surface);
+      }
+      .gate b {
+        color: var(--blue);
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        margin-right: 0.6em;
+      }
+
+      .levels {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+      }
+      @media (max-width: 860px) {
+        .levels {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .title-demo {
+        font-family: var(--font-mono);
+        font-size: clamp(0.82rem, 2.4vw, 1.05rem);
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+        padding: 14px 16px;
+        overflow-wrap: anywhere;
+      }
+      .title-demo .f {
+        color: var(--blue);
+        font-weight: 600;
+      }
+      .title-demo .p {
+        color: var(--signal);
+        font-weight: 700;
+      }
+      .title-demo .a {
+        color: var(--ink);
+      }
+      .title-demo.bad {
+        text-decoration: line-through;
+        text-decoration-color: var(--signal);
+        color: var(--ink-faint);
+      }
+
+      .code.gk {
+        white-space: pre;
+      }
+      .code .g {
+        color: var(--agent);
+        font-weight: 600;
+      }
+
+      .sprints {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        margin-top: 8px;
+      }
+      @media (max-width: 700px) {
+        .sprints {
+          grid-template-columns: 1fr;
+        }
+      }
+      .sprint {
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+        background: var(--surface);
+        padding: 14px 16px;
+      }
+      .sprint .n {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--signal);
+      }
+      .sprint .ks {
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        color: var(--ink);
+        margin-top: 6px;
+      }
+      .sprint p {
+        margin: 6px 0 0;
+        font-size: 0.85rem;
+        color: var(--ink-soft);
+      }
+
+      .hosts {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 14px;
+      }
+      @media (max-width: 820px) {
+        .hosts {
+          grid-template-columns: 1fr;
+        }
+      }
+      .host {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface);
+        padding: 18px 20px;
+        box-shadow: var(--shadow);
+      }
+      .host h3 {
+        font-size: 1.12rem;
+        margin: 0 0 10px;
+      }
+      .host .say {
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        background: var(--blue-wash);
+        border: 1px solid var(--line-soft);
+        border-radius: 7px;
+        padding: 8px 12px;
+        display: block;
+        overflow-wrap: anywhere;
+      }
+      .host p {
+        font-size: 0.86rem;
+        color: var(--ink-soft);
+        margin: 10px 0 0;
+      }
+      .planes > *,
+      .lanes > *,
+      .levels > *,
+      .hosts > * {
+        min-width: 0;
+      }
+      .plane .mono,
+      .callout .mono {
+        overflow-wrap: anywhere;
+      }
+      table.cmp.narrow {
+        min-width: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="topbar">
+      <a class="brand" href="../../index.html"
+        ><span class="mark"></span> <b>Blueprints</b> · agentic-dev-boilerplate</a
+      >
+      <nav class="topnav">
+        <a href="#cuando">When</a>
+        <a href="#mapa">Map</a>
+        <a href="#jira">Jira</a>
+        <a href="#crear">Create</a>
+        <a href="#refinar">Refine</a>
+        <a href="#ordenar">Order</a>
+        <a href="#reporte">Report</a>
+        <a href="#invocar">Invoke</a>
+      </nav>
+      <button class="themebtn" id="themebtn" aria-label="Cambiar tema">
+        <span id="themeicon">◐</span> theme
+      </button>
+    </div>
+
+    <!-- ============ HERO ============ -->
+    <header class="hero">
+      <div class="wrap">
+        <div class="kicker eyebrow"><span class="num">00</span> · the backlog before the code</div>
+        <h1>Stories <em>ready</em> before anyone <span class="sig">codes</span>.</h1>
+        <p class="lede">
+          <span class="mono">/product-management</span> is the ongoing product work: it turns
+          the PRD into epics and stories inside <b>Jira</b>, refines them until anyone on the
+          team can pick them up, and works out <b>the order in which they can start</b>. The quality of the
+          backlog decides everything that comes after.
+        </p>
+
+        <div class="hero-meta">
+          <span class="chip"><span class="dot"></span> for <b>PM / PO</b> and for whoever codes</span>
+          <span class="chip"
+            ><span class="dot"></span> source of truth: <b>Jira</b>, read-only local
+            cache</span
+          >
+          <span class="chip agent"
+            ><span class="dot"></span> doesn't wait for mockups: <b>screens come later</b></span
+          >
+        </div>
+
+        <div class="pipe five" id="pipe">
+          <div class="node">
+            <div class="n">Input</div>
+            <h3>PRD + SRS</h3>
+            <p>What <span class="mono">/project-foundation</span> left behind.</p>
+            <div class="arw">→</div>
+          </div>
+          <div class="node">
+            <div class="n">Create</div>
+            <h3>Epics and stories</h3>
+            <p>Straight in Jira, with a real key.</p>
+            <div class="arw">→</div>
+          </div>
+          <div class="node">
+            <div class="n">Refine</div>
+            <h3>INVEST + criteria</h3>
+            <p>Gherkin, edges, business voice.</p>
+            <div class="arw">→</div>
+          </div>
+          <div class="node">
+            <div class="n">Order</div>
+            <h3>Execution Sprints</h3>
+            <p>Topological order of dependencies.</p>
+            <div class="arw">→</div>
+          </div>
+          <div class="node">
+            <div class="n">Delivery</div>
+            <h3>Sprint dev</h3>
+            <p><span class="mono">/sprint-development</span> picks up each story.</p>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- ============ §01 CUÁNDO SÍ / CUÁNDO NO ============ -->
+    <section class="band" id="cuando">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">01</span> · when to use it</div>
+          <h2>Backlog work, every time it appears</h2>
+          <p class="sub">
+            Unlike <span class="mono">/project-foundation</span>, which runs once, this
+            skill is invoked again whenever product work comes up: a new feature, an
+            ambiguous criterion, a story that fails INVEST mid-sprint.
+          </p>
+        </div>
+
+        <div class="planes r">
+          <div class="plane">
+            <div class="tag">Use it when</div>
+            <h3>There is backlog to create or polish</h3>
+            <ul>
+              <li>You seed the <b>first backlog</b> from a freshly written PRD.</li>
+              <li>A <b>new feature or epic</b> needs to join the backlog.</li>
+              <li>A story has <b>acceptance criteria</b> that are vague or ambiguous.</li>
+              <li>A story needs to be checked against <b>INVEST</b> or a 3 amigos session.</li>
+              <li>You want to list a feature's <b>edge cases</b> systematically.</li>
+              <li>You want a <b>sprint report</b> or to know <b>what starts first</b>.</li>
+            </ul>
+          </div>
+          <div class="plane sig">
+            <div class="tag">Don't use it for</div>
+            <h3>What belongs to another skill</h3>
+            <ul>
+              <li>
+                <b>Screens or mockups:</b> the story is refined without them; the screen is resolved
+                when <span class="mono">/sprint-development</span> picks up the story.
+              </li>
+              <li>
+                <b>Defining the product from scratch:</b> that is
+                <span class="mono">/project-foundation</span>.
+              </li>
+              <li>
+                <b>Setting up the infrastructure:</b> that is
+                <span class="mono">/project-bootstrap</span>.
+              </li>
+              <li>
+                <b>Implementing a story:</b> that is
+                <span class="mono">/sprint-development</span>.
+              </li>
+              <li><b>Unit tests:</b> that is <span class="mono">/unit-testing</span>.</li>
+              <li><b>Formal QA test cases:</b> out of scope for this repo.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="callout blue r">
+          <b>Before starting:</b> the PRD and SRS that
+          <span class="mono">/project-foundation</span> leaves in <span class="mono">.context/PRD/</span> and
+          <span class="mono">.context/SRS/</span> (required for the initial seed, useful
+          context for everything else; in an existing app with no PRD or SRS, the business maps and the
+          domain glossary stand in as product docs and flow A does not apply), the project identity in
+          <span class="mono">.agents/project.yaml</span>, and Jira access through
+          <span class="mono">acli</span> (or the Atlassian MCP as a fallback).
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §02 MAPA A-H ============ -->
+    <section class="band" id="mapa">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">02</span> · the map</div>
+          <h2>Flows A to H: create, refine, order and look</h2>
+          <p class="sub">
+            Each flow has its own reference with the exact protocol. You don't pick them by name:
+            you describe what you need and the skill routes to the right flow.
+          </p>
+        </div>
+
+        <div class="lanes r">
+          <div class="lane">
+            <div class="lane-head">Create · with session</div>
+            <a class="wf" href="#siembra"
+              ><span class="lt">A</span
+              ><span
+                ><b>Initial seed</b><span>From the PRD to the first tree of epics and stories.</span></span
+              ></a
+            >
+            <a class="wf" href="#feature"
+              ><span class="lt">B</span
+              ><span
+                ><b>Incremental feature</b
+                ><span>Classifies the idea: story, epic or several epics.</span></span
+              ></a
+            >
+            <a class="wf" href="#epica"
+              ><span class="lt">C</span
+              ><span
+                ><b>Epic creation</b
+                ><span>Name, limits, child stories and traceability to the PRD.</span></span
+              ></a
+            >
+          </div>
+          <div class="lane">
+            <div class="lane-head">Refine · no session</div>
+            <a class="wf" href="#refinamiento"
+              ><span class="lt sig">D</span
+              ><span
+                ><b>Story refinement</b
+                ><span>INVEST, optional 3 amigos, Ready checklist.</span></span
+              ></a
+            >
+            <a class="wf" href="#criterios"
+              ><span class="lt sig">E</span
+              ><span
+                ><b>Acceptance criteria</b
+                ><span>Gherkin scenarios with concrete data.</span></span
+              ></a
+            >
+            <a class="wf" href="#bordes"
+              ><span class="lt sig">F</span
+              ><span
+                ><b>Edge cases</b
+                ><span>What can go wrong, and what becomes a criterion.</span></span
+              ></a
+            >
+          </div>
+          <div class="lane">
+            <div class="lane-head">Order and look · no session</div>
+            <a class="wf" href="#ordenar"
+              ><span class="lt agent">H</span
+              ><span
+                ><b>Sequencing</b
+                ><span>Which stories can start now, and which come later.</span></span
+              ></a
+            >
+            <a class="wf" href="#reporte"
+              ><span class="lt agent">G</span
+              ><span
+                ><b>Sprint report</b
+                ><span>Read-only snapshot: blocked, in progress, in review, done.</span></span
+              ></a
+            >
+          </div>
+        </div>
+
+        <div class="callout r">
+          <b>A session only in A, B and C.</b> They are long flows that can be interrupted: they write a
+          plan in <span class="mono">.session/product-management/&lt;scope&gt;/</span> and can be
+          resumed. D to H are short or read-only: they create no session folder and do not check for a
+          resume.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §03 JIRA PRIMERO ============ -->
+    <section class="band" id="jira">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">03</span> · the mechanism</div>
+          <h2>Jira first, the local copy after</h2>
+          <p class="sub">
+            Everything the skill writes goes to Jira. What you see in
+            <span class="mono">.context/PBI/</span> is a read-only cache that a script
+            materializes. Nobody writes it by hand: not you, not the AI.
+          </p>
+        </div>
+
+        <div class="planes r">
+          <div class="plane">
+            <div class="tag">Source of truth</div>
+            <h3>The issue in Jira</h3>
+            <span class="path">[ISSUE_TRACKER_TOOL]</span>
+            <ul>
+              <li>
+                It is created with a <b>real key</b> (<span class="mono">PROJ-45</span>), never with
+                <span class="mono">TBD</span>.
+              </li>
+              <li>
+                Criteria, scope and out of scope live in <b>their own fields</b>, not in the
+                description.
+              </li>
+              <li>
+                Fields are named by <b>slug</b> (<span class="mono"
+                  >{{jira.acceptance_criteria}}</span
+                >), resolved against <span class="mono">.agents/jira-required.yaml</span> and
+                <span class="mono">.agents/jira-fields.json</span>. Never a numeric ID.
+              </li>
+              <li>
+                Tool layer: <span class="mono">acli</span> first, the Atlassian MCP as a
+                fallback, REST as a last resort.
+              </li>
+            </ul>
+          </div>
+          <div class="plane agent">
+            <div class="tag">Local copy</div>
+            <h3>The synced cache</h3>
+            <span class="path">.context/PBI/epics/EPIC-…/stories/STORY-…/</span>
+            <ul>
+              <li>
+                <span class="mono">bun run jira:sync-issues</span> materializes it (<span
+                  class="mono"
+                  >get</span
+                >, <span class="mono">pull</span>, <span class="mono">pull --epic</span>).
+              </li>
+              <li>
+                One file per field with content:
+                <span class="mono">acceptance-criteria.md</span>,
+                <span class="mono">scope.md</span>, <span class="mono">out-of-scope.md</span>…
+              </li>
+              <li>
+                Something wrong in the copy? Fix it <b>in Jira</b> and sync again.
+              </li>
+              <li>
+                A fresh clone rebuilds it with <span class="mono">bun run context:hydrate</span>.
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="gotchas r" style="margin-top: 22px">
+          <div class="g">
+            <b>Trap: reading fields with acli view</b
+            ><span
+              >Its default projection omits custom fields: the criteria look empty
+              even when they are filled. To read, use <span class="mono">bun run jira:sync-issues get
+              &lt;KEY&gt;</span> and open the field file.</span
+            >
+          </div>
+          <div class="g">
+            <b>Trap: several rich fields in a single call</b
+            ><span
+              >The MCP converts Markdown to ADF only in the description. Several rich fields together
+              make the whole update fail: one field per call.</span
+            >
+          </div>
+          <div class="g">
+            <b>What stays in human hands: the Jira Sprint</b
+            ><span
+              >The skill works out the execution order, but assigning issues to a Sprint object on the
+              board is done by a person, when they decide to start it.</span
+            >
+          </div>
+        </div>
+
+        <div class="callout blue r">
+          <b>To understand the cache in depth:</b> the deck
+          <a href="../agentic-dev-core/pbi-jira-cache.en.html">PBI as a Jira cache</a> explains
+          the three file levels and why the local copy is not committed.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §04 SESIÓN A/B/C ============ -->
+    <section class="band" id="sesion">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">04</span> · plan before writing</div>
+          <h2>A, B and C start with a plan you approve</h2>
+          <p class="sub">
+            The three flows that create issues follow the same session contract: first it checks whether
+            there is half-finished work, then they write a plan, and only with your approval do they touch
+            Jira.
+          </p>
+        </div>
+
+        <div class="steps r">
+          <div class="step">
+            <h3>Phase 0 · is there a previous session?</h3>
+            <p>
+              The scope is <span class="mono">seed</span> (A) or the epic slug (B, C). If
+              <span class="mono">progress.md</span> exists, the AI shows you the goal, the last closed
+              phase and the next one, and waits: <b>resume</b>, <b>restart</b> (archives the old one)
+              or <b>abort</b>. In discovery or in a routine, where nobody is there to answer,
+              it resumes on its own from phase 0.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Phase 1 · the plan</h3>
+            <p>
+              It writes <span class="mono">.session/product-management/&lt;scope&gt;/plan.md</span>:
+              goal, inputs, approach, phases, risks and a verification checklist. It starts as
+              <span class="mono">draft</span> and becomes <span class="mono">approved</span> only
+              when you approve it.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Execution with checkpoints</h3>
+            <p>
+              Each epic created (A), each story added (B) or each part of the decomposed epic
+              (C) leaves an entry in <span class="mono">progress.md</span>. If it is cut off, it resumes
+              from there.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Archive</h3>
+            <p>
+              With the plan's checklist green, the folder moves to
+              <span class="mono">.session/.archive/</span> and a summary stays in persistent
+              memory so it can be found later.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §05 CREAR: A SIEMBRA ============ -->
+    <section class="band" id="crear">
+      <div class="wrap">
+        <div class="sec-head r" id="siembra">
+          <div class="eyebrow"><span class="num">05</span> · flow A</div>
+          <h2>Initial seed: from the PRD to the first backlog</h2>
+          <p class="sub">
+            It runs once, when there is a fresh PRD and SRS and zero issues in Jira. It goes epic by
+            epic to keep the context contained.
+          </p>
+        </div>
+
+        <div class="steps r">
+          <div class="step">
+            <h3>Confirm the project key</h3>
+            <p>
+              It comes from <span class="mono">.agents/project.yaml</span>. If it is missing or malformed,
+              the AI stops: it never guesses a key.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Draft the epic tree, writing nothing</h3>
+            <p>
+              Epics with their foundational stories, priority and provisional order. It is a working draft
+              so that you can spot extra or missing epics <b>before</b> spending
+              ticket numbers.
+            </p>
+          </div>
+          <div class="step">
+            <h3>For each epic: create, transition, sync</h3>
+            <p>
+              It creates the epic and moves it to its default status (<span class="mono"
+                >{{jira.statuses.epic_default}}</span
+              >, <span class="mono">Planning</span> if the slug is not there). It creates the child stories,
+              validated with INVEST, and moves them to
+              <span class="mono">{{jira.statuses.story_default}}</span> (<span class="mono"
+                >Shift-Left QA</span
+              >
+              by default). After that, <span class="mono">bun run jira:sync-issues pull --epic</span>.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Scope overlap check</h3>
+            <p>
+              It compares the scope of sibling stories. If two share a literal bullet,
+              it raises an <span class="mono">overlap_alert</span> and does not fix it on its own: you choose to
+              <b>move</b> the bullet, <b>extract</b> a shared story or <b>accept</b> the
+              duplicate with its reason.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Dependencies and execution order</h3>
+            <p>
+              With everything created, it runs dependency discovery, publishes the links in Jira and
+              closes with sequencing (see <a href="#ordenar">§11</a>).
+            </p>
+          </div>
+        </div>
+
+        <div class="trio r">
+          <div>
+            <span class="k">The AI does</span>
+            <p>Reads the PRD, personas, journeys and functional specs; builds the draft; creates in Jira.</p>
+          </div>
+          <div class="hum">
+            <span class="k">You decide</span>
+            <p>You approve the tree, resolve each overlap and confirm the dependency matrix.</p>
+          </div>
+          <div class="out">
+            <span class="k">Output</span>
+            <p>
+              Issues in Jira, the cache in <span class="mono">.context/PBI/</span> and
+              <span class="mono">.context/dev-roadmap.md</span> §4.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §06 B FEATURE ============ -->
+    <section class="band" id="feature">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">06</span> · flow B</div>
+          <h2>New feature: measure first, create after</h2>
+          <p class="sub">
+            A request from the PO, an opportunity, customer feedback. Before creating anything, the AI
+            classifies the idea into one of three levels. The classification decides the path.
+          </p>
+        </div>
+
+        <div class="levels r">
+          <div class="alt">
+            <div class="kk">Level 1</div>
+            <h3>One story</h3>
+            <p>
+              It extends something that exists, fits in a current epic, asks for no architecture changes.
+              The story is created under that epic.
+            </p>
+          </div>
+          <div class="alt">
+            <div class="kk">Level 2</div>
+            <h3>A whole epic</h3>
+            <p>
+              A new capability that fits in no epic, with a bounded scope and between 3 and 8
+              stories. The epic is created with its children, links, overlap check and
+              sequencing.
+            </p>
+          </div>
+          <div class="alt">
+            <div class="kk" style="color: var(--signal)">Level 3 · stop</div>
+            <h3>Several epics</h3>
+            <p>
+              Two or more epics, complex dependencies, architecture changes. <b>Nothing is
+              created</b>: a split plan comes out. Once the plan is approved, level 2 runs one epic at
+              a time. With nobody present, the plan goes into the run report and stops there.
+            </p>
+          </div>
+        </div>
+
+        <div class="callout r">
+          <b>Don't force the level.</b> If the analysis says "level 3", insisting on creating everything at
+          once saturates the context and leaves dependencies badly resolved. Work incrementally.
+          <br /><br />
+          <b>Open questions before creating.</b> When there are questions that decide the scope, the
+          AI calls the <span class="mono">grilling</span> skill: it interrogates you in numbered rounds,
+          each question with its recommended answer. If the skill is not installed, it asks the same
+          questions as a numbered list and says so in the report. If you already decided everything in the
+          conversation, the AI writes a spec from that and does not ask again.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §07 C EPICA ============ -->
+    <section class="band" id="epica">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">07</span> · flow C</div>
+          <h2>An epic is a module, not a task list</h2>
+          <p class="sub">
+            It groups related stories under one parent, tells the "why" of the capability
+            and measures progress at feature scale. If it can't be described in two sentences, it is two
+            epics.
+          </p>
+        </div>
+
+        <div class="planes r">
+          <div class="plane">
+            <div class="tag">Healthy size</div>
+            <h3>Signs it is well cut</h3>
+            <ul>
+              <li><b>Between 3 and 8 stories.</b> Fewer is a story; more, it needs splitting.</li>
+              <li><b>2 to 4 sprints</b> long.</li>
+              <li><b>A single team.</b> Multi-team epics get split.</li>
+              <li>
+                Title as a <b>noun</b>, no pipe or verb:
+                <span class="mono">Tenancy &amp; Identity</span>.
+              </li>
+            </ul>
+          </div>
+          <div class="plane sig">
+            <div class="tag">Epic or feature flag?</div>
+            <h3>They are not alternatives</h3>
+            <ul>
+              <li>
+                <b>Flag:</b> turning something that already exists on or off, dark launch, instant
+                rollback.
+              </li>
+              <li>
+                <b>Epic:</b> a new capability with several stories, metrics and a place in the
+                roadmap.
+              </li>
+              <li>A flag is an implementation tactic; an epic, a product container.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="callout blue r">
+          <b>An epic's criteria are outcomes:</b> "the person completes the capability
+          end to end without leaving the product", "all its stories are in Done". The Gherkin
+          scenarios live in each story, never in the epic.
+        </div>
+
+        <div class="callout r">
+          <b>An epic too big to plan.</b> A map of decision tickets is drawn (children of the epic, one
+          session each) after interrogating with
+          <span class="mono">grilling</span> and <span class="mono">domain-modeling</span>. Each
+          ticket is for research (<span class="mono">research</span>), for questions to a
+          person, or is a small task. With nobody present this section does not run: the gap is
+          noted in the report.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §08 TÍTULO + PRE-FLIGHT ============ -->
+    <section class="band" id="titulo">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">08</span> · before every write to Jira</div>
+          <h2>A title that reads on the board, and a pre-check</h2>
+          <p class="sub">
+            A story's title is not the "As a… I want… so that…" sentence. That sentence is too long for
+            a card and buries the action. It goes in the description; the title uses another format.
+          </p>
+        </div>
+
+        <div class="r">
+          <div class="title-demo">
+            <span class="f">Authentication</span><span class="p"> | </span
+            ><span class="a">Sign up and sign in via OAuth (GitHub / Google)</span>
+          </div>
+          <p class="figcap">{Feature} | {Action} · in English · no persona or benefit</p>
+          <div class="title-demo bad" style="margin-top: 14px">
+            As a visitor, I want to sign in via OAuth so that I can access the app
+          </div>
+          <p class="figcap">this goes in the description, "User story" section, never in the title</p>
+        </div>
+
+        <div class="planes r" style="margin-top: 30px">
+          <div class="plane">
+            <div class="tag">Title rules</div>
+            <h3>Short feature, action as a base verb</h3>
+            <ul>
+              <li>
+                <b>{Feature}:</b> 1 to 3 words; sibling stories of the same feature share
+                it.
+              </li>
+              <li>
+                <b>{Action}:</b> the "I want to…" as a base verb, with no persona and no "so that".
+              </li>
+              <li>
+                No spec prefixes (<span class="mono">FR-…</span>): the spec goes as the first line
+                of the description, <span class="mono">**Source spec:** FR-XXX</span>.
+              </li>
+              <li>
+                If the product is itself a management tool, the entity that clashes with agile
+                vocabulary carries the prefix <span class="mono">TMS-</span>
+                (<span class="mono">TMS-Run Execution</span>).
+              </li>
+            </ul>
+          </div>
+          <div class="plane sig">
+            <div class="tag">Pre-check, mandatory</div>
+            <h3>If something fails, it gets fixed before publishing</h3>
+            <ul>
+              <li><b>A real persona</b> from the personas file, never "the user" or "the system".</li>
+              <li>
+                <b>Business voice:</b> no endpoints, HTTP codes, tables, libraries or algorithms.
+              </li>
+              <li><b>Criteria</b> in <span class="mono">```gherkin</span> blocks.</li>
+              <li><b>Effort and tokens empty</b>: QA sets the AI Effort and the agents measure the tokens.</li>
+              <li>
+                <b>No duplicating</b> criteria or scope in the description, <b>no inventing</b>
+                content, and the domain <b>glossary terms</b>.
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="callout agent r">
+          <b>The voice test:</b> if a criterion is still true after changing the whole
+          stack, it is in business voice. If it breaks when the stack changes, it is implementation and goes in the
+          plan that <span class="mono">/sprint-development</span> builds. The exception: when the
+          persona consumes an API, the endpoints are what they observe.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §09 D REFINAMIENTO ============ -->
+    <section class="band" id="refinar">
+      <div class="wrap">
+        <div class="sec-head r" id="refinamiento">
+          <div class="eyebrow"><span class="num">09</span> · flow D</div>
+          <h2>From "it exists in Jira" to "anyone can pick it up"</h2>
+          <p class="sub">
+            A good story fits in a sprint, is in the persona's voice and leaves no doubt
+            about what "done" is. If two devs read it and imagine different things, it isn't
+            refined.
+          </p>
+        </div>
+
+        <div class="tablewrap r">
+          <table class="cmp">
+            <thead>
+              <tr>
+                <th>INVEST</th>
+                <th>The question</th>
+                <th>If it fails</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th>Independent</th>
+                <td>Can it be completed without depending on other stories?</td>
+                <td>Resequence, or extract the shared dependency into its own story.</td>
+              </tr>
+              <tr>
+                <th>Negotiable</th>
+                <td>Is there flexibility in how it is implemented?</td>
+                <td>Take implementation detail out of the description.</td>
+              </tr>
+              <tr>
+                <th>Valuable</th>
+                <td>Is the "so that…" a clear benefit?</td>
+                <td>Talk to product; with no value, it doesn't get built.</td>
+              </tr>
+              <tr>
+                <th>Estimable</th>
+                <td>Could the team size it with what is there?</td>
+                <td>A time-boxed spike, then refine again.</td>
+              </tr>
+              <tr>
+                <th>Small</th>
+                <td>Does it fit in a sprint?</td>
+                <td>Split it into vertical slices.</td>
+              </tr>
+              <tr>
+                <th>Testable</th>
+                <td>Are the scenarios clear and measurable?</td>
+                <td>Rewrite in Gherkin: at least one happy path, one error and one edge.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="planes r" style="margin-top: 26px">
+          <div class="plane">
+            <div class="tag">Cutting well</div>
+            <h3>Vertical slices, not layers</h3>
+            <ul>
+              <li>
+                <b>Vertical:</b> each slice delivers a visible result on its own ("pay with a
+                saved card", "add a new card", "clear errors on rejection").
+              </li>
+              <li>
+                <b>Horizontal (antipattern):</b> "database, then API, then UI". Nothing can
+                be shown until the end.
+              </li>
+              <li>
+                <b>Other ways:</b> by workflow step, by data variation, by interface or by
+                role.
+              </li>
+            </ul>
+          </div>
+          <div class="plane agent">
+            <div class="tag">3 amigos · optional</div>
+            <h3>Product, dev and QA, before the sprint</h3>
+            <ul>
+              <li>
+                Worth it if the story is big, touches integrations, is a flow with no
+                precedent, has ambiguity or depends on another team.
+              </li>
+              <li>
+                Thirty to forty-five minutes: read the story, walk the happy path,
+                surface unknowns and edges, decide scope, confirm Ready.
+              </li>
+              <li>If anything is left unchecked, another one is scheduled; it is not marked Ready.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="gate r">
+          <b>Gate:</b> INVEST and the voice test pass, the criteria are in Gherkin, the
+          dependencies are published as links in Jira, and the story is transitioned to
+          <span class="mono">{{jira.statuses.story_default}}</span>. That status change tells
+          the team it passed the Ready check.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §10 E + F ============ -->
+    <section class="band" id="criterios">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">10</span> · flows E and F</div>
+          <h2>Criteria that can be verified, and edges that don't get lost</h2>
+          <p class="sub">
+            A criterion without a concrete "given", "when" and "then" is not a criterion: it is
+            a wish. The goal is to remove every "it depends" before the story enters the sprint.
+          </p>
+        </div>
+
+        <div class="planes r">
+          <div>
+            <div class="code gk">
+<span class="g">Scenario:</span> User cannot create a note with empty title
+  <span class="k">Given</span> I am on the new-note form
+  <span class="k">When</span> I submit the form with an empty title
+  <span class="k">Then</span> I see the error <span class="s">"Title is required"</span>
+  <span class="k">And</span> no note is created</div>
+            <p class="figcap">an error scenario, in its gherkin block, with concrete text</p>
+          </div>
+          <div class="plane sig">
+            <div class="tag">Flow E · when editing existing criteria</div>
+            <h3>The voice check first</h3>
+            <ul>
+              <li>
+                Reads the field with <span class="mono">bun run jira:sync-issues get</span>, never with
+                <span class="mono">acli view</span>.
+              </li>
+              <li>Looks for implementation, scenarios without a gherkin block and generic personas.</li>
+              <li>
+                If it finds something, it <b>rewrites the whole field</b> and shows you the before and
+                after before publishing.
+              </li>
+              <li>Each "then" is something the persona sees: a message, an element, a state.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="sec-head r" id="bordes" style="margin-top: 56px; margin-bottom: 24px">
+          <div class="eyebrow"><span class="num">10b</span> · flow F</div>
+          <h2 style="font-size: clamp(1.5rem, 3vw, 2.1rem)">Edge cases: find them and decide</h2>
+        </div>
+
+        <div class="planes r">
+          <div class="plane">
+            <div class="tag">Where to look</div>
+            <h3>Five families</h3>
+            <ul>
+              <li><b>Limits:</b> empty, maximum, one too many, odd characters.</li>
+              <li><b>Errors:</b> network, database, external service, permissions.</li>
+              <li><b>Concurrency:</b> two people editing, double click, stale state.</li>
+              <li><b>Performance:</b> high volume, slow network, third-party limits.</li>
+              <li><b>Persona:</b> role, language, device, accessibility.</li>
+            </ul>
+          </div>
+          <div class="plane sig">
+            <div class="tag">The decision rule</div>
+            <h3>Criterion or test?</h3>
+            <ul>
+              <li>
+                <b>High criticality</b> (money, data, security, a critical journey)
+                <b>and clear behavior</b>: becomes an acceptance criterion.
+              </li>
+              <li>If not: it stays as a testing matter, for QA.</li>
+              <li>
+                Medium criticality with very clear behavior: at the PO's discretion.
+              </li>
+              <li>What is deferred is documented with its reason; it is not lost silently.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §11 DEPENDENCIAS + H ============ -->
+    <section class="band" id="ordenar">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">11</span> · dependencies and flow H</div>
+          <h2>What do we start first?</h2>
+          <p class="sub">
+            The order comes from the Jira link graph, not from a hunch. That is why, before ordering,
+            you have to discover the real dependencies and publish them.
+          </p>
+        </div>
+
+        <div class="steps r">
+          <div class="step">
+            <h3>Active dependency discovery</h3>
+            <p>
+              Before creating or editing a story, the AI builds a matrix
+              <span class="mono">(from, to, source)</span> by reading the epic tree, the links
+              that already exist and the data map. Valid sources: the PRD or SRS order, the
+              master plan, the relationships between entities and what a person declared.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Filter the noise</h3>
+            <p>
+              "It needs login to exist" or "it needs the database" is a property of the
+              project, not a dependency between two stories. The test: if the dependency
+              disappears when sprints are reordered, it was noise.
+            </p>
+          </div>
+          <div class="step">
+            <h3>You confirm, then it is published</h3>
+            <p>
+              The filtered matrix is shown to you <b>before</b> a single link is written. Each link is
+              created one at a time and re-read to verify the direction: "A depends on B" has to read
+              that way from A.
+            </p>
+            <p>
+              If the workspace does not have the dependency link type, the
+              <span class="mono">relates</span> fallback loses the direction: the AI tells you so, in
+              plain words.
+            </p>
+          </div>
+        </div>
+
+        <div class="r" style="margin-top: 34px">
+          <p class="lead-in" style="max-width: 66ch">
+            With the links published, flow H does a <b>topological order</b>: what waits for
+            nobody goes to <b>Execution Sprint 1</b>; what only waits for 1, to 2; and so on until the
+            graph is empty.
+          </p>
+          <div class="sprints">
+            <div class="sprint">
+              <div class="n">Execution Sprint 1</div>
+              <div class="ks">PROJ-2 · PROJ-3 · PROJ-18</div>
+              <p>Nothing blocks them: they start in parallel.</p>
+            </div>
+            <div class="sprint">
+              <div class="n">Execution Sprint 2</div>
+              <div class="ks">PROJ-4 · PROJ-19</div>
+              <p>Each one waits for a story in sprint 1.</p>
+            </div>
+            <div class="sprint">
+              <div class="n">Execution Sprint N</div>
+              <div class="ks">…</div>
+              <p>1 + the highest sprint among their predecessors.</p>
+            </div>
+          </div>
+          <p class="figcap">illustrative example · only dependency and blocking links count</p>
+        </div>
+
+        <div class="planes r" style="margin-top: 26px">
+          <div class="plane">
+            <div class="tag">Two different sprints</div>
+            <h3>Master Sprint and Execution Sprint</h3>
+            <ul>
+              <li>
+                <b>Master Sprint:</b> strategic roadmap grouping, in
+                <span class="mono">.context/master-implementation-plan.md</span>. It rarely changes.
+              </li>
+              <li>
+                <b>Execution Sprint:</b> operational batch that comes out of the topological order. It is recalculated
+                every time stories or links change.
+              </li>
+            </ul>
+          </div>
+          <div class="plane sig">
+            <div class="tag">Where it lives and what it is worth</div>
+            <h3>An input for planning</h3>
+            <ul>
+              <li>
+                The skill delegates the writing to
+                <span class="mono">/project-context dev-roadmap</span>, which regenerates §4 of
+                <span class="mono">.context/dev-roadmap.md</span> without touching the hand-written
+                sections.
+              </li>
+              <li>
+                It is an <b>input</b> for the planning meeting (capacity, priorities, other
+                teams), not a commitment.
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="callout r">
+          <b>A cycle is a bug.</b> If A depends on B and B on A, the ordering stops and the AI shows you
+          the trapped stories. Which link to remove is a product decision: a
+          person makes it, never the AI.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §12 G REPORTE ============ -->
+    <section class="band" id="reporte">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">12</span> · flow G</div>
+          <h2>Sprint report: look without touching</h2>
+          <p class="sub">
+            A snapshot of the sprint and the backlog aimed at development. It is read-only: it changes no
+            statuses, creates no issues, writes nothing in <span class="mono">.context/</span>. It is shown in
+            the conversation and saved only if you ask.
+          </p>
+        </div>
+
+        <div class="figwrap r">
+          <div class="win">
+            <div class="win-bar">
+              <div class="win-dots"><i></i><i></i><i></i></div>
+              <div class="win-url">Sprint Report · {{PROJECT_KEY}}</div>
+            </div>
+            <div class="win-body two">
+              <div class="pane chat">
+                <span class="pane-label">you</span>
+                <div class="bub me">sprint report, with PRs</div>
+                <div class="bub ai">
+                  Scope? Active sprint, backlog or both. Filter by person or epic?
+                </div>
+                <div class="bub me">both, everything</div>
+                <div class="bub tool">→ [ISSUE_TRACKER_TOOL] search for epics and stories</div>
+                <div class="bub tool">→ gh pr list (open and merged)</div>
+              </div>
+              <div class="pane">
+                <span class="pane-label">report</span>
+                <div class="tree">
+                  <div><span class="on">🔴 BLOCKED</span> <span class="mut">· needs attention now</span></div>
+                  <div><span class="f">🟡 In Progress</span> <span class="mut">· with its PR</span></div>
+                  <div><span class="f">🔵 In Review</span> <span class="mut">· review status</span></div>
+                  <div><span class="f">🟦 Ready For Dev</span></div>
+                  <div><span class="f">📦 Backlog / To Do</span></div>
+                  <div><span class="f">✅ Done</span></div>
+                  <div class="mut">📈 progress per epic · 🎯 metrics · ⚠️ alerts</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <p class="figcap">the order of the groups follows development urgency</p>
+        </div>
+
+        <div class="callout blue r">
+          <b>The report always suggests the next step:</b> if there are blockers, investigate them; PRs
+          with no activity, ask for review; stories in progress with no PR, talk to whoever has it; a backlog
+          that grows with no priority, a refinement session with this same skill.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §13 FILA §8 ============ -->
+    <section class="band" id="pantalla">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">13</span> · stories with an interface</div>
+          <h2>It doesn't wait for the mockup, but it leaves the row</h2>
+          <p class="sub">
+            A story is written, refined and left ready without any screen having been
+            drawn. It is not postponed, not blocked and not downgraded because of that.
+          </p>
+        </div>
+
+        <div class="planes r">
+          <div class="plane agent">
+            <div class="tag">What it must do</div>
+            <h3>Its row in the Story → Screen map</h3>
+            <span class="path">.context/design/master-design-plan.md · §8</span>
+            <ul>
+              <li>
+                If the project has a master design plan, each story with an interface is born with a
+                line in §8.
+              </li>
+              <li>
+                The line names the screen where it renders, or says explicitly that there is no
+                mockup covering it yet: <span class="mono">🔒 mockup-gated</span>.
+              </li>
+              <li>It is cheap, and it is what the design gate reads later on.</li>
+            </ul>
+          </div>
+          <div class="plane">
+            <div class="tag">What it is not</div>
+            <h3>Writing the row is not designing</h3>
+            <ul>
+              <li>The row is not a mockup.</li>
+              <li>
+                When <span class="mono">/sprint-development</span> picks up the story, its design gate
+                reads the row and resolves the screen's route at that moment.
+              </li>
+              <li>
+                A UI story created without a row reaches development already outside the repo's
+                fidelity rule.
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §14 RIELES ============ -->
+    <section class="band" id="rieles">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">14</span> · safety rails</div>
+          <h2>What the skill never does</h2>
+          <p class="sub">
+            The full invariants live in the compact rules of
+            <span class="mono">SKILL.md</span> (the body no longer repeats the list). These are the ones
+            a PM notices first.
+          </p>
+        </div>
+
+        <div class="check r">
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Doesn't invent.</b> A criterion, scope or business rule with no source (PRD, SRS, business map
+              or what you said) is reported as a <span class="mono">gap</span>, that field is held back
+              and it carries on with the rest.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Doesn't size for you.</b> QA sets the AI Effort in shift-left and the agents
+              measure the tokens. If QA marks High, it proposes splitting the story and you sign off.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Doesn't create links without your confirmation</b>, nor use a symmetric link for something that
+              depends on order without telling you.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Doesn't resolve overlaps or cycles on its own.</b> It shows you the problem and waits for your
+              decision.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Doesn't write the cache by hand</b> nor hardcode field IDs, link names or
+              tool commands: everything is resolved by slug or by the owning skill.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Doesn't say "Wave".</b> It says Sprint, and Master Sprint or Execution Sprint when there is
+              ambiguity.</span
+            >
+          </div>
+        </div>
+
+        <div class="callout agent r">
+          <b>Optional, for teams that need it:</b> the delta specs pattern replaces the
+          in-place editing of criteria with one source spec per feature plus one delta per
+          story (added, modified, removed). It helps with several devs on the same feature or with
+          audit; for small teams, the default flow is enough.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §15 INVOCAR ============ -->
+    <section class="band" id="invocar">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">15</span> · what you tell the AI</div>
+          <h2>Invoking it in each terminal</h2>
+          <p class="sub">
+            This skill has no named modes: the flow comes from your sentence. You name the skill and
+            describe what you want, in Spanish or English.
+          </p>
+        </div>
+
+        <div class="hosts r">
+          <div class="host">
+            <h3>Claude Code</h3>
+            <span class="say">/product-management create an epic for notifications</span>
+            <p>The slash loads the skill; the rest of the sentence picks the flow.</p>
+          </div>
+          <div class="host">
+            <h3>OpenCode</h3>
+            <span class="say">load the product-management skill: refine the criteria of PROJ-45</span>
+            <p>No slash: you name the skill in the sentence.</p>
+          </div>
+          <div class="host">
+            <h3>Codex</h3>
+            <span class="say">load the product-management skill: which stories do we work on first</span>
+            <p>Same pattern as OpenCode, CLI or Desktop.</p>
+          </div>
+          <div class="host">
+            <h3>Pi</h3>
+            <span class="say">/skill:product-management create an epic for notifications</span>
+            <p>Slash with the <span class="mono">/skill:</span> prefix. In a new folder, <span class="mono">/trust</span> once.</p>
+          </div>
+        </div>
+
+        <div class="tablewrap r" style="margin-top: 26px">
+          <table class="cmp narrow">
+            <thead>
+              <tr>
+                <th>If you say something like…</th>
+                <th>It runs</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th>"seed the product backlog"</th>
+                <td>A · initial seed</td>
+              </tr>
+              <tr>
+                <th>"agregar feature al backlog" (add a feature to the backlog)</th>
+                <td>B · incremental feature</td>
+              </tr>
+              <tr>
+                <th>"crear épica" (create an epic)</th>
+                <td>C · epic creation</td>
+              </tr>
+              <tr>
+                <th>"INVEST a esta historia" (INVEST this story) · "3 amigos"</th>
+                <td>D · refinement</td>
+              </tr>
+              <tr>
+                <th>"refine acceptance criteria"</th>
+                <td>E · acceptance criteria</td>
+              </tr>
+              <tr>
+                <th>"enumerar edge cases" (list edge cases)</th>
+                <td>F · edge cases</td>
+              </tr>
+              <tr>
+                <th>"reporte de sprint" (sprint report) · "estado del sprint" (sprint status)</th>
+                <td>G · report</td>
+              </tr>
+              <tr>
+                <th>"qué historias trabajamos primero" (which stories do we work on first)</th>
+                <td>H · sequencing</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §16 HANDOFFS ============ -->
+    <section class="band" id="handoffs">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">16</span> · after this skill</div>
+          <h2>Who it hands the baton to</h2>
+        </div>
+
+        <div class="alts r">
+          <div class="alt">
+            <div class="kk">Implementation</div>
+            <h3>/sprint-development</h3>
+            <p>
+              It takes each ready story and carries it from plan to code, review and deploy. If the
+              criteria are not clear, it sends you back here to refine first.
+            </p>
+          </div>
+          <div class="alt">
+            <div class="kk">Execution order</div>
+            <h3>/project-context dev-roadmap</h3>
+            <p>
+              Writes §4 of <span class="mono">.context/dev-roadmap.md</span> with the order that
+              flow H calculates.
+            </p>
+          </div>
+          <div class="alt">
+            <div class="kk">Tests</div>
+            <h3>/unit-testing</h3>
+            <p>TDD on a function, inside <span class="mono">/sprint-development</span>.</p>
+          </div>
+          <div class="alt">
+            <div class="kk">Before this skill</div>
+            <h3>/project-foundation</h3>
+            <p>Leaves the PRD and SRS that the initial seed comes from.</p>
+          </div>
+        </div>
+
+        <div class="callout blue r">
+          <b>To read more:</b>
+          <a
+            href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/.agents/skills/product-management/SKILL.md"
+            >.agents/skills/product-management/SKILL.md</a
+          >
+          and its <span class="mono">references/</span> folder, one reference per flow. For the
+          screen design that comes afterwards, the deck
+          <a href="../design-system/flujo-mockups.en.html">From blueprint to product</a>.
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <div class="wrap">
+        <div class="prose">
+          <p>
+            <b style="color: var(--ink)">The underlying idea.</b> A good backlog is one that reads on
+            the board, is verified in Jira and is ordered by real dependencies. The AI writes,
+            checks and calculates; you approve the plan, decide the conflicts and set the
+            priorities.
+          </p>
+        </div>
+        <div class="sig">
+          <span
+            >Source: <span class="mono">.agents/skills/product-management/</span></span
+          >
+          <span>·</span>
+          <span><a href="../../index.html">← back to Blueprints</a></span>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      // theme toggle
+      (function () {
+        var root = document.documentElement;
+        var btn = document.getElementById('themebtn');
+        var icon = document.getElementById('themeicon');
+        function current() {
+          var t = root.getAttribute('data-theme');
+          if (t) return t;
+          return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+            ? 'dark'
+            : 'light';
+        }
+        function setIcon() {
+          icon.textContent = current() === 'dark' ? '☾' : '☀';
+        }
+        setIcon();
+        btn.addEventListener('click', function () {
+          var next = current() === 'dark' ? 'light' : 'dark';
+          root.setAttribute('data-theme', next);
+          setIcon();
+        });
+        if (window.matchMedia) {
+          window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', setIcon);
+        }
+      })();
+
+      // hero pipeline animation
+      (function () {
+        var reduce =
+          window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var pipe = document.getElementById('pipe');
+        if (pipe && !reduce) {
+          var io = new IntersectionObserver(
+            function (es) {
+              es.forEach(function (e) {
+                if (e.isIntersecting) {
+                  pipe.classList.add('reveal-pipe');
+                  io.disconnect();
+                }
+              });
+            },
+            { threshold: 0.3 }
+          );
+          io.observe(pipe);
+        } else if (pipe) {
+          pipe.classList.add('reveal-pipe');
+        }
+      })();
+
+      // scroll reveal
+      (function () {
+        var reduce =
+          window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var els = document.querySelectorAll('.r');
+        if (reduce) {
+          els.forEach(function (el) {
+            el.classList.add('in');
+          });
+          return;
+        }
+        var io = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (e) {
+              if (e.isIntersecting) {
+                e.target.classList.add('in');
+                io.unobserve(e.target);
+              }
+            });
+          },
+          { threshold: 0.12, rootMargin: '0px 0px -8% 0px' }
+        );
+        els.forEach(function (el) {
+          io.observe(el);
+        });
+      })();
+    </script>
+    <!-- ============ MOBILE (UPEX), scroll deck: reflow by CSS, no scale-to-fit or swipe ============
+         The decks in this repo are pages read by scrolling and rearranged with @media.
+         There are no slides to scale or to swipe through: this block only declares the mobile mode.
+         The site that serves the deck validates the id `upex-mobile-nav`. -->
+    <script id="upex-mobile-nav">
+      (function () {
+        var mobile =
+          window.matchMedia &&
+          window.matchMedia('(pointer: coarse)').matches &&
+          window.matchMedia('(max-width: 768px)').matches;
+        document.documentElement.setAttribute('data-mobile', mobile ? 'reflow' : 'off');
+      })();
+    </script>
+  </body>
+</html>

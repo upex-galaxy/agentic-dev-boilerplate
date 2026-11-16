@@ -1726,7 +1726,7 @@
             <h3>Un checklist y una escala</h3>
             <ul>
               <li>
-                Las dos leen el mismo <span class="mono">review-pr.md</span> §"CHECKLIST DE REVIEW".
+                Las dos leen el mismo <span class="mono">review-pr.md</span> §"Review checklist".
                 Esta skill lo usa por referencia y nunca lo copia: un cambio al checklist se hace
                 ahí, una sola vez.
               </li>
@@ -2165,10 +2165,10 @@ gh api <span class="s">"repos/&lt;owner&gt;/&lt;repo&gt;/contents/.context"</spa
         </div>
 
         <div class="sec-head r" style="margin-top: 34px">
-          <h2 style="font-size: 1.4rem">El checklist, más tres áreas del revisor de PRs ajenos</h2>
+          <h2 style="font-size: 1.4rem">El checklist, más lo que suma el revisor de PRs ajenos</h2>
           <p class="sub">
-            Recorre <span class="mono">review-pr.md</span> §"CHECKLIST DE REVIEW" en su orden
-            (criterios de aceptación primero) y suma tres frentes que un revisor de historia puede
+            Recorre <span class="mono">review-pr.md</span> §"Review checklist" en su orden
+            (criterios de aceptación primero) y suma frentes que un revisor de historia puede
             no alcanzar.
           </p>
         </div>
@@ -2196,9 +2196,29 @@ gh api <span class="s">"repos/&lt;owner&gt;/&lt;repo&gt;/contents/.context"</spa
           <div class="step">
             <h3>ADRs</h3>
             <p>
-              Una elección difícil de revertir (modelo de auth, de acceso a datos o de tenancy,
-              lock-in de framework) sin ADR, o que contradice uno <span class="mono">Accepted</span>
-              en <span class="mono">.context/ADR/</span>, es un hallazgo.
+              Una elección que pasa la prueba de tres puertas de
+              <span class="mono">adr-doctrine.md</span> §1 (difícil de revertir, sorprendente sin
+              contexto, con un trade-off real) y no tiene ADR, o que contradice uno
+              <span class="mono">Accepted</span> en <span class="mono">.context/ADR/</span>, es un
+              hallazgo.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Dos ejes</h3>
+            <p>
+              Si el PR trae ticket, plan o criterios de aceptación, la revisión corre en dos ejes:
+              un revisor de Spec y otro de Standards, cada uno en contexto fresco, con los briefs de
+              <span class="mono">review-pr.md</span> <span class="mono">## Two-axis review</span>.
+              Cada hallazgo lleva su eje.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Tests mentirosos</h3>
+            <p>
+              Los tests nuevos se revisan con LT-1 (tautológico), LT-2 (no puede fallar) y LT-3
+              (ligado a la estructura), definidos en
+              <span class="mono">unit-testing/references/tdd-workflow.md</span>. Son hallazgos Real
+              en todos los niveles de rigor.
             </p>
           </div>
         </div>
@@ -2231,7 +2251,7 @@ gh api <span class="s">"repos/&lt;owner&gt;/&lt;repo&gt;/contents/.context"</spa
                 <td>
                   Criterio no cumplido, credencial hardcodeada (Rule #1), RPC que confía en la
                   identidad que le pasan, migración destructiva sin camino de vuelta, divergencia
-                  de UI sin ratificar
+                  de UI sin ratificar, tests mentirosos
                 </td>
               </tr>
               <tr>
@@ -2452,7 +2472,9 @@ gh pr view &lt;N&gt; [--repo &lt;owner&gt;/&lt;repo&gt;] --json comments -q <spa
             <span class="bx"></span
             ><span
               ><b>Nunca postea sin el OK del paso 7.</b> Sin excepciones. Un OK para otro PR no se
-              traslada, y el silencio no es aprobación.</span
+              traslada, y el silencio no es aprobación. Un worker supervisado necesita el OK que el
+              conductor transmite de la persona, y una rutina sin nadie postea solo si el brief
+              nombra este PR y lo pide; si no, guarda el borrador y lo reporta.</span
             >
           </div>
           <div class="it">

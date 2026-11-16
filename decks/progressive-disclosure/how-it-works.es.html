@@ -934,7 +934,7 @@
       <section>
         <h2><span class="num">04</span>El LOAD PROTOCOL</h2>
         <p class="sub">
-          Cinco líneas en la cabecera de L0 convierten el router en obligación. Sin ellas, la tabla
+          Cuatro líneas en la cabecera de L0 convierten el router en obligación. Sin ellas, la tabla
           sería una sugerencia.
         </p>
         <ol class="steps">
@@ -950,11 +950,8 @@
           </li>
           <li>
             <strong>Un archivo leído no se relee</strong>, salvo que una compactación lo haya sacado
-            del contexto.
-          </li>
-          <li>
-            <strong>Ante la duda, se lee.</strong> Las secciones son chicas; una sección salteada es
-            justo la falla que este diseño evita.
+            del contexto. <strong>Ante la duda, se lee</strong>: las secciones son chicas; una
+            sección salteada es justo la falla que este diseño evita.
           </li>
           <li>
             <strong>Una sección se edita en su archivo</strong>, nunca pegando su prosa en
@@ -962,6 +959,12 @@
             <code>.agents/instructions/agent-project.md</code>.
           </li>
         </ol>
+        <p>
+          Debajo de esas líneas, un párrafo aparte dice que las skills y las secciones se cargan por
+          significado en cualquier idioma. Los triggers están en inglés, así que con otro idioma una
+          línea <code>ROUTE:</code> puede faltar o llegar incompleta, y el agente enruta por su cuenta
+          desde el router.
+        </p>
       </section>
 
       <section>
@@ -1132,8 +1135,9 @@
         </p>
         <div class="hookline">
           <span class="c"># cada regla en L0: su frase obligatoria, textual, y un puntero</span><br />
-          6. <span class="k">**QUALITY VERIFICATION**</span>: After code changes, verify in order:
-          tests → types → lint. No skip steps. Full: agent-critical-rules.md#6
+          6. <span class="k">**Quality verification**</span>: After code changes, verify in this
+          order: tests, then types, then lint. Run all three; skip none. Full:
+          agent-critical-rules.md#6
         </div>
         <div class="cards">
           <div class="card">

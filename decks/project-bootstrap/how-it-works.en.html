@@ -1,0 +1,2615 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Project bootstrap: from the SRS to a repo that starts up</title>
+    <meta
+      name="description"
+      content="How /project-bootstrap turns the PRD, the SRS and DESIGN.md into the project's technical base: backend with database, auth and types, frontend with the design system, and integration pieces on demand."
+    />
+    <style>
+      /* ============================================================
+     Self-contained deck: zero external requests, not even
+     fonts. Built to survive for years as a loose file.
+     Tokens: "Planos", see packages/decks/README.md (single source).
+     ============================================================ */
+      :root {
+        --paper: #e8ecf1;
+        --paper-2: #dee5ed;
+        --surface: #f5f8fb;
+        --surface-2: #ffffff;
+        --ink: #172236;
+        --ink-soft: #4a5873;
+        --ink-faint: #5e6e88;
+        --line: rgba(23, 34, 54, 0.14);
+        --line-soft: rgba(23, 34, 54, 0.08);
+        --blue: #1e56a8;
+        --blue-2: #2f72ce;
+        --blue-wash: rgba(30, 86, 168, 0.08);
+        --blue-solid: #1e56a8;
+        --signal: #c2410c;
+        --signal-2: #ea580c;
+        --signal-wash: rgba(194, 65, 12, 0.09);
+        --signal-solid: #9a3412;
+        --agent: #6d28d9;
+        --agent-2: #7c3aed;
+        --agent-wash: rgba(109, 40, 217, 0.08);
+        --agent-solid: #6d28d9;
+        --good: #15803d;
+        --warn: #b45309;
+        --grid: rgba(30, 86, 168, 0.055);
+        --shadow: 0 1px 2px rgba(23, 34, 54, 0.06), 0 8px 24px -12px rgba(23, 34, 54, 0.18);
+        --shadow-lg: 0 2px 4px rgba(23, 34, 54, 0.05), 0 24px 60px -24px rgba(23, 34, 54, 0.28);
+        /* -solid tokens: fixed across both themes, reserved for solid-fill
+           + white-text UI (buttons, bubbles, ::selection): the plain
+           --blue/--signal/--agent above lighten in dark mode for on-paper
+           text/links and fail contrast as a white-text fill. Never themed. */
+
+        --font-display:
+          'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
+        --font-body:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', system-ui, sans-serif;
+        --font-mono:
+          ui-monospace, 'SF Mono', 'JetBrains Mono', 'Cascadia Code', Menlo, Consolas, monospace;
+
+        --maxw: 1120px;
+        --prose: 66ch;
+        --r: 14px;
+        --r-sm: 9px;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --paper: #0b1220;
+          --paper-2: #0e1626;
+          --surface: #121b2e;
+          --surface-2: #16213a;
+          --ink: #e4e9f2;
+          --ink-soft: #9fb0c9;
+          --ink-faint: #7e8caa;
+          --line: rgba(160, 180, 210, 0.16);
+          --line-soft: rgba(160, 180, 210, 0.09);
+          --blue: #6fa8ff;
+          --blue-2: #8cbbff;
+          --blue-wash: rgba(111, 168, 255, 0.11);
+          --signal: #fb923c;
+          --signal-2: #fdba74;
+          --signal-wash: rgba(251, 146, 60, 0.12);
+          --agent: #c4b5fd;
+          --agent-2: #ddd6fe;
+          --agent-wash: rgba(196, 181, 253, 0.12);
+          --good: #4ade80;
+          --warn: #fbbf24;
+          --grid: rgba(111, 168, 255, 0.06);
+          --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 30px -14px rgba(0, 0, 0, 0.6);
+          --shadow-lg: 0 2px 6px rgba(0, 0, 0, 0.4), 0 30px 70px -28px rgba(0, 0, 0, 0.7);
+        }
+      }
+      :root[data-theme='light'] {
+        --paper: #e8ecf1;
+        --paper-2: #dee5ed;
+        --surface: #f5f8fb;
+        --surface-2: #ffffff;
+        --ink: #172236;
+        --ink-soft: #4a5873;
+        --ink-faint: #5e6e88;
+        --line: rgba(23, 34, 54, 0.14);
+        --line-soft: rgba(23, 34, 54, 0.08);
+        --blue: #1e56a8;
+        --blue-2: #2f72ce;
+        --blue-wash: rgba(30, 86, 168, 0.08);
+        --signal: #c2410c;
+        --signal-2: #ea580c;
+        --signal-wash: rgba(194, 65, 12, 0.09);
+        --agent: #6d28d9;
+        --agent-2: #7c3aed;
+        --agent-wash: rgba(109, 40, 217, 0.08);
+        --good: #15803d;
+        --warn: #b45309;
+        --grid: rgba(30, 86, 168, 0.055);
+        --shadow: 0 1px 2px rgba(23, 34, 54, 0.06), 0 8px 24px -12px rgba(23, 34, 54, 0.18);
+        --shadow-lg: 0 2px 4px rgba(23, 34, 54, 0.05), 0 24px 60px -24px rgba(23, 34, 54, 0.28);
+      }
+      :root[data-theme='dark'] {
+        --paper: #0b1220;
+        --paper-2: #0e1626;
+        --surface: #121b2e;
+        --surface-2: #16213a;
+        --ink: #e4e9f2;
+        --ink-soft: #9fb0c9;
+        --ink-faint: #7e8caa;
+        --line: rgba(160, 180, 210, 0.16);
+        --line-soft: rgba(160, 180, 210, 0.09);
+        --blue: #6fa8ff;
+        --blue-2: #8cbbff;
+        --blue-wash: rgba(111, 168, 255, 0.11);
+        --signal: #fb923c;
+        --signal-2: #fdba74;
+        --signal-wash: rgba(251, 146, 60, 0.12);
+        --agent: #c4b5fd;
+        --agent-2: #ddd6fe;
+        --agent-wash: rgba(196, 181, 253, 0.12);
+        --good: #4ade80;
+        --warn: #fbbf24;
+        --grid: rgba(111, 168, 255, 0.06);
+        --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 30px -14px rgba(0, 0, 0, 0.6);
+        --shadow-lg: 0 2px 6px rgba(0, 0, 0, 0.4), 0 30px 70px -28px rgba(0, 0, 0, 0.7);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+      }
+      body {
+        margin: 0;
+        font-family: var(--font-body);
+        font-size: 17px;
+        line-height: 1.65;
+        color: var(--ink);
+        background-color: var(--paper);
+        background-image:
+          linear-gradient(var(--grid) 1px, transparent 1px),
+          linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+        background-size: 30px 30px;
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
+      }
+      h1,
+      h2,
+      h3 {
+        font-family: var(--font-display);
+        font-weight: 600;
+        text-wrap: balance;
+        line-height: 1.12;
+        margin: 0;
+      }
+      p {
+        margin: 0 0 1.1em;
+      }
+      a {
+        color: var(--blue);
+        text-decoration-color: var(--line);
+        text-underline-offset: 3px;
+      }
+      a:focus-visible {
+        outline: 2px solid var(--blue);
+        outline-offset: 2px;
+      }
+      code,
+      .mono {
+        font-family: var(--font-mono);
+      }
+      ::selection {
+        background: var(--signal-solid);
+        color: #fff;
+      }
+
+      .wrap {
+        max-width: var(--maxw);
+        margin: 0 auto;
+        padding: 0 clamp(20px, 5vw, 56px);
+      }
+      .prose {
+        max-width: var(--prose);
+      }
+
+      .eyebrow {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        font-weight: 600;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--signal);
+        display: inline-flex;
+        align-items: baseline;
+        gap: 0.6em;
+      }
+      .eyebrow .num {
+        color: var(--blue);
+      }
+
+      .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 11px clamp(20px, 5vw, 56px);
+        background: color-mix(in srgb, var(--paper) 82%, transparent);
+        backdrop-filter: blur(12px) saturate(1.4);
+        border-bottom: 1px solid var(--line-soft);
+      }
+      .topbar .brand {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        letter-spacing: 0.04em;
+        color: var(--ink-soft);
+        display: flex;
+        align-items: center;
+        gap: 0.6em;
+        text-decoration: none;
+      }
+      .topbar .brand b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .topbar .mark {
+        width: 16px;
+        height: 16px;
+        border: 1.5px solid var(--blue);
+        border-radius: 3px;
+        position: relative;
+        flex: none;
+      }
+      .topbar .mark::after {
+        content: '';
+        position: absolute;
+        inset: 3px;
+        border: 1.5px solid var(--agent);
+        border-radius: 1px;
+      }
+      .topnav {
+        display: flex;
+        gap: 4px;
+        align-items: center;
+      }
+      .topnav a {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        letter-spacing: 0.03em;
+        color: var(--ink-faint);
+        text-decoration: none;
+        padding: 5px 9px;
+        border-radius: 6px;
+      }
+      .topnav a:hover {
+        color: var(--ink);
+        background: var(--blue-wash);
+      }
+      @media (max-width: 900px) {
+        .topnav {
+          display: none;
+        }
+      }
+      .themebtn {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        letter-spacing: 0.05em;
+        cursor: pointer;
+        border: 1px solid var(--line);
+        background: var(--surface);
+        color: var(--ink-soft);
+        padding: 6px 11px;
+        border-radius: 7px;
+        display: flex;
+        gap: 0.5em;
+        align-items: center;
+      }
+      .themebtn:hover {
+        border-color: var(--blue);
+        color: var(--ink);
+      }
+      .themebtn:focus-visible {
+        outline: 2px solid var(--blue);
+        outline-offset: 2px;
+      }
+
+      .hero {
+        position: relative;
+        padding: clamp(60px, 12vh, 130px) 0 clamp(48px, 8vh, 90px);
+        overflow: hidden;
+      }
+      .hero .kicker {
+        margin-bottom: 26px;
+      }
+      .hero h1 {
+        font-size: clamp(2.5rem, 6.6vw, 5.2rem);
+        letter-spacing: -0.015em;
+      }
+      .hero h1 em {
+        font-style: italic;
+        color: var(--blue);
+      }
+      .hero h1 .sig {
+        color: var(--signal);
+        font-style: normal;
+      }
+      .hero .lede {
+        font-size: clamp(1.06rem, 2vw, 1.32rem);
+        color: var(--ink-soft);
+        max-width: 60ch;
+        margin-top: 28px;
+        line-height: 1.55;
+      }
+      .hero .lede b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .hero-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px 10px;
+        margin-top: 36px;
+      }
+      .chip {
+        font-family: var(--font-mono);
+        font-size: 0.74rem;
+        letter-spacing: 0.02em;
+        padding: 7px 12px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        color: var(--ink-soft);
+        background: var(--surface);
+        display: inline-flex;
+        gap: 0.55em;
+        align-items: center;
+      }
+      .chip b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .chip .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--signal);
+        flex: none;
+      }
+      .chip.agent .dot {
+        background: var(--agent);
+      }
+
+      .pipe {
+        margin-top: 54px;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0;
+        align-items: stretch;
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        overflow: hidden;
+        background: var(--surface);
+        box-shadow: var(--shadow);
+      }
+      .pipe .node {
+        position: relative;
+        padding: 22px 20px;
+        border-right: 1px solid var(--line);
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      .pipe .node:last-child {
+        border-right: 0;
+      }
+      .reveal-pipe .node {
+        animation: pipeIn 0.6s cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+      }
+      .pipe .node:nth-child(1) {
+        animation-delay: 0.1s;
+      }
+      .pipe .node:nth-child(2) {
+        animation-delay: 0.3s;
+      }
+      .pipe .node:nth-child(3) {
+        animation-delay: 0.5s;
+      }
+      .pipe .node:nth-child(4) {
+        animation-delay: 0.7s;
+      }
+      .pipe .node .n {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        letter-spacing: 0.12em;
+        color: var(--signal);
+        text-transform: uppercase;
+      }
+      .pipe .node h3 {
+        font-family: var(--font-display);
+        font-size: 1.14rem;
+        margin: 8px 0 5px;
+      }
+      .pipe .node p {
+        font-size: 0.85rem;
+        color: var(--ink-soft);
+        margin: 0;
+        line-height: 1.45;
+      }
+      .pipe .node .arw {
+        position: absolute;
+        right: -8px;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 2;
+        width: 16px;
+        height: 16px;
+        color: var(--blue);
+        background: var(--surface);
+        display: grid;
+        place-items: center;
+      }
+      .pipe .node:last-child .arw {
+        display: none;
+      }
+      @media (max-width: 760px) {
+        .pipe {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+      @media (max-width: 460px) {
+        .pipe {
+          grid-template-columns: 1fr;
+        }
+        .pipe .node {
+          border-right: 0;
+          border-bottom: 1px solid var(--line);
+        }
+        .pipe .node .arw {
+          display: none;
+        }
+      }
+      @keyframes pipeIn {
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .pipe .node {
+          opacity: 1;
+          transform: none;
+          animation: none !important;
+        }
+      }
+
+      section.band {
+        padding: clamp(56px, 9vh, 96px) 0;
+        border-top: 1px solid var(--line-soft);
+      }
+      .sec-head {
+        max-width: 62ch;
+        margin-bottom: 40px;
+      }
+      .sec-head h2 {
+        font-size: clamp(1.9rem, 4vw, 2.9rem);
+        letter-spacing: -0.012em;
+        margin-top: 16px;
+      }
+      .sec-head p.sub {
+        font-size: 1.1rem;
+        color: var(--ink-soft);
+        margin-top: 18px;
+      }
+
+      .r {
+        opacity: 0;
+        transform: translateY(18px);
+        transition:
+          opacity 0.7s ease,
+          transform 0.7s cubic-bezier(0.2, 0.7, 0.3, 1);
+      }
+      .r.in {
+        opacity: 1;
+        transform: none;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .r {
+          opacity: 1;
+          transform: none;
+          transition: none;
+        }
+      }
+
+      .planes {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+      }
+      @media (max-width: 780px) {
+        .planes {
+          grid-template-columns: 1fr;
+        }
+      }
+      .plane {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface);
+        padding: 26px 26px 24px;
+        box-shadow: var(--shadow);
+        position: relative;
+        overflow: hidden;
+      }
+      .plane::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 3px;
+        background: var(--blue);
+      }
+      .plane.sig::before {
+        background: var(--signal);
+      }
+      .plane.agent::before {
+        background: var(--agent);
+      }
+      .plane .tag {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+      }
+      .plane h3 {
+        font-size: 1.32rem;
+        margin: 8px 0 4px;
+      }
+      .plane .path {
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        color: var(--blue);
+        background: var(--blue-wash);
+        padding: 3px 8px;
+        border-radius: 5px;
+        display: inline-block;
+        margin-bottom: 12px;
+      }
+      .plane.sig .path {
+        color: var(--signal);
+        background: var(--signal-wash);
+      }
+      .plane.agent .path {
+        color: var(--agent);
+        background: var(--agent-wash);
+      }
+      .plane ul {
+        margin: 12px 0 0;
+        padding: 0;
+        list-style: none;
+      }
+      .plane li {
+        position: relative;
+        padding-left: 20px;
+        margin-bottom: 8px;
+        font-size: 0.93rem;
+        color: var(--ink-soft);
+      }
+      .plane li::before {
+        content: '-';
+        position: absolute;
+        left: 0;
+        color: var(--ink-faint);
+      }
+      .plane li b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+
+      .callout {
+        border: 1px solid var(--line);
+        border-left: 3px solid var(--signal);
+        background: var(--signal-wash);
+        border-radius: var(--r-sm);
+        padding: 16px 20px;
+        font-size: 0.93rem;
+        color: var(--ink);
+        margin: 22px 0 0;
+      }
+      .callout b {
+        color: var(--signal);
+      }
+      .callout.blue {
+        border-left-color: var(--blue);
+        background: var(--blue-wash);
+      }
+      .callout.blue b {
+        color: var(--blue);
+      }
+      .callout.agent {
+        border-left-color: var(--agent);
+        background: var(--agent-wash);
+      }
+      .callout.agent b {
+        color: var(--agent);
+      }
+
+      .steps {
+        display: grid;
+        gap: 2px;
+        margin-top: 8px;
+        counter-reset: st;
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        overflow: hidden;
+        background: var(--line-soft);
+      }
+      .step {
+        background: var(--surface);
+        padding: 20px 22px 20px 66px;
+        position: relative;
+      }
+      .step::before {
+        counter-increment: st;
+        content: counter(st, decimal-leading-zero);
+        position: absolute;
+        left: 20px;
+        top: 20px;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: var(--signal);
+      }
+      .step h3 {
+        font-family: var(--font-display);
+        font-size: 1.16rem;
+        margin: 0 0 5px;
+      }
+      .step p {
+        margin: 0;
+        font-size: 0.93rem;
+        color: var(--ink-soft);
+      }
+      .step p + p {
+        margin-top: 8px;
+      }
+      .step .say {
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        color: var(--ink);
+        background: var(--blue-wash);
+        border: 1px solid var(--line-soft);
+        border-radius: 7px;
+        padding: 8px 12px;
+        margin-top: 12px;
+        display: block;
+      }
+      .step .say .who {
+        color: var(--signal);
+        font-weight: 600;
+      }
+
+      .figwrap {
+        margin-top: 8px;
+      }
+      .figcap {
+        font-family: var(--font-mono);
+        font-size: 0.74rem;
+        color: var(--ink-faint);
+        margin-top: 12px;
+        text-align: center;
+        letter-spacing: 0.02em;
+      }
+      .win {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        overflow: hidden;
+        background: var(--surface-2);
+        box-shadow: var(--shadow-lg);
+      }
+      .win-bar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 9px 13px;
+        background: var(--surface);
+        border-bottom: 1px solid var(--line);
+      }
+      .win-dots {
+        display: flex;
+        gap: 6px;
+      }
+      .win-dots i {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--line);
+        display: block;
+      }
+      .win-url {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        color: var(--ink-soft);
+        background: var(--paper-2);
+        border-radius: 6px;
+        padding: 4px 10px;
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .win-btn {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        padding: 4px 9px;
+        border-radius: 6px;
+        border: 1px solid var(--line);
+        color: var(--ink-soft);
+        white-space: nowrap;
+      }
+      .win-btn.exp {
+        color: #fff;
+        background: var(--signal-solid);
+        border-color: var(--signal-solid);
+      }
+      .win-btn.mcp {
+        color: #fff;
+        background: var(--agent-solid);
+        border-color: var(--agent-solid);
+      }
+      .win-nav {
+        display: flex;
+        gap: 3px;
+        padding: 7px 13px;
+        border-bottom: 1px solid var(--line);
+        background: var(--surface);
+        overflow-x: auto;
+      }
+      .win-nav span {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        color: var(--ink-faint);
+        padding: 3px 9px;
+        border-radius: 5px;
+        white-space: nowrap;
+      }
+      .win-nav span.on {
+        color: var(--ink);
+        background: var(--blue-wash);
+      }
+      .win-nav .gear {
+        margin-left: auto;
+        color: var(--ink-faint);
+      }
+
+      .win-body {
+        display: grid;
+        min-height: 260px;
+      }
+      .win-body.two {
+        grid-template-columns: 40% 60%;
+      }
+      .win-body.three {
+        grid-template-columns: 30% 30% 40%;
+      }
+      @media (max-width: 600px) {
+        .win-body.two,
+        .win-body.three {
+          grid-template-columns: 1fr;
+        }
+        .win-body .pane {
+          border-right: 0 !important;
+          border-bottom: 1px solid var(--line);
+        }
+      }
+      .pane {
+        padding: 15px;
+        border-right: 1px solid var(--line);
+        position: relative;
+      }
+      .pane:last-child {
+        border-right: 0;
+      }
+      .pane-label {
+        position: absolute;
+        top: 8px;
+        right: 10px;
+        font-family: var(--font-mono);
+        font-size: 0.6rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        opacity: 0.8;
+      }
+      .pane.chat {
+        background: var(--surface);
+      }
+      .bub {
+        border-radius: 9px;
+        padding: 8px 11px;
+        margin-bottom: 9px;
+        font-size: 0.76rem;
+        line-height: 1.4;
+        max-width: 92%;
+      }
+      .bub.me {
+        background: var(--blue-solid);
+        color: #fff;
+        margin-left: auto;
+      }
+      .bub.ai {
+        background: var(--paper-2);
+        color: var(--ink-soft);
+        border: 1px solid var(--line-soft);
+      }
+      .bub.tool {
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        color: var(--good);
+        background: transparent;
+        border: 0;
+        padding: 2px 0;
+      }
+      .bub.mcp {
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        color: var(--agent);
+        background: transparent;
+        border: 0;
+        padding: 2px 0;
+      }
+      .promptbox {
+        margin-top: 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface-2);
+        padding: 8px 10px;
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        color: var(--ink-faint);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+      }
+      .promptbox .send {
+        color: #fff;
+        background: var(--blue-solid);
+        border-radius: 5px;
+        padding: 3px 8px;
+        font-size: 0.64rem;
+      }
+
+      .canvas {
+        background: var(--paper);
+        background-image:
+          linear-gradient(var(--grid) 1px, transparent 1px),
+          linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+        background-size: 16px 16px;
+        display: grid;
+        place-items: center;
+      }
+      .mini {
+        width: 82%;
+        max-width: 260px;
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        position: relative;
+      }
+      .mini .mtop {
+        height: 26px;
+        background: var(--blue);
+        display: flex;
+        align-items: center;
+        padding: 0 8px;
+        gap: 5px;
+      }
+      .mini .mtop i {
+        width: 24px;
+        height: 5px;
+        border-radius: 3px;
+        background: rgba(255, 255, 255, 0.55);
+        display: block;
+      }
+      .mini .mtop i.sm {
+        width: 12px;
+        margin-left: auto;
+      }
+      .mini .mbody {
+        padding: 10px;
+        display: grid;
+        gap: 7px;
+      }
+      .mini .line {
+        height: 6px;
+        border-radius: 3px;
+        background: var(--line);
+      }
+      .mini .line.w1 {
+        width: 70%;
+      }
+      .mini .line.w2 {
+        width: 45%;
+        background: var(--signal);
+        opacity: 0.8;
+      }
+      .mini .cards {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 6px;
+        margin-top: 4px;
+      }
+      .mini .cards i {
+        height: 30px;
+        border-radius: 5px;
+        background: var(--blue-wash);
+        border: 1px solid var(--line-soft);
+        display: block;
+      }
+      .mini .btn {
+        height: 16px;
+        width: 60px;
+        border-radius: 5px;
+        background: var(--signal);
+        margin-top: 2px;
+      }
+      .mini .pin {
+        position: absolute;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: var(--signal-solid);
+        color: #fff;
+        font-family: var(--font-mono);
+        font-size: 0.58rem;
+        display: grid;
+        place-items: center;
+        top: 40px;
+        right: 14px;
+        box-shadow: 0 0 0 3px var(--signal-wash);
+      }
+      .sliders {
+        position: absolute;
+        bottom: 10px;
+        left: 12px;
+        right: 12px;
+        display: grid;
+        gap: 5px;
+      }
+      .sliders .sl {
+        height: 4px;
+        border-radius: 3px;
+        background: var(--line);
+        position: relative;
+      }
+      .sliders .sl::after {
+        content: '';
+        position: absolute;
+        top: -3px;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--blue);
+        border: 2px solid var(--surface-2);
+      }
+      .sliders .sl.a::after {
+        left: 30%;
+      }
+      .sliders .sl.b::after {
+        left: 62%;
+      }
+
+      .tree {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        color: var(--ink-soft);
+        line-height: 1.9;
+      }
+      .tree .f {
+        color: var(--ink);
+      }
+      .tree .on {
+        color: var(--signal);
+      }
+      .tree .mut {
+        color: var(--ink-faint);
+      }
+      .verpill {
+        display: inline-block;
+        font-size: 0.58rem;
+        padding: 1px 5px;
+        border-radius: 4px;
+        background: var(--blue-wash);
+        color: var(--blue);
+        margin-left: 6px;
+      }
+
+      .preview {
+        background: var(--paper);
+        background-image:
+          linear-gradient(var(--grid) 1px, transparent 1px),
+          linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+        background-size: 14px 14px;
+        display: grid;
+        place-items: center;
+        position: relative;
+      }
+      .exp-fab {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        color: #fff;
+        background: var(--agent-solid);
+        padding: 4px 9px;
+        border-radius: 6px;
+      }
+
+      .tablewrap {
+        overflow-x: auto;
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        box-shadow: var(--shadow);
+      }
+      table.cmp {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 760px;
+        background: var(--surface);
+        font-size: 0.9rem;
+      }
+      table.cmp th,
+      table.cmp td {
+        text-align: left;
+        padding: 14px 16px;
+        border-bottom: 1px solid var(--line-soft);
+        vertical-align: top;
+      }
+      table.cmp thead th {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        background: var(--paper-2);
+        position: sticky;
+        top: 0;
+      }
+      table.cmp tbody th {
+        font-family: var(--font-body);
+        font-weight: 600;
+        color: var(--ink);
+        font-size: 0.9rem;
+        width: 20%;
+      }
+      table.cmp td {
+        color: var(--ink-soft);
+      }
+      table.cmp tr:last-child td,
+      table.cmp tr:last-child th {
+        border-bottom: 0;
+      }
+      .badge {
+        font-family: var(--font-mono);
+        font-size: 0.64rem;
+        padding: 2px 7px;
+        border-radius: 5px;
+        letter-spacing: 0.03em;
+        white-space: nowrap;
+      }
+      .badge.free {
+        color: var(--good);
+        background: color-mix(in srgb, var(--good) 14%, transparent);
+      }
+      .badge.paid {
+        color: var(--warn);
+        background: color-mix(in srgb, var(--warn) 16%, transparent);
+      }
+      .badge.local {
+        color: var(--blue);
+        background: var(--blue-wash);
+      }
+      .badge.mcp {
+        color: var(--agent);
+        background: var(--agent-wash);
+      }
+
+      .code {
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.7;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+        padding: 16px 18px;
+        overflow-x: auto;
+        color: var(--ink);
+      }
+      .code .c {
+        color: var(--ink-faint);
+      }
+      .code .k {
+        color: var(--signal);
+      }
+      .code .s {
+        color: var(--blue);
+      }
+
+      .alts {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 18px;
+        margin-top: 8px;
+      }
+      @media (max-width: 720px) {
+        .alts {
+          grid-template-columns: 1fr;
+        }
+      }
+      .alt {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface);
+        padding: 22px 22px;
+        box-shadow: var(--shadow);
+      }
+      .alt h3 {
+        font-size: 1.18rem;
+        margin: 0 0 4px;
+        display: flex;
+        align-items: center;
+        gap: 0.5em;
+      }
+      .alt .kk {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        color: var(--signal);
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      .alt p {
+        font-size: 0.9rem;
+        color: var(--ink-soft);
+        margin: 8px 0 0;
+      }
+
+      .check {
+        display: grid;
+        gap: 10px;
+        margin-top: 8px;
+      }
+      .check .it {
+        display: flex;
+        gap: 14px;
+        align-items: flex-start;
+        padding: 15px 18px;
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+        background: var(--surface);
+      }
+      .check .bx {
+        flex: none;
+        width: 22px;
+        height: 22px;
+        border-radius: 6px;
+        border: 2px solid var(--blue);
+        position: relative;
+        margin-top: 1px;
+      }
+      .check .bx::after {
+        content: '';
+        position: absolute;
+        left: 6px;
+        top: 2px;
+        width: 6px;
+        height: 11px;
+        border: solid var(--signal);
+        border-width: 0 2.5px 2.5px 0;
+        transform: rotate(42deg);
+      }
+      .check .it b {
+        color: var(--ink);
+      }
+      .check .it span {
+        color: var(--ink-soft);
+        font-size: 0.92rem;
+      }
+      .check .it .mono {
+        color: var(--blue);
+        font-size: 0.84rem;
+      }
+
+      .facts {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+        margin-top: 8px;
+      }
+      @media (max-width: 700px) {
+        .facts {
+          grid-template-columns: 1fr;
+        }
+      }
+      .fact {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface);
+        padding: 20px 22px;
+      }
+      .fact .big {
+        font-family: var(--font-display);
+        font-size: 2rem;
+        color: var(--blue);
+        font-variant-numeric: tabular-nums;
+      }
+      .fact .lbl {
+        font-size: 0.88rem;
+        color: var(--ink-soft);
+        margin-top: 4px;
+      }
+
+      .gotchas {
+        display: grid;
+        gap: 10px;
+        margin-top: 8px;
+      }
+      .gotchas .g {
+        border: 1px solid var(--line);
+        border-left: 3px solid var(--agent);
+        background: var(--surface);
+        border-radius: var(--r-sm);
+        padding: 14px 18px;
+      }
+      .gotchas .g b {
+        color: var(--agent);
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        letter-spacing: 0.02em;
+        display: block;
+        margin-bottom: 4px;
+      }
+      .gotchas .g span {
+        color: var(--ink-soft);
+        font-size: 0.89rem;
+      }
+
+      footer {
+        padding: 60px 0 80px;
+        border-top: 1px solid var(--line-soft);
+      }
+      footer .prose {
+        color: var(--ink-soft);
+        font-size: 0.95rem;
+      }
+      footer .sig {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        color: var(--ink-faint);
+        letter-spacing: 0.04em;
+        margin-top: 26px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px 14px;
+      }
+
+      .lead-in {
+        font-size: 1.14rem;
+        color: var(--ink);
+        line-height: 1.6;
+      }
+      .lead-in b {
+        color: var(--blue);
+      }
+
+      /* ============================================================
+     Deck-local: project-bootstrap (shell compartido con product-management).
+     ============================================================ */
+      .pipe.five {
+        grid-template-columns: repeat(5, 1fr);
+      }
+      .pipe .node:nth-child(5) {
+        animation-delay: 0.9s;
+      }
+      @media (max-width: 960px) {
+        .pipe.five {
+          grid-template-columns: 1fr 1fr;
+        }
+        .pipe.five .node .arw {
+          display: none;
+        }
+      }
+      @media (max-width: 460px) {
+        .pipe.five {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .lanes {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 18px;
+      }
+      @media (max-width: 860px) {
+        .lanes {
+          grid-template-columns: 1fr;
+        }
+      }
+      .lane {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+      }
+      .lane-head {
+        padding: 12px 18px;
+        border-bottom: 1px solid var(--line);
+        background: var(--paper-2);
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+      }
+      .wf {
+        display: flex;
+        gap: 14px;
+        align-items: flex-start;
+        padding: 14px 18px;
+        border-bottom: 1px solid var(--line-soft);
+        text-decoration: none;
+        color: inherit;
+      }
+      .wf:last-child {
+        border-bottom: 0;
+      }
+      .wf:hover {
+        background: var(--blue-wash);
+      }
+      .wf .lt {
+        flex: none;
+        width: 30px;
+        height: 30px;
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+        font-family: var(--font-mono);
+        font-weight: 700;
+        font-size: 0.9rem;
+        color: #fff;
+        background: var(--blue-solid);
+      }
+      .wf .lt.sig {
+        background: var(--signal-solid);
+      }
+      .wf .lt.agent {
+        background: var(--agent-solid);
+      }
+      .wf b {
+        display: block;
+        color: var(--ink);
+        font-size: 0.97rem;
+      }
+      .wf span {
+        display: block;
+        color: var(--ink-soft);
+        font-size: 0.86rem;
+        line-height: 1.45;
+        margin-top: 2px;
+      }
+
+      .trio {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+        margin-top: 22px;
+      }
+      @media (max-width: 820px) {
+        .trio {
+          grid-template-columns: 1fr;
+        }
+      }
+      .trio > div {
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+        background: var(--surface);
+        padding: 16px 18px;
+        border-top: 3px solid var(--agent);
+      }
+      .trio > div.hum {
+        border-top-color: var(--signal);
+      }
+      .trio > div.out {
+        border-top-color: var(--blue);
+      }
+      .trio .k {
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        display: block;
+        margin-bottom: 6px;
+      }
+      .trio p {
+        margin: 0;
+        font-size: 0.9rem;
+        color: var(--ink-soft);
+      }
+      .trio p + p {
+        margin-top: 8px;
+      }
+      .trio b {
+        color: var(--ink);
+      }
+
+      .gate {
+        margin-top: 14px;
+        font-size: 0.9rem;
+        color: var(--ink);
+        border: 1px dashed var(--blue);
+        border-radius: var(--r-sm);
+        padding: 12px 16px;
+        background: var(--surface);
+      }
+      .gate b {
+        color: var(--blue);
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        margin-right: 0.6em;
+      }
+
+      .levels {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+      }
+      @media (max-width: 860px) {
+        .levels {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .title-demo {
+        font-family: var(--font-mono);
+        font-size: clamp(0.82rem, 2.4vw, 1.05rem);
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+        padding: 14px 16px;
+        overflow-wrap: anywhere;
+      }
+      .title-demo .f {
+        color: var(--blue);
+        font-weight: 600;
+      }
+      .title-demo .p {
+        color: var(--signal);
+        font-weight: 700;
+      }
+      .title-demo .a {
+        color: var(--ink);
+      }
+      .title-demo.bad {
+        text-decoration: line-through;
+        text-decoration-color: var(--signal);
+        color: var(--ink-faint);
+      }
+
+      .code.gk {
+        white-space: pre;
+      }
+      .code .g {
+        color: var(--agent);
+        font-weight: 600;
+      }
+
+      .sprints {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        margin-top: 8px;
+      }
+      @media (max-width: 700px) {
+        .sprints {
+          grid-template-columns: 1fr;
+        }
+      }
+      .sprint {
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+        background: var(--surface);
+        padding: 14px 16px;
+      }
+      .sprint .n {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--signal);
+      }
+      .sprint .ks {
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        color: var(--ink);
+        margin-top: 6px;
+      }
+      .sprint p {
+        margin: 6px 0 0;
+        font-size: 0.85rem;
+        color: var(--ink-soft);
+      }
+
+      .hosts {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 14px;
+      }
+      @media (max-width: 820px) {
+        .hosts {
+          grid-template-columns: 1fr;
+        }
+      }
+      .host {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--surface);
+        padding: 18px 20px;
+        box-shadow: var(--shadow);
+      }
+      .host h3 {
+        font-size: 1.12rem;
+        margin: 0 0 10px;
+      }
+      .host .say {
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        background: var(--blue-wash);
+        border: 1px solid var(--line-soft);
+        border-radius: 7px;
+        padding: 8px 12px;
+        display: block;
+        overflow-wrap: anywhere;
+      }
+      .host p {
+        font-size: 0.86rem;
+        color: var(--ink-soft);
+        margin: 10px 0 0;
+      }
+      .planes > *,
+      .lanes > *,
+      .levels > *,
+      .hosts > * {
+        min-width: 0;
+      }
+      .plane .mono,
+      .callout .mono {
+        overflow-wrap: anywhere;
+      }
+      table.cmp.narrow {
+        min-width: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="topbar">
+      <a class="brand" href="../../index.html"
+        ><span class="mark"></span> <b>Planos</b> · agentic-dev-boilerplate</a
+      >
+      <nav class="topnav">
+        <a href="#cuando">When</a>
+        <a href="#guard">Guard</a>
+        <a href="#mapa">Map</a>
+        <a href="#plan">Plan</a>
+        <a href="#backend">Backend</a>
+        <a href="#frontend">Frontend</a>
+        <a href="#incrementales">Incremental</a>
+        <a href="#verificar">Verify</a>
+        <a href="#invocar">Invoke</a>
+      </nav>
+      <button class="themebtn" id="themebtn" aria-label="Cambiar tema">
+        <span id="themeicon">◐</span> theme
+      </button>
+    </div>
+
+    <!-- ============ HERO ============ -->
+    <header class="hero">
+      <div class="wrap">
+        <div class="kicker eyebrow"><span class="num">00</span> · from specification to repo</div>
+        <h1>A repo that <em>starts up</em> before the first <span class="sig">story</span>.</h1>
+        <p class="lede">
+          <span class="mono">/project-bootstrap</span> takes what
+          <span class="mono">/project-foundation</span> left behind (PRD, SRS) plus
+          <span class="mono">DESIGN.md</span>, and builds the technical base: <b>backend</b> with
+          database, auth and types, <b>frontend</b> with the design system, and whatever integration pieces
+          the project asks for. It runs once per project; after that, every story builds on top.
+        </p>
+
+        <div class="hero-meta">
+          <span class="chip"><span class="dot"></span> for whoever <b>codes</b> and for the <b>tech lead</b></span>
+          <span class="chip"
+            ><span class="dot"></span> fixed order: <b>backend first</b>, frontend after</span
+          >
+          <span class="chip agent"
+            ><span class="dot"></span> ready for <b>features</b>, not for production</span
+          >
+        </div>
+
+        <div class="pipe five" id="pipe">
+          <div class="node">
+            <div class="n">Input</div>
+            <h3>PRD + SRS + DESIGN.md</h3>
+            <p>Product, architecture and visual tokens.</p>
+            <div class="arw">→</div>
+          </div>
+          <div class="node">
+            <div class="n">Phase 0.5</div>
+            <h3>Plan</h3>
+            <p>What gets built and which features it adds. You approve it.</p>
+            <div class="arw">→</div>
+          </div>
+          <div class="node">
+            <div class="n">Phase 1</div>
+            <h3>Backend</h3>
+            <p>Schema, RLS, auth, clients and types.</p>
+            <div class="arw">→</div>
+          </div>
+          <div class="node">
+            <div class="n">Phase 2</div>
+            <h3>Frontend</h3>
+            <p>Design system from <span class="mono">DESIGN.md</span>, layout, demo pages.</p>
+            <div class="arw">→</div>
+          </div>
+          <div class="node">
+            <div class="n">Phase 3</div>
+            <h3>Incremental</h3>
+            <p>OpenAPI, routes, bearer, URLs, types. Only the ones you need.</p>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- ============ §01 CUÁNDO SÍ / CUÁNDO NO ============ -->
+    <section class="band" id="cuando">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">01</span> · when to use it</div>
+          <h2>After the product is defined, before the first story</h2>
+          <p class="sub">
+            <span class="mono">/project-foundation</span> answers what gets built. This skill
+            answers how the repo is set up so building can start.
+          </p>
+        </div>
+
+        <div class="planes r">
+          <div class="plane">
+            <div class="tag">Use it when</div>
+            <h3>There is a specification and no code</h3>
+            <ul>
+              <li>
+                A new repo already has its foundation (<span class="mono">/project-foundation</span>
+                ran) but <b>has no code yet</b>.
+              </li>
+              <li>
+                An existing repo needs <b>one more piece of infrastructure</b>: "add OpenAPI to
+                the API", "add bearer token auth", "connect the Supabase types to the frontend".
+                Only the incremental pieces: the base does not run on top of an app that already exists (§01·b).
+              </li>
+            </ul>
+          </div>
+          <div class="plane sig">
+            <div class="tag">Do not use it for</div>
+            <h3>What belongs to another skill</h3>
+            <ul>
+              <li>
+                <b>Defining the product</b> (PRD, journeys, architecture decisions): that is
+                <span class="mono">/project-foundation</span>.
+              </li>
+              <li>
+                <b>Seeding the backlog</b> in Jira: that is
+                <span class="mono">/product-management</span>.
+              </li>
+              <li>
+                <b>Implementing a story</b> end to end: that is
+                <span class="mono">/sprint-development</span>.
+              </li>
+              <li>
+                <b>Unit tests</b> and their framework: that is <span class="mono">/unit-testing</span>.
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="callout blue r">
+          <b>Before starting:</b> the backend stack, the frontend stack and the database engine
+          are read from <span class="mono">.agents/project.yaml</span>. If those values are empty, the
+          skill sends you to <span class="mono">/project-foundation</span> first, because the
+          infrastructure decisions come out of the SRS architecture.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §01·b GUARD GREENFIELD ============ -->
+    <section class="band" id="guard">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">01·b</span> · greenfield only for the base</div>
+          <h2>The base does not run on top of an app that already exists</h2>
+          <p class="sub">
+            The base phases (backend and frontend) create: tables, RLS, seeds, clients, middleware,
+            layout, theme, the Tailwind config, pages and demo credentials. On a live app,
+            each of those steps would overwrite something. That is why a script gives the verdict, never the AI
+            looking at the tree: a gate the agent can satisfy by writing a believable value is not
+            a gate.
+          </p>
+        </div>
+
+        <pre class="code r"><span class="c"># on entry, before the session plan; the verdict and the exit code go to plan.md</span>
+bun run bootstrap:guard   <span class="c"># exit 0 = greenfield · exit 2 = existing app (with the signals) · --json</span></pre>
+
+        <div class="planes r">
+          <div class="plane">
+            <div class="tag">exit 0 · greenfield</div>
+            <h3>Everything runs as written</h3>
+            <ul>
+              <li>The base phases and the incremental pieces.</li>
+              <li>
+                A resumed run keeps the verdict its plan recorded: by then, what
+                the guard would see is the skill's own output.
+              </li>
+            </ul>
+          </div>
+          <div class="plane sig">
+            <div class="tag">exit 2 · existing app</div>
+            <h3>The base is refused</h3>
+            <ul>
+              <li>
+                Any one signal is enough: the adoption lock, a <span class="mono">package.json</span>
+                that declares <span class="mono">next</span> or <span class="mono">react</span>, or app files
+                (routes, middleware, Tailwind config, <span class="mono">components.json</span>,
+                migrations).
+              </li>
+              <li>
+                The AI cites the signals, names what it would have overwritten and sends you to
+                <span class="mono">/project-adoption</span> (and to
+                <span class="mono">/design-system extract</span> if the request was about how the
+                UI looks).
+              </li>
+              <li>The incremental pieces stay available and read the <span class="mono">stack:</span> block.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="callout r">
+          <b>Fail-closed.</b> With no recorded verdict, or an unreadable one, the base does not run. Saying "this
+          is greenfield" does not unlock it: the fix for a wrong reading is to remove the signal the
+          script cited and run it again. Deck for the other door:
+          <a href="../project-adoption/how-it-works.en.html">Project adoption</a>.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §02 MAPA ============ -->
+    <section class="band" id="mapa">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">02</span> · the map</div>
+          <h2>An ordered base, and pieces that stack on top</h2>
+          <p class="sub">
+            The base (backend and then frontend) is always built, in that order. The incremental
+            pieces are independent of each other: you pick them by need and skip the rest.
+          </p>
+        </div>
+
+        <div class="lanes r">
+          <div class="lane">
+            <div class="lane-head">Start · in the main thread</div>
+            <a class="wf" href="#plan"
+              ><span class="lt">0</span
+              ><span
+                ><b>Is there a previous session?</b
+                ><span>Resume, restart or abort.</span></span
+              ></a
+            >
+            <a class="wf" href="#plan"
+              ><span class="lt">0.5</span
+              ><span><b>Plan</b><span>What gets built, with which features, how it is verified.</span></span></a
+            >
+          </div>
+          <div class="lane">
+            <div class="lane-head">Base · subagents in sequence</div>
+            <a class="wf" href="#backend"
+              ><span class="lt sig">1</span
+              ><span
+                ><b>Backend</b><span>Database, RLS, auth, clients, generated types.</span></span
+              ></a
+            >
+            <a class="wf" href="#frontend"
+              ><span class="lt sig">2</span
+              ><span
+                ><b>Frontend</b
+                ><span>Reads the backend types and the DESIGN.md tokens.</span></span
+              ></a
+            >
+          </div>
+          <div class="lane">
+            <div class="lane-head">Incremental · on demand</div>
+            <a class="wf" href="#incrementales"
+              ><span class="lt agent">3</span
+              ><span
+                ><b>Integration pieces</b
+                ><span>OpenAPI, API routes, bearer token, per-environment URLs, Supabase types.</span></span
+              ></a
+            >
+            <a class="wf" href="#verificar"
+              ><span class="lt agent">✓</span
+              ><span><b>Verification and archive</b><span>Build, types, server up, session archived.</span></span></a
+            >
+          </div>
+        </div>
+
+        <div class="callout r">
+          <b>The main thread does not write code.</b> It coordinates: each base phase and each incremental
+          piece goes to its own subagent, with a seven-component briefing that names the
+          exact reference it has to read. On entry, the skill also resolves which
+          complementary skills you have installed for the categories its frontmatter declares:
+          the repo's own load by themselves, and it asks you once about the ones in your user directory.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §03 ENTRADAS ============ -->
+    <section class="band" id="entradas">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">03</span> · what it reads</div>
+          <h2>What it reads, in this order</h2>
+          <p class="sub">
+            This is the canonical order for an AI starting cold. Each one feeds a different
+            scaffolding decision.
+          </p>
+        </div>
+
+        <div class="steps r">
+          <div class="step">
+            <h3><span class="mono">.context/PRD/</span></h3>
+            <p>The feature inventory and the MVP scope: they decide <b>what</b> gets built.</p>
+          </div>
+          <div class="step">
+            <h3><span class="mono">.context/SRS/</span></h3>
+            <p>
+              The infrastructure decisions: database, hosting, auth provider, runtime.
+              The database schema comes from the architecture ERD.
+            </p>
+          </div>
+          <div class="step">
+            <h3><span class="mono">DESIGN.md</span> at the root</h3>
+            <p>
+              Palette, typography and tokens. It is a mandatory input for the frontend: it has to exist
+              before phase 2.
+            </p>
+          </div>
+          <div class="step">
+            <h3><span class="mono">.agents/project.yaml</span></h3>
+            <p>Project identity, backend and frontend stack, database engine and the URLs of each environment.</p>
+          </div>
+          <div class="step">
+            <h3>What already exists in <span class="mono">app/</span>, <span class="mono">lib/</span>, <span class="mono">db/</span></h3>
+            <p>
+              If there is earlier scaffolding, it is detected and patched in place. Anything
+              someone already edited is never overwritten.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §04 SESIÓN + PLAN ============ -->
+    <section class="band" id="plan">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">04</span> · phases 0 and 0.5</div>
+          <h2>First it checks for half-finished work, then it writes the plan</h2>
+          <p class="sub">
+            Both run in the main thread, with no subagents, even the first time: that way
+            "resume or start over" is always an explicit decision.
+          </p>
+        </div>
+
+        <div class="trio r">
+          <div>
+            <span class="k">The AI does</span>
+            <p>
+              Looks for <span class="mono">.session/project-bootstrap/progress.md</span>. If it exists, it reads
+              the plan and the latest entries and shows you the goal, the last closed phase and the
+              next one.
+            </p>
+            <p>
+              If it does not exist, it drafts <span class="mono">plan.md</span>: goal, inputs, approach,
+              phases, risks and verification checklist.
+            </p>
+          </div>
+          <div class="hum">
+            <span class="k">You decide</span>
+            <p>
+              With a previous session: <b>resume</b>, <b>restart</b> (the earlier one is archived) or
+              <b>abort</b> (nothing is touched).
+            </p>
+            <p>
+              With a new plan: <b>which incremental pieces</b> get added on top of the base. Without your
+              approval, phase 1 does not start.
+            </p>
+          </div>
+          <div class="out">
+            <span class="k">Output</span>
+            <p>
+              <span class="mono">.session/project-bootstrap/plan.md</span> in
+              <span class="mono">draft</span> state, which becomes <span class="mono">approved</span> when
+              you approve it.
+            </p>
+            <p>
+              Every phase that finishes leaves an entry in <span class="mono">progress.md</span>: if the
+              session is cut off, it resumes from there.
+            </p>
+          </div>
+        </div>
+        <div class="gate r"><b>Gate</b> plan approved, with the incremental pieces chosen.</div>
+      </div>
+    </section>
+
+    <!-- ============ §05 BACKEND ============ -->
+    <section class="band" id="backend">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">05</span> · phase 1</div>
+          <h2>Backend: the base every story reuses</h2>
+          <p class="sub">
+            It sets up the database, auth and the access layer, and fixes the conventions every
+            future endpoint will follow. It is done once, before the sprints.
+          </p>
+        </div>
+
+        <div class="trio r">
+          <div>
+            <span class="k">The AI does</span>
+            <p>
+              Checks the git state and the tools. <b>Without the Supabase MCP everything
+              stops</b>: it creates tables and policies through it, not with hand-written SQL scripts.
+            </p>
+            <p>
+              Creates the foundational tables (not the whole ERD), indexes, RLS per table and realistic
+              seed data. Builds the Supabase clients, the session middleware and the centralized
+              configuration. Reads the official documentation before installing each dependency.
+            </p>
+          </div>
+          <div class="hum">
+            <span class="k">You decide</span>
+            <p>
+              The <b>Supabase project</b>: an existing one (you give its ID) or a new one.
+            </p>
+            <p>
+              How environment files are handled: the AI does not create a <span class="mono">.env</span>
+              without asking you. You make the commits.
+            </p>
+          </div>
+          <div class="out">
+            <span class="k">Output</span>
+            <p>
+              Tables with RLS in the database, clients in <span class="mono">src/lib/supabase/</span>,
+              configuration in <span class="mono">src/lib/config.ts</span>, generated types in
+              <span class="mono">src/types/supabase.ts</span>.
+            </p>
+            <p>
+              Documentation in <span class="mono">.context/backend-setup.md</span> and
+              <span class="mono">.context/api-auth.md</span>.
+            </p>
+          </div>
+        </div>
+        <div class="gate r">
+          <b>Gate</b> types generated from the live schema, TypeScript with no errors and a full build
+          passing.
+        </div>
+
+        <div class="planes r" style="margin-top: 26px">
+          <div class="plane">
+            <div class="tag">Layers that do not collapse</div>
+            <h3><span class="mono">api/</span> · <span class="mono">schemas/</span> · <span class="mono">db/</span></h3>
+            <ul>
+              <li>
+                The boundaries between layers are <b>framework architecture</b>, not speculative
+                abstraction: the simplicity rule in <span class="mono">AGENTS.md</span> exempts them
+                on purpose.
+              </li>
+              <li>
+                <span class="mono">api/schemas/</span> are the OpenAPI type facades: a single
+                source of truth per domain.
+              </li>
+              <li>
+                Later, in review, a layer violation is a citable finding:
+                <span class="mono">/pr-review-lead</span> checks them against this doctrine.
+              </li>
+            </ul>
+          </div>
+          <div class="plane sig">
+            <div class="tag">Secrets and configuration</div>
+            <h3>Two places, never the code</h3>
+            <ul>
+              <li>
+                Credentials in <span class="mono">.env</span>; non-secret configuration in
+                <span class="mono">.agents/project.yaml</span>.
+              </li>
+              <li>
+                <span class="mono">.env.example</span> is not rewritten: it is in parity with
+                <span class="mono">cli/lib/variables-manifest.ts</span>. A new variable goes in
+                both, in the same commit.
+              </li>
+              <li>Variables are validated at startup with a schema (Zod or equivalent).</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §06 FRONTEND ============ -->
+    <section class="band" id="frontend">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">06</span> · phase 2</div>
+          <h2>Frontend: the design system comes from DESIGN.md</h2>
+          <p class="sub">
+            It sets up the project, the design system, the layout and a few demo pages that prove
+            everything fits together. It does not implement features: that is left to each story.
+          </p>
+        </div>
+
+        <div class="trio r">
+          <div>
+            <span class="k">The AI does</span>
+            <p>
+              First of all, it <b>confirms the backend exists</b>: it reads
+              <span class="mono">src/types/supabase.ts</span> and the Supabase clients, and
+              stops if they are missing. With them it builds type helpers for the components.
+            </p>
+            <p>
+              Maps the <span class="mono">DESIGN.md</span> tokens to the Tailwind configuration and
+              to CSS variables <b>without asking you about colors</b>: the file is already the source. Sets up the
+              project in the current directory, with no generators that create subfolders.
+            </p>
+          </div>
+          <div class="hum">
+            <span class="k">You decide</span>
+            <p>The <b>package manager</b>.</p>
+            <p>
+              The <b>component strategy</b>: shadcn/ui, components from scratch or Headless UI with
+              custom styles. That question stays open even when DESIGN.md exists.
+            </p>
+            <p>Which <b>demo pages</b> get built (two or three, the most representative of the domain).</p>
+          </div>
+          <div class="out">
+            <span class="k">Output</span>
+            <p>
+              Components in <span class="mono">src/components/ui/</span>, layout in
+              <span class="mono">src/components/layout/</span>, demo pages, global styles.
+            </p>
+            <p>
+              <span class="mono">.context/design-system.md</span> documents palette, components and usage.
+            </p>
+          </div>
+        </div>
+        <div class="gate r">
+          <b>Gate</b> passing build and visual review: with <span class="mono">/playwright-cli</span>
+          in a named session, or you do it with the server running.
+        </div>
+
+        <div class="callout r">
+          <b>No DESIGN.md, no phase 2.</b> The design tokens are the frontend's entry
+          contract. If the file does not exist, run
+          <span class="mono">/design-system</span> first and then come back here. The default path is
+          the repo root; a project with a different structure declares it in
+          <span class="mono">.agents/project.yaml</span>.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §07 INCREMENTALES ============ -->
+    <section class="band" id="incrementales">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">07</span> · phase 3</div>
+          <h2>Incremental pieces: you choose, not everything gets installed</h2>
+          <p class="sub">
+            Each piece adds a capability on top of the base. They are independent of each other and each one runs
+            in its own subagent. Before writing, each one looks at what is in the repo and decides its
+            scope: full if there are already endpoints or earlier structure, partial if the ground is
+            empty.
+          </p>
+        </div>
+
+        <div class="tablewrap r">
+          <table class="cmp">
+            <thead>
+              <tr>
+                <th>Piece</th>
+                <th>What it adds</th>
+                <th>Where it lands</th>
+                <th>Requires</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th>OpenAPI</th>
+                <td>
+                  Spec generated from Zod schemas at <span class="mono">/api/openapi</span> and the Scalar
+                  UI at <span class="mono">/api/docs</span>. The schema is defined once, next to the
+                  type: the documentation is not duplicated.
+                </td>
+                <td><span class="mono">src/lib/openapi/</span></td>
+                <td>base backend</td>
+              </tr>
+              <tr>
+                <th>API routes</th>
+                <td>
+                  Folders per domain, Zod validation, standardized errors and an example
+                  endpoint; with OpenAPI present, the SRS endpoints are registered in the spec.
+                </td>
+                <td><span class="mono">src/app/api/</span></td>
+                <td>base backend</td>
+              </tr>
+              <tr>
+                <th>Bearer token</th>
+                <td>
+                  Auth through the <span class="mono">Authorization</span> header for Postman, curl or external
+                  apps, without breaking the browser's cookie auth.
+                </td>
+                <td><span class="mono">src/lib/supabase/server.ts</span> and the protected routes</td>
+                <td>base backend</td>
+              </tr>
+              <tr>
+                <th>Per-environment URLs</th>
+                <td>
+                  A helper that detects the environment (development, staging, production) and builds the
+                  correct base URL. It asks you for the staging and production URLs.
+                </td>
+                <td><span class="mono">src/lib/urls.ts</span></td>
+                <td>base backend</td>
+              </tr>
+              <tr>
+                <th>Supabase types</th>
+                <td>
+                  The schema → TypeScript pipeline, a regeneration script in
+                  <span class="mono">package.json</span> and clients typed with
+                  <span class="mono">Database</span>.
+                </td>
+                <td><span class="mono">src/types/supabase.ts</span></td>
+                <td>base frontend</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="gotchas r" style="margin-top: 22px">
+          <div class="g">
+            <b>OpenAPI always with its UI</b
+            ><span
+              >The spec without the Scalar route at <span class="mono">/api/docs</span> is not delivered:
+              the contract has to be browsable from day one. No Redoc or Swagger in its
+              place.</span
+            >
+          </div>
+          <div class="g">
+            <b>Bearer token never half-done</b
+            ><span
+              >Token auth ships together with rate limiting and a secret rotation guide. Without
+              those two, the feature is incomplete.</span
+            >
+          </div>
+          <div class="g">
+            <b>Types that follow the live schema</b
+            ><span
+              >If the database schema changes, the types are regenerated and TypeScript flags where
+              to adjust. Skipping the generation leaves silent drift.</span
+            >
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §08 VERIFICAR ============ -->
+    <section class="band" id="verificar">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">08</span> · closing each phase</div>
+          <h2>Verify at the destination, then archive</h2>
+          <p class="sub">
+            Each phase closes with the lightweight stage verifier and the session ends with the footer of
+            tools used. A check that fails is reported as it is: no invented
+            fixes for an unknown stack, the AI asks you.
+          </p>
+        </div>
+
+        <div class="check r">
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Build passes.</b> The build of the chosen stack finishes without errors.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Server up.</b> The frontend home and the backend health route
+              respond.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span><b>TypeScript compiles</b> with no errors across the whole repo.</span>
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Variables documented.</b> Every new variable appears in
+              <span class="mono">.env.example</span>.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Generated artifacts committed</b> (OpenAPI spec, Supabase types). The skill
+              recommends the commit; you do it or
+              <span class="mono">/git-flow-master</span>.</span
+            >
+          </div>
+        </div>
+
+        <div class="callout blue r">
+          <b>With the plan checklist green,</b> the folder
+          <span class="mono">.session/project-bootstrap/</span> moves to
+          <span class="mono">.session/.archive/</span> and a summary is left in persistent memory
+          with the file path, so it can be found later.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §09 RIELES ============ -->
+    <section class="band" id="rieles">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">09</span> · safety rails</div>
+          <h2>What the skill never does</h2>
+          <p class="sub">
+            The full rules live in the frontmatter of <span class="mono">SKILL.md</span>
+            (<span class="mono">compact_rules</span>) and travel in the compact registry the
+            subagents receive (<span class="mono">.agents/skills/REGISTRY.md</span>).
+          </p>
+        </div>
+
+        <div class="check r">
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Does not overwrite existing scaffolding.</b> It detects what is there and patches in place,
+              preserving what you edited.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Does not hardcode</b> credentials, URLs or environment values in the generated
+              code.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Does not skip variable validation</b> at startup: a silently missing variable
+              blows up in production, far from the cause.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Does not collapse the layers</b> of the backend or the structure of the design system in the
+              frontend.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Does not start the frontend without DESIGN.md</b>, nor the database without generating its
+              types.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Does not continue without the official documentation</b> when it needs it: if no library
+              documentation tool is available, it stops and tells you which one is missing, with no silent
+              substitute.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Does not write the database layer or the UI layer without their stack skills
+              loaded:</b> <span class="mono">supabase</span> and
+              <span class="mono">supabase-postgres-best-practices</span> before installing, touching the
+              schema, RLS or migrations through the MCP, or generating types;
+              the design set (<span class="mono">frontend-design</span>,
+              <span class="mono">ui-ux-pro-max</span>, <span class="mono">impeccable</span>,
+              <span class="mono">emil-design-eng</span>) plus <span class="mono">shadcn</span> and
+              <span class="mono">tailwind-css-patterns</span> before the component strategy.
+              If they are not installed it says so once, points to <span class="mono">bun setup</span> and
+              carries on; it never skips this silently.</span
+            >
+          </div>
+          <div class="it">
+            <span class="bx"></span
+            ><span
+              ><b>Does not change the database outside the change doctrine.</b> Everything goes through the database
+              MCP: it reads <span class="mono">list_migrations</span> first, DDL goes only through
+              <span class="mono">apply_migration</span>, it is verified at the destination and a migration
+              that changes the architecture leaves its ADR.</span
+            >
+          </div>
+        </div>
+
+        <div class="callout agent r">
+          <b>Ready for features, not for production.</b> Deploy, CI and observability
+          hardening are added later, with other skills, as the product matures.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ §10 INVOCAR ============ -->
+    <section class="band" id="invocar">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">10</span> · what you tell the AI</div>
+          <h2>Invoking it in each terminal</h2>
+          <p class="sub">
+            This skill has no named modes: what you ask for picks the reference. You name the skill
+            and describe the piece, in Spanish or in English.
+          </p>
+        </div>
+
+        <div class="hosts r">
+          <div class="host">
+            <h3>Claude Code</h3>
+            <span class="say">/project-bootstrap scaffolding del proyecto (project scaffolding)</span>
+            <p>The slash loads the skill; the rest of the sentence picks the phase or the piece.</p>
+          </div>
+          <div class="host">
+            <h3>OpenCode</h3>
+            <span class="say">carga la skill project-bootstrap: configurar OpenAPI (load the project-bootstrap skill: set up OpenAPI)</span>
+            <p>No slash: you name the skill in the sentence.</p>
+          </div>
+          <div class="host">
+            <h3>Codex</h3>
+            <span class="say">carga la skill project-bootstrap: bearer token authentication (load the project-bootstrap skill: bearer token authentication)</span>
+            <p>Same pattern as OpenCode, CLI or Desktop.</p>
+          </div>
+          <div class="host">
+            <h3>Pi</h3>
+            <span class="say">/skill:project-bootstrap scaffolding del proyecto (project scaffolding)</span>
+            <p>Slash with the <span class="mono">/skill:</span> prefix. In a new folder, <span class="mono">/trust</span> once.</p>
+          </div>
+        </div>
+
+        <div class="tablewrap r" style="margin-top: 26px">
+          <table class="cmp narrow">
+            <thead>
+              <tr>
+                <th>If you say something like…</th>
+                <th>The AI reads</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th>"setup del backend (backend setup)" · "scaffold the server"</th>
+                <td><span class="mono">backend-setup.md</span></td>
+              </tr>
+              <tr>
+                <th>"inicializar el frontend (initialize the frontend)" · "design system + project skeleton"</th>
+                <td><span class="mono">frontend-setup.md</span></td>
+              </tr>
+              <tr>
+                <th>"configurar OpenAPI (set up OpenAPI)" · "API docs UI"</th>
+                <td><span class="mono">openapi-setup.md</span></td>
+              </tr>
+              <tr>
+                <th>"API routes setup" · "middleware"</th>
+                <td><span class="mono">api-routes-setup.md</span></td>
+              </tr>
+              <tr>
+                <th>"bearer token authentication" · "protect routes"</th>
+                <td><span class="mono">bearer-token-support.md</span></td>
+              </tr>
+              <tr>
+                <th>"env vars setup" · "URL builder"</th>
+                <td><span class="mono">env-url-setup.md</span></td>
+              </tr>
+              <tr>
+                <th>"supabase types generation"</th>
+                <td><span class="mono">supabase-types-setup.md</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="figcap">
+          the references live in <span class="mono">.agents/skills/project-bootstrap/references/</span>
+          · if the request matches none of the rows, the AI falls back to backend or frontend depending on the side
+          of the stack, and tells you
+        </p>
+      </div>
+    </section>
+
+    <!-- ============ §11 HANDOFFS ============ -->
+    <section class="band" id="handoffs">
+      <div class="wrap">
+        <div class="sec-head r">
+          <div class="eyebrow"><span class="num">11</span> · before and after this skill</div>
+          <h2>Who it hands the baton to</h2>
+        </div>
+
+        <div class="alts r">
+          <div class="alt">
+            <div class="kk">Before · product</div>
+            <h3>/project-foundation</h3>
+            <p>Leaves the PRD and the SRS with the architecture decisions the stack comes from.</p>
+          </div>
+          <div class="alt">
+            <div class="kk">Before · design</div>
+            <h3>/design-system</h3>
+            <p>
+              Produces the <span class="mono">DESIGN.md</span> the frontend needs. The per-story
+              screen flow is in the deck
+              <a href="../design-system/flujo-mockups.en.html">From blueprint to product</a>.
+            </p>
+          </div>
+          <div class="alt">
+            <div class="kk">After · backlog</div>
+            <h3>/product-management</h3>
+            <p>
+              Turns the PRD into epics and stories in Jira. Deck:
+              <a href="../product-management/how-it-works.en.html">Product management</a>.
+            </p>
+          </div>
+          <div class="alt">
+            <div class="kk">After · stories</div>
+            <h3>/sprint-development</h3>
+            <p>Takes each story from plan to code, review and deploy, on top of this base.</p>
+          </div>
+          <div class="alt">
+            <div class="kk">Whenever you want</div>
+            <h3>/unit-testing</h3>
+            <p>A separate topic; it can run at any time after the base.</p>
+          </div>
+          <div class="alt">
+            <div class="kk">Optional · QA</div>
+            <h3>/testability-guide</h3>
+            <p>
+              With the infrastructure up, it generates the <span class="mono">/qa</span> page and a
+              credentials artifact to test the app through database, API and UI.
+            </p>
+          </div>
+        </div>
+
+        <div class="callout blue r">
+          <b>To read more:</b>
+          <a
+            href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/.agents/skills/project-bootstrap/SKILL.md"
+            >.agents/skills/project-bootstrap/SKILL.md</a
+          >
+          and its <span class="mono">references/</span> folder, one reference per phase and per incremental
+          piece.
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <div class="wrap">
+        <div class="prose">
+          <p>
+            <b style="color: var(--ink)">The idea behind it.</b> The base is set up once and done well: layers
+            that do not mix, secrets outside the code, types that follow the live schema. The AI
+            sets up and verifies; you choose the Supabase project, the pieces and the components, and
+            make the commits.
+          </p>
+        </div>
+        <div class="sig">
+          <span>Source: <span class="mono">.agents/skills/project-bootstrap/</span></span>
+          <span>·</span>
+          <span><a href="../../index.html">← back to Planos</a></span>
+        </div>
+      </div>
+    </footer>
+
+
+    <script>
+      // theme toggle
+      (function () {
+        var root = document.documentElement;
+        var btn = document.getElementById('themebtn');
+        var icon = document.getElementById('themeicon');
+        function current() {
+          var t = root.getAttribute('data-theme');
+          if (t) return t;
+          return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+            ? 'dark'
+            : 'light';
+        }
+        function setIcon() {
+          icon.textContent = current() === 'dark' ? '☾' : '☀';
+        }
+        setIcon();
+        btn.addEventListener('click', function () {
+          var next = current() === 'dark' ? 'light' : 'dark';
+          root.setAttribute('data-theme', next);
+          setIcon();
+        });
+        if (window.matchMedia) {
+          window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', setIcon);
+        }
+      })();
+
+      // hero pipeline animation
+      (function () {
+        var reduce =
+          window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var pipe = document.getElementById('pipe');
+        if (pipe && !reduce) {
+          var io = new IntersectionObserver(
+            function (es) {
+              es.forEach(function (e) {
+                if (e.isIntersecting) {
+                  pipe.classList.add('reveal-pipe');
+                  io.disconnect();
+                }
+              });
+            },
+            { threshold: 0.3 }
+          );
+          io.observe(pipe);
+        } else if (pipe) {
+          pipe.classList.add('reveal-pipe');
+        }
+      })();
+
+      // scroll reveal
+      (function () {
+        var reduce =
+          window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var els = document.querySelectorAll('.r');
+        if (reduce) {
+          els.forEach(function (el) {
+            el.classList.add('in');
+          });
+          return;
+        }
+        var io = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (e) {
+              if (e.isIntersecting) {
+                e.target.classList.add('in');
+                io.unobserve(e.target);
+              }
+            });
+          },
+          { threshold: 0.12, rootMargin: '0px 0px -8% 0px' }
+        );
+        els.forEach(function (el) {
+          io.observe(el);
+        });
+      })();
+    </script>
+    <!-- ============ MOBILE (UPEX) · scroll deck: reflow through CSS, no scale-to-fit or swipe ============
+         The decks in this repo are pages you read by scrolling and they rearrange with @media.
+         There are no slides to scale or swipe through: this block only declares the mobile mode.
+         The site that serves the deck validates the id `upex-mobile-nav`. -->
+    <script id="upex-mobile-nav">
+      (function () {
+        var mobile =
+          window.matchMedia &&
+          window.matchMedia('(pointer: coarse)').matches &&
+          window.matchMedia('(max-width: 768px)').matches;
+        document.documentElement.setAttribute('data-mobile', mobile ? 'reflow' : 'off');
+      })();
+    </script>
+  </body>
+</html>

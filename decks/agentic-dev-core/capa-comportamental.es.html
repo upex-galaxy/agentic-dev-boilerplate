@@ -10,9 +10,9 @@
     />
     <style>
       /* ============================================================
-     Self-contained deck — cero requests externos, ni siquiera
+     Self-contained deck: cero requests externos, ni siquiera
      fuentes. Diseñado para sobrevivir años como archivo suelto.
-     Tokens: "Planos" — ver packages/decks/README.md (fuente única).
+     Tokens: "Planos", ver packages/decks/README.md (fuente única).
      ============================================================ */
       :root {
         --paper: #e8ecf1;
@@ -567,14 +567,15 @@
         <h1>La capa comportamental</h1>
         <p class="lede">
           Butler Pattern, PM Voice y Visual Mapping explican por qué el repo responde como responde.
-          Pero encima de las tres hay una pregunta anterior: cuando dos capas opinan sobre lo mismo,
-          cuál gana? La respuesta está escrita en <code>AGENTS.md</code> §2. Cada capa manda sobre
-          una sola dimensión, y un hook repite el contrato en cada turno para que no gane, por
-          accidente, la que más se repite.
+          Antes de ellas hay otra pregunta: cuando dos capas opinan sobre lo mismo, cuál gana? La
+          respuesta está en <code>AGENTS.md</code> §2. Cada capa manda sobre una sola dimensión, y
+          un hook repite el contrato en cada turno para que no gane, por accidente, la que más se
+          repite.
         </p>
         <div class="meta">
           <span class="tag">AGENTS.md §2</span>
-          <span class="tag">OUTPUT STYLE · instrucciones de usuario</span>
+          <span class="tag">Reglas de respuesta · instrucciones de usuario</span>
+          <span class="tag">skill humanizer</span>
           <span class="tag">.agents/hooks/personality-reinject.mjs</span>
           <span class="tag">docs/ai-personality.md</span>
         </div>
@@ -583,8 +584,8 @@
       <section>
         <h2><span class="num">01</span>Dos capas, dos dimensiones</h2>
         <p class="sub">
-          Cada capa manda sobre una sola dimensión. Ese es el diseño entero: si dos reclaman la
-          misma, se contradicen, y el desempate acaba siendo mecánico en lugar de deliberado.
+          Cada capa manda sobre una sola dimensión. Si dos reclaman la misma, se contradicen, y el
+          desempate acaba siendo mecánico en lugar de deliberado.
         </p>
         <div class="tbl-scroll">
         <table class="plain">
@@ -604,11 +605,12 @@
               <td>cada turno, vía <code>personality-reinject.mjs</code></td>
             </tr>
             <tr>
-              <td>OUTPUT STYLE</td>
+              <td>Reglas de respuesta y <code>humanizer</code></td>
               <td>cómo se <strong>ve</strong> y qué <strong>textura</strong> tiene</td>
               <td>
-                instrucciones de agente a nivel usuario (<code>~/.claude/CLAUDE.md</code> en Claude
-                Code)
+                las reglas de respuesta (<code>## Replies</code>) en las instrucciones de agente a
+                nivel usuario (<code>~/.claude/CLAUDE.md</code> en Claude Code), y la skill
+                <code>humanizer</code>
               </td>
               <td>al arrancar sesión; su resumen viaja en el contrato de cada turno</td>
             </tr>
@@ -618,10 +620,11 @@
         <div class="callout">
           <span class="ic">Regla</span>
           <div>
-            <strong>§2 gana siempre sobre contenido.</strong> OUTPUT STYLE solo decide el render
-            (títulos, anclas en negrita, <code>backticks</code>, tablas, espaciado) y la textura de
-            las frases (sin guión largo, longitud variable, sin recap final). Si una regla de ahí
-            cambiara <em>qué</em> se dice, está mal puesta y pertenece a §2.
+            <strong>§2 gana siempre sobre contenido.</strong> Las reglas de respuesta solo deciden
+            el render (títulos, anclas en negrita, <code>backticks</code>, tablas, espaciado), y la
+            textura de las frases (sin guión largo, longitud variable, sin recap final) la pone
+            <code>humanizer</code>. Si una regla de esas fuentes cambiara <em>qué</em> se dice,
+            está mal puesta y pertenece a §2.
           </div>
         </div>
         <div class="callout warn">
@@ -631,8 +634,9 @@
             una sola vez al arrancar se diluye conforme crece el contexto, mientras cualquier cosa
             que un plugin reinyecte en cada <code>UserPromptSubmit</code> sigue fresca. Ganaría la
             capa más repetida, no la que tiene razón, y PM Voice se evaporaría en sesiones largas.
-            Por eso §2 viaja en cada turno. La concisión no tiene capa propia: sale de §2 y del
-            OUTPUT STYLE, sin plugin de modo de comunicación (regla crítica #11).
+            Por eso §2 viaja en cada turno. La concisión no tiene capa propia: sale de §2, de las
+            reglas de respuesta y de <code>humanizer</code>, sin plugin de modo de comunicación
+            (regla crítica #11).
           </div>
         </div>
       </section>
@@ -640,8 +644,8 @@
       <section>
         <h2><span class="num">02</span>La misma sesión, los dos estilos</h2>
         <p class="sub">
-          Ticket ficticio <code>APEX-233</code>, checkout con pago dividido entre dos tarjetas. Mismo
-          trabajo, misma información. Solo cambia cómo llega.
+          Ticket ficticio <code>APEX-233</code>, checkout con pago dividido entre dos tarjetas. El
+          trabajo y la información son los mismos. Solo cambia cómo llegan.
         </p>
 
         <div class="switcher">
@@ -776,7 +780,7 @@
               <td>Emisor</td>
               <td>
                 <code>.agents/hooks/personality-reinject.mjs</code> arma el contexto de cada turno:
-                el contrato de salida (§2 más el OUTPUT STYLE activo), la línea
+                el contrato de salida (§2 más las reglas de respuesta del usuario), la línea
                 <code>AGENT IDENTITY:</code> con worktree, sesión y harness que copian los trailers de
                 commit, una línea <code>ORCA:</code> solo si el binario <code>orca</code> es
                 alcanzable, las líneas <code>ROUTE:</code> y <code>ROUTE-OPTIONAL:</code> con las
@@ -788,7 +792,7 @@
             <tr>
               <td>Claude Code</td>
               <td>
-                <code>.claude/settings.json</code> → hook <code>UserPromptSubmit</code> que ejecuta
+                <code>.claude/settings.json</code> declara el hook <code>UserPromptSubmit</code> que ejecuta
                 el emisor. Además lo ejecuta en <code>SessionStart</code> con <code>compact</code> o
                 <code>clear</code>, para re-armar las líneas, y en <code>PostToolUse</code>, donde
                 solo avisa con <code>ROUTE-PENDING:</code> si quedó una ruta sin leer.
@@ -797,7 +801,7 @@
             <tr>
               <td>Codex</td>
               <td>
-                <code>.codex/hooks.json</code> → el mismo hook <code>UserPromptSubmit</code>, y
+                <code>.codex/hooks.json</code> declara el mismo hook <code>UserPromptSubmit</code>, y
                 <code>SessionStart</code> con <code>compact</code> o <code>clear</code>.
               </td>
             </tr>
@@ -824,9 +828,9 @@
           <span class="ic">Ojo</span>
           <div>
             <strong>Las instrucciones no son modelo de estilo.</strong> <code>AGENTS.md</code>,
-            <code>docs/ai-personality.md</code> y cada <code>SKILL.md</code> son prosa densa escrita
-            para parseo automático. El agente no imita su tipografía, su densidad ni sus flechas en
-            el chat. <code>docs/ai-personality.md</code> es el espejo humano de §2 y se edita junto
+            <code>docs/ai-personality.md</code> y cada <code>SKILL.md</code> son prosa densa que
+            leen las máquinas. En el chat, el agente no imita su tipografía, su densidad ni sus
+            flechas. <code>docs/ai-personality.md</code> es el espejo humano de §2 y se edita junto
             con él.
           </div>
         </div>
@@ -845,11 +849,11 @@
         before: [
           {
             user: 'cómo quedó lo del checkout con pago dividido?',
-            html: '<p class="head"><span class="punch">Resumen</span>: se completó la implementación de la funcionalidad de pago dividido <span class="dash">—</span> ticket APEX-233 <span class="dash">—</span> y los detalles se exponen a continuación.</p><p>La funcionalidad permite que el importe total de una compra sea repartido entre dos tarjetas distintas, generando dos autorizaciones independientes que únicamente son capturadas de forma conjunta, de manera que si la segunda tarjeta resultara rechazada la primera autorización sería anulada antes de proceder a cobro alguno, garantizando así que en ningún escenario se produzca un cobro parcial no deseado sobre el usuario final. La totalidad de la funcionalidad se encuentra protegida tras un feature flag denominado checkout.split_payment, actualmente activado exclusivamente en el entorno de staging y desactivado en el entorno de producción, dado que la funcionalidad afecta directamente a datos de pago.</p><p>Desde el punto de vista de la persistencia, se ha introducido una migración que incorpora una tabla nueva denominada order_payments así como una columna adicional payment_mode sobre la tabla orders, tratándose en ambos casos de cambios estrictamente aditivos que no requieren reescritura de las filas existentes. Desde el punto de vista del rendimiento, las dos capturas se ejecutan de forma paralela, lo cual reduce el percentil noventa y cinco del checkout desde mil novecientos milisegundos hasta mil cien milisegundos aproximadamente.</p><p>Cabe mencionar que existe una limitación conocida y asumida deliberadamente: en el supuesto de que la primera captura se complete satisfactoriamente y la segunda falle con posterioridad, no se ejecuta ningún reembolso automático, quedando el caso derivado a una cola de tratamiento manual.</p><p>Espero que este resumen resulte de utilidad y quedo a la espera de tus indicaciones.</p>',
+            html: '<p class="head"><span class="punch">Resumen</span>: se completó la implementación de la funcionalidad de pago dividido <span class="dash">&mdash;</span> ticket APEX-233 <span class="dash">&mdash;</span> y los detalles se exponen a continuación.</p><p>La funcionalidad permite que el importe total de una compra sea repartido entre dos tarjetas distintas, generando dos autorizaciones independientes que únicamente son capturadas de forma conjunta, de manera que si la segunda tarjeta resultara rechazada la primera autorización sería anulada antes de proceder a cobro alguno, garantizando así que en ningún escenario se produzca un cobro parcial no deseado sobre el usuario final. La totalidad de la funcionalidad se encuentra protegida tras un feature flag denominado checkout.split_payment, activado exclusivamente en el entorno de staging y desactivado en el entorno de producción, dado que la funcionalidad afecta directamente a datos de pago.</p><p>Desde el punto de vista de la persistencia, se ha introducido una migración que incorpora una tabla nueva denominada order_payments así como una columna adicional payment_mode sobre la tabla orders, tratándose en ambos casos de cambios estrictamente aditivos que no requieren reescritura de las filas existentes. Desde el punto de vista del rendimiento, las dos capturas se ejecutan de forma paralela, lo cual reduce el percentil noventa y cinco del checkout desde mil novecientos milisegundos hasta mil cien milisegundos aproximadamente.</p><p>Cabe mencionar que existe una limitación conocida y asumida deliberadamente: en el supuesto de que la primera captura se complete satisfactoriamente y la segunda falle con posterioridad, no se ejecuta ningún reembolso automático, quedando el caso derivado a una cola de tratamiento manual.</p><p>Espero que este resumen resulte de utilidad y quedo a la espera de tus indicaciones.</p>',
           },
           {
             user: 'espera, y la migración? tocaste el schema de orders?',
-            html: '<p class="head"><span class="punch">Detalle</span>: la migración 0042_split_payment.sql <span class="dash">—</span> aditiva pura <span class="dash">—</span> no modifica columnas existentes.</p><p>Sobre la tabla orders se ha añadido una columna payment_mode de tipo enumerado con valores single y split y un valor por defecto single no volátil, lo cual implica que en PostgreSQL quince las cuatro millones doscientas mil filas existentes no son reescritas, habiéndose ejecutado la sentencia en ochenta y cuatro milisegundos en el entorno de staging. Adicionalmente se ha creado una tabla order_payments que almacena entre una y dos filas por pedido, incorporando la referencia del proveedor, el slot, el importe y el estado, junto con un índice sobre order_id y una restricción de unicidad sobre la pareja order_id y slot.</p><p>La validación de que la suma de los importes coincide con el total del pedido se realiza en la capa de aplicación y no mediante un trigger de base de datos, decisión tomada deliberadamente con el fin de no penalizar el rendimiento de la inserción de pedidos ordinarios que no utilizan pago dividido. La reversibilidad queda garantizada mediante el fichero descendente correspondiente, si bien únicamente resulta seguro mientras el feature flag permanezca desactivado.</p>',
+            html: '<p class="head"><span class="punch">Detalle</span>: la migración 0042_split_payment.sql <span class="dash">&mdash;</span> aditiva pura <span class="dash">&mdash;</span> no modifica columnas existentes.</p><p>Sobre la tabla orders se ha añadido una columna payment_mode de tipo enumerado con valores single y split y un valor por defecto single no volátil, lo cual implica que en PostgreSQL quince las cuatro millones doscientas mil filas existentes no son reescritas, habiéndose ejecutado la sentencia en ochenta y cuatro milisegundos en el entorno de staging. Adicionalmente se ha creado una tabla order_payments que almacena entre una y dos filas por pedido, incorporando la referencia del proveedor, el slot, el importe y el estado, junto con un índice sobre order_id y una restricción de unicidad sobre la pareja order_id y slot.</p><p>La validación de que la suma de los importes coincide con el total del pedido se realiza en la capa de aplicación y no mediante un trigger de base de datos, decisión tomada deliberadamente con el fin de no penalizar el rendimiento de la inserción de pedidos ordinarios que no utilizan pago dividido. La reversibilidad queda garantizada mediante el fichero descendente correspondiente, si bien únicamente resulta seguro mientras el feature flag permanezca desactivado.</p>',
           },
           {
             user: 'vale, qué falta antes de mergear?',
@@ -867,7 +871,7 @@
           },
           {
             user: 'vale, qué falta antes de mergear?',
-            html: '<p class="head">Funcionalmente está lista; lo que queda es verificación y un acuerdo con Finanzas, nada de código de producto.</p><p class="q">Por dónde empezamos?</p><ul><li>review: PR #812 espera aprobación de los owners de <code>@payments</code>, es su tabla</li><li>prueba de fallo real: en <code>staging</code> falta forzar el rechazo de la segunda tarjeta y confirmar que la primera queda anulada, no capturada</li><li>ventana de migración: aditiva y de 84ms en staging, pero quiero aplicarla en producción antes del merge, no durante</li><li>alerta: falta un aviso para capturas huérfanas (primera cobrada, segunda muerta), hoy nadie se enteraría hasta el cierre contable</li><li>decisión de negocio: quién procesa la cola de reconciliación manual y con qué plazo, porque ese es dinero de un cliente retenido</li></ul>',
+            html: '<p class="head">Funcionalmente está lista; lo que queda es verificación y un acuerdo con Finanzas, nada de código de producto.</p><p class="q">Por dónde empezamos?</p><ul><li>review: PR #812 espera aprobación de los owners de <code>@payments</code>, es su tabla</li><li>prueba de fallo real: en <code>staging</code> falta forzar el rechazo de la segunda tarjeta y confirmar que la primera queda anulada, no capturada</li><li>ventana de migración: aditiva y de 84ms en staging, pero quiero aplicarla en producción antes del merge, no durante</li><li>alerta: falta un aviso para capturas huérfanas (primera cobrada, segunda muerta), nadie se enteraría hasta el cierre contable</li><li>decisión de negocio: quién procesa la cola de reconciliación manual y con qué plazo, porque ese es dinero de un cliente retenido</li></ul>',
           },
         ],
       };
@@ -881,7 +885,7 @@
         after: {
           cls: 'callout',
           ic: 'Resultado',
-          html: 'Esta salida sigue el contrato de <code>AGENTS.md</code> §2 y el <code>OUTPUT STYLE</code>. El titular responde y se sostiene solo. La segunda respuesta pasa a registro técnico porque toca una migración, uno de los disparadores que suspenden PM Voice durante un turno. La comparación va en tabla, el SQL en bloque, las rutas y los flags en <code>backticks</code>. Frases de 6 a 30 palabras alternadas. Cero guiones largos, cero recap final. <strong>El menú deja que tires del hilo que te interese en lugar de recibirlo todo de golpe.</strong>',
+          html: 'Esta salida sigue el contrato de <code>AGENTS.md</code> §2 y las reglas de respuesta. El titular responde y se sostiene solo. La segunda respuesta pasa a registro técnico porque toca una migración, uno de los disparadores que suspenden PM Voice durante un turno. La comparación va en tabla, el SQL en bloque, las rutas y los flags en <code>backticks</code>. Frases de 6 a 30 palabras alternadas. Cero guiones largos, cero recap final. <strong>El menú deja que tires del hilo que te interese en lugar de recibirlo todo de golpe.</strong>',
         },
       };
 
@@ -935,7 +939,7 @@
 
       render();
     </script>
-    <!-- ============ MOBILE (UPEX) — deck de scroll: reflow por CSS, sin scale-to-fit ni swipe ============
+    <!-- ============ MOBILE (UPEX): deck de scroll: reflow por CSS, sin scale-to-fit ni swipe ============
          Los decks de este repo son páginas que se leen haciendo scroll y se reacomodan con @media.
          No hay slides que escalar ni que pasar con swipe: este bloque solo declara el modo móvil.
          El sitio que sirve el deck valida el id `upex-mobile-nav`. -->

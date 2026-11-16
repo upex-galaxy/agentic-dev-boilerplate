@@ -1,0 +1,1484 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Progressive disclosure: instructions in layers</title>
+    <meta
+      name="description"
+      content="How agentic-dev-boilerplate splits its instructions: a small AGENTS.md that always loads, one section per topic read on request, a fixed router, the hook that injects the ROUTE: line, the two Claude Code imports and the budgets that hold it together."
+    />
+    <style>
+      /* ============================================================
+     Self-contained deck: zero external requests, not even
+     fonts. Built to survive for years as a loose file.
+     Tokens: "Planos", see packages/decks/README.md (single source).
+     ============================================================ */
+      :root {
+        --paper: #e8ecf1;
+        --paper-2: #dee5ed;
+        --surface: #f5f8fb;
+        --surface-2: #ffffff;
+        --ink: #172236;
+        --ink-soft: #4a5873;
+        --ink-faint: #5e6e88;
+        --line: rgba(23, 34, 54, 0.14);
+        --line-soft: rgba(23, 34, 54, 0.08);
+        --blue: #1e56a8;
+        --blue-2: #2f72ce;
+        --blue-wash: rgba(30, 86, 168, 0.08);
+        --blue-solid: #1e56a8;
+        --signal: #c2410c;
+        --signal-2: #ea580c;
+        --signal-wash: rgba(194, 65, 12, 0.09);
+        --signal-solid: #9a3412;
+        --agent: #6d28d9;
+        --agent-wash: rgba(109, 40, 217, 0.08);
+        --agent-solid: #6d28d9;
+        --good: #15803d;
+        --warn: #b45309;
+        --font-display: 'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia,
+          serif;
+        --font-body:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', system-ui, sans-serif;
+        --font-mono:
+          ui-monospace, 'SF Mono', 'JetBrains Mono', 'Cascadia Code', Menlo, Consolas, monospace;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --paper: #0b1220;
+          --paper-2: #0e1626;
+          --surface: #121b2e;
+          --surface-2: #16213a;
+          --ink: #e4e9f2;
+          --ink-soft: #9fb0c9;
+          --ink-faint: #7e8caa;
+          --line: rgba(160, 180, 210, 0.16);
+          --line-soft: rgba(160, 180, 210, 0.09);
+          --blue: #6fa8ff;
+          --blue-2: #8cbbff;
+          --blue-wash: rgba(111, 168, 255, 0.11);
+          --signal: #fb923c;
+          --signal-2: #fdba74;
+          --signal-wash: rgba(251, 146, 60, 0.12);
+          --agent: #c4b5fd;
+          --agent-wash: rgba(196, 181, 253, 0.12);
+          --good: #4ade80;
+          --warn: #fbbf24;
+        }
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        margin: 0;
+        background: var(--paper);
+        color: var(--ink);
+        font-family: var(--font-body);
+        line-height: 1.62;
+        -webkit-font-smoothing: antialiased;
+      }
+      .wrap {
+        max-width: 1120px;
+        margin: 0 auto;
+        padding: 0 26px 110px;
+      }
+
+      /* hero */
+      header.hero {
+        padding: 76px 0 40px;
+        border-bottom: 1px solid var(--line);
+      }
+      .kick {
+        font-family: var(--font-mono);
+        font-size: 12px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--blue);
+        margin: 0 0 16px;
+        font-weight: 600;
+      }
+      h1 {
+        font-family: var(--font-display);
+        font-size: clamp(32px, 5vw, 54px);
+        line-height: 1.08;
+        margin: 0 0 20px;
+        font-weight: 600;
+      }
+      .lede {
+        font-size: clamp(16px, 1.6vw, 20px);
+        color: var(--ink-soft);
+        max-width: 70ch;
+        margin: 0;
+      }
+      .meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 26px;
+      }
+      .tag {
+        font-family: var(--font-mono);
+        font-size: 11.5px;
+        padding: 4px 10px;
+        border-radius: 5px;
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        color: var(--ink-faint);
+      }
+
+      section {
+        margin-top: 58px;
+      }
+      h2 {
+        font-family: var(--font-display);
+        font-size: clamp(23px, 3vw, 33px);
+        line-height: 1.15;
+        margin: 0 0 10px;
+        font-weight: 600;
+      }
+      h2 .num {
+        font-family: var(--font-mono);
+        font-size: 0.5em;
+        color: var(--ink-faint);
+        margin-right: 12px;
+        font-weight: 600;
+      }
+      .sub {
+        color: var(--ink-soft);
+        max-width: 76ch;
+        margin: 0 0 24px;
+      }
+
+      .tbl-scroll {
+        overflow-x: auto;
+      }
+      table.plain {
+        width: 100%;
+        border-collapse: collapse;
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        overflow: hidden;
+        font-size: 14.5px;
+      }
+      table.plain th {
+        text-align: left;
+        padding: 13px 17px;
+        background: var(--surface);
+        font-family: var(--font-mono);
+        font-size: 11px;
+        letter-spacing: 0.11em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        border-bottom: 1px solid var(--line);
+      }
+      table.plain td {
+        padding: 14px 17px;
+        border-bottom: 1px solid var(--line-soft);
+        color: var(--ink-soft);
+        vertical-align: top;
+      }
+      table.plain tr:last-child td {
+        border-bottom: none;
+      }
+      table.plain td:first-child {
+        color: var(--ink);
+        font-weight: 600;
+        white-space: nowrap;
+      }
+      code {
+        font-family: var(--font-mono);
+        font-size: 0.87em;
+        background: var(--blue-wash);
+        color: var(--blue);
+        padding: 1.5px 6px;
+        border-radius: 4px;
+      }
+      .badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        padding: 3px 8px;
+        border-radius: 999px;
+        margin-left: 8px;
+        background: var(--blue-solid);
+        color: #fff;
+      }
+
+      .callout {
+        display: flex;
+        gap: 13px;
+        margin-top: 18px;
+        padding: 15px 18px;
+        border-radius: 9px;
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        border-left: 3px solid var(--blue);
+        color: var(--ink-soft);
+        font-size: 15px;
+      }
+      .callout.warn {
+        border-left-color: var(--signal);
+      }
+      .callout .ic {
+        flex-shrink: 0;
+        font-family: var(--font-mono);
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--blue);
+        padding-top: 3px;
+      }
+      .callout.warn .ic {
+        color: var(--signal);
+      }
+      .callout strong {
+        color: var(--ink);
+      }
+
+      /* toggle */
+      .switcher {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        flex-wrap: wrap;
+        margin: 0 0 20px;
+      }
+      .seg {
+        display: inline-flex;
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        border-radius: 9px;
+        padding: 4px;
+        gap: 4px;
+      }
+      .seg button {
+        font-family: var(--font-mono);
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        padding: 9px 20px;
+        border-radius: 6px;
+        border: none;
+        cursor: pointer;
+        background: transparent;
+        color: var(--ink-faint);
+        transition: all 0.2s ease;
+      }
+      .seg button.on[data-mode='before'] {
+        background: var(--signal-solid);
+        color: #fff;
+      }
+      .seg button.on[data-mode='after'] {
+        background: var(--blue-solid);
+        color: #fff;
+      }
+      .hint {
+        font-size: 13.5px;
+        color: var(--ink-faint);
+      }
+      .hint kbd {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        border-bottom-width: 2px;
+        border-radius: 4px;
+        padding: 2px 7px;
+      }
+
+      /* terminal */
+      .term {
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        border-radius: 11px;
+        overflow: hidden;
+      }
+      .term-bar {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        padding: 11px 16px;
+        background: var(--surface);
+        border-bottom: 1px solid var(--line);
+      }
+      .dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--line);
+      }
+      .term-title {
+        margin-left: 8px;
+        font-family: var(--font-mono);
+        font-size: 11.5px;
+        color: var(--ink-faint);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .term-badge {
+        margin-left: auto;
+        font-family: var(--font-mono);
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.09em;
+        text-transform: uppercase;
+        padding: 3px 9px;
+        border-radius: 999px;
+        color: #fff;
+        white-space: nowrap;
+      }
+      .term-badge.before {
+        background: var(--signal-solid);
+      }
+      .term-badge.after {
+        background: var(--blue-solid);
+      }
+      .term-body {
+        padding: 24px 26px 28px;
+        font-family: var(--font-mono);
+        font-size: 13px;
+        line-height: 1.7;
+      }
+
+      .uline {
+        display: flex;
+        gap: 10px;
+        margin: 28px 0 18px;
+      }
+      .uline:first-child {
+        margin-top: 0;
+      }
+      .uline .caret {
+        color: var(--blue);
+        font-weight: 700;
+        flex-shrink: 0;
+      }
+      .uline .txt {
+        color: var(--ink);
+        font-weight: 600;
+      }
+
+      .reply {
+        border-left: 2px solid var(--line);
+        padding-left: 19px;
+      }
+      .reply.after-mode {
+        border-left-color: var(--blue);
+      }
+      .reply.before-mode {
+        border-left-color: var(--signal);
+      }
+      .reply p {
+        margin: 0 0 13px;
+        color: var(--ink-soft);
+      }
+      .reply p.head {
+        color: var(--ink);
+        margin-bottom: 15px;
+      }
+      .reply strong {
+        color: var(--ink);
+      }
+      .reply .punch {
+        color: var(--signal);
+        font-weight: 700;
+      }
+      .reply .dash {
+        color: #fff;
+        background: var(--signal-solid);
+        border-radius: 3px;
+        padding: 0 4px;
+        font-weight: 700;
+      }
+      .reply ul {
+        list-style: none;
+        margin: 0 0 14px;
+        padding: 0;
+      }
+      .reply li {
+        position: relative;
+        padding-left: 18px;
+        margin-bottom: 7px;
+        color: var(--ink-soft);
+      }
+      .reply li::before {
+        content: '·';
+        position: absolute;
+        left: 3px;
+        color: var(--blue);
+        font-weight: 700;
+      }
+      .reply .q {
+        color: var(--ink-faint);
+        font-style: italic;
+        margin-bottom: 12px;
+      }
+      .reply table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 4px 0 15px;
+        font-size: 12px;
+      }
+      .reply th {
+        text-align: left;
+        padding: 7px 11px;
+        color: var(--ink-faint);
+        border-bottom: 1px solid var(--line);
+        white-space: nowrap;
+      }
+      .reply td {
+        padding: 7px 11px;
+        border-bottom: 1px solid var(--line-soft);
+        color: var(--ink-soft);
+        vertical-align: top;
+      }
+      .reply pre {
+        background: var(--paper-2);
+        border: 1px solid var(--line-soft);
+        border-radius: 8px;
+        padding: 13px 15px;
+        overflow-x: auto;
+        font-size: 11.5px;
+        line-height: 1.6;
+        margin: 4px 0 14px;
+        color: var(--ink-soft);
+      }
+      .reply pre .c {
+        color: var(--ink-faint);
+      }
+      .reply pre .k {
+        color: var(--agent);
+        font-weight: 600;
+      }
+      .reply code {
+        background: var(--blue-wash);
+      }
+
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+        gap: 15px;
+      }
+      .card {
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        border-top: 2px solid var(--blue);
+        border-radius: 10px;
+        padding: 19px 21px;
+      }
+      .card.sig {
+        border-top-color: var(--signal);
+      }
+      .card.agt {
+        border-top-color: var(--agent);
+      }
+      .card h4 {
+        margin: 0 0 8px;
+        font-size: 15.5px;
+        font-family: var(--font-display);
+        font-weight: 600;
+      }
+      .card p {
+        margin: 0;
+        font-size: 14px;
+        color: var(--ink-soft);
+      }
+      .card .n {
+        font-family: var(--font-mono);
+        font-size: 10.5px;
+        font-weight: 700;
+        letter-spacing: 0.09em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        display: block;
+        margin-bottom: 8px;
+      }
+
+      footer {
+        margin-top: 74px;
+        padding-top: 24px;
+        border-top: 1px solid var(--line);
+        font-size: 13px;
+        color: var(--ink-faint);
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+      footer code {
+        background: none;
+        color: var(--ink-faint);
+      }
+      footer a,
+      .back {
+        color: var(--ink-soft);
+      }
+      .back {
+        display: inline-block;
+        margin-bottom: 22px;
+        font-family: var(--font-mono);
+        font-size: 12px;
+        text-decoration: none;
+      }
+      .back:hover {
+        color: var(--blue);
+      }
+
+      @media (max-width: 760px) {
+        .wrap {
+          padding: 0 16px 70px;
+        }
+        .term-body {
+          padding: 18px 15px 22px;
+          font-size: 12px;
+        }
+        .reply {
+          padding-left: 13px;
+        }
+        table.plain td:first-child {
+          white-space: normal;
+        }
+        table.plain th,
+        table.plain td {
+          padding: 11px 12px;
+        }
+      }
+
+      /* deck-local: diagrams, steps and hook lines */
+      .figure {
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        border-radius: 11px;
+        padding: 20px 18px;
+        margin: 0 0 18px;
+      }
+      .figure svg {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+      .figure .cap {
+        margin: 12px 4px 0;
+        font-size: 13px;
+        color: var(--ink-faint);
+      }
+      svg .box {
+        fill: var(--surface);
+        stroke: var(--line);
+        stroke-width: 1.4;
+      }
+      svg .box.l0 {
+        fill: var(--blue-wash);
+        stroke: var(--blue);
+      }
+      svg .box.l1 {
+        fill: var(--agent-wash);
+        stroke: var(--agent);
+      }
+      svg .box.l2 {
+        fill: var(--surface);
+        stroke: var(--ink-faint);
+        stroke-dasharray: 5 4;
+      }
+      svg .box.sig {
+        fill: var(--signal-wash);
+        stroke: var(--signal);
+      }
+      svg .t {
+        fill: var(--ink);
+        font-family: var(--font-body);
+        font-size: 15px;
+        font-weight: 600;
+      }
+      svg .s {
+        fill: var(--ink-soft);
+        font-family: var(--font-body);
+        font-size: 12.5px;
+      }
+      svg .m {
+        fill: var(--blue);
+        font-family: var(--font-mono);
+        font-size: 12px;
+      }
+      svg .arrow {
+        stroke: var(--ink-faint);
+        stroke-width: 1.6;
+        fill: none;
+        marker-end: url(#ah);
+      }
+      svg .ahead {
+        fill: var(--ink-faint);
+      }
+      ol.steps {
+        counter-reset: st;
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: grid;
+        gap: 10px;
+      }
+      ol.steps li {
+        counter-increment: st;
+        position: relative;
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        border-radius: 9px;
+        padding: 13px 16px 13px 54px;
+        color: var(--ink-soft);
+        font-size: 15px;
+      }
+      ol.steps li::before {
+        content: counter(st);
+        position: absolute;
+        left: 16px;
+        top: 12px;
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        background: var(--blue-solid);
+        color: #fff;
+        font-family: var(--font-mono);
+        font-size: 12px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      ol.steps li strong {
+        color: var(--ink);
+      }
+      .hookline {
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        border-left: 3px solid var(--agent);
+        border-radius: 9px;
+        padding: 14px 18px;
+        font-family: var(--font-mono);
+        font-size: 13px;
+        line-height: 1.75;
+        color: var(--ink-soft);
+        overflow-x: auto;
+        margin: 0 0 18px;
+      }
+      .hookline .k {
+        color: var(--agent);
+        font-weight: 700;
+      }
+      .hookline .c {
+        color: var(--ink-faint);
+      }
+      .links {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 12px;
+      }
+      .links a {
+        display: block;
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        border-radius: 9px;
+        padding: 14px 16px;
+        color: var(--ink);
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 15px;
+      }
+      .links a span {
+        display: block;
+        font-weight: 400;
+        font-size: 13.5px;
+        color: var(--ink-soft);
+        margin-top: 4px;
+      }
+      .links a:hover {
+        border-color: var(--blue);
+      }
+      code {
+        overflow-wrap: anywhere;
+      }
+      @media (max-width: 760px) {
+        .figure {
+          overflow-x: auto;
+          padding: 16px 12px;
+        }
+        .figure svg {
+          min-width: 640px;
+        }
+        ol.steps li {
+          padding-left: 48px;
+          font-size: 14px;
+        }
+        .hookline {
+          font-size: 12px;
+          padding: 12px 13px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header class="hero">
+        <a class="back" href="../../index.html">← back to Planos</a>
+        <p class="kick">agentic-dev-core · progressive disclosure</p>
+        <h1>Instructions, in layers</h1>
+        <p class="lede">
+          The agent does not need every rule in the repo on every turn. It always needs the ones that
+          bind it, and the rest when the request calls for them. That is why <code>AGENTS.md</code> is a small core
+          that loads in every session, each topic lives in its own file under
+          <code>.agents/instructions/</code>, and a fixed router, backed by a hook, says which one to read and
+          when.
+        </p>
+        <div class="meta">
+          <span class="tag">AGENTS.md · L0</span>
+          <span class="tag">.agents/instructions/ · L1</span>
+          <span class="tag">.agents/hooks/personality-reinject.mjs</span>
+          <span class="tag">scripts/lint-instructions.ts</span>
+          <span class="tag">ADR-0009</span>
+        </div>
+      </header>
+
+      <section>
+        <h2><span class="num">01</span>Why split the file</h2>
+        <p class="sub">
+          Before, <code>AGENTS.md</code> was a single file that every session loaded whole,
+          needed or not. It had two costs, and the second one was invisible.
+        </p>
+        <div class="cards">
+          <div class="card">
+            <span class="n">Visible cost</span>
+            <h4>Every session paid for the whole file</h4>
+            <p>
+              A chat about a color paid for the git policy, the Jira cache and the
+              multi-harness contract. Conditional sections always loaded, even though most
+              sessions never used them.
+            </p>
+          </div>
+          <div class="card sig">
+            <span class="n">Invisible cost</span>
+            <h4>Codex cut it in the middle</h4>
+            <p>
+              Codex merges the project's <code>AGENTS.md</code> files into a single budget,
+              <code>project_doc_max_bytes</code>, and cuts the text at the byte that crosses it, with just
+              a warning in the log. The old file went well past it: in Codex, everything after
+              the cut never reached the model.
+            </p>
+          </div>
+          <div class="card agt">
+            <span class="n">What did not work</span>
+            <h4>An import saves nothing</h4>
+            <p>
+              In Claude Code an <code>@file</code> is expanded whole at startup, and neither OpenCode nor
+              Codex expands imports. The only lazy thing all hosts share is the model reading
+              a file because an instruction told it to, skills, and a hook that injects text
+              into every request. The design uses those three things.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2><span class="num">02</span>Three layers</h2>
+        <p class="sub">
+          Each layer loads at a different moment. L0 is always there; L1 comes in on request, one section per
+          topic; L2 is what already existed, each skill's <code>references/</code>.
+        </p>
+        <div class="figure">
+          <svg viewBox="0 0 760 300" role="img" aria-labelledby="layersTitle">
+            <title id="layersTitle">
+              L0 AGENTS.md always loads and its router points to the L1 sections, which in turn name
+              the skills' references in L2
+            </title>
+            <defs>
+              <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+                <path class="ahead" d="M0,0 L10,5 L0,10 z" />
+              </marker>
+            </defs>
+            <rect class="box l0" x="20" y="20" width="720" height="70" rx="10" />
+            <text class="t" x="40" y="50">L0 · AGENTS.md</text>
+            <text class="s" x="40" y="72">always, on every host · binding rules, all of §2, router, LOAD PROTOCOL</text>
+            <rect class="box l1" x="20" y="125" width="220" height="70" rx="10" />
+            <text class="t" x="38" y="155">L1 · one section</text>
+            <text class="m" x="38" y="177">agent-git.md</text>
+            <rect class="box l1" x="270" y="125" width="220" height="70" rx="10" />
+            <text class="t" x="288" y="155">L1 · another section</text>
+            <text class="m" x="288" y="177">agent-local-context-pbi.md</text>
+            <rect class="box l1" x="520" y="125" width="220" height="70" rx="10" />
+            <text class="t" x="538" y="155">L1 · from the project</text>
+            <text class="m" x="538" y="177">agent-project.md</text>
+            <rect class="box l2" x="20" y="225" width="470" height="56" rx="10" />
+            <text class="t" x="38" y="250">L2 · the skills' references/</text>
+            <text class="s" x="38" y="270">on request, named by the section or the skill</text>
+            <path class="arrow" d="M130,90 L130,123" />
+            <path class="arrow" d="M380,90 L380,123" />
+            <path class="arrow" d="M630,90 L630,123" />
+            <path class="arrow" d="M130,195 L130,223" />
+            <path class="arrow" d="M380,195 L380,223" />
+          </svg>
+          <p class="cap">
+            The arrows are on-request reads: L0 never imports a section. The ones the drawing shows
+            are examples; the real list is the folder.
+          </p>
+        </div>
+        <div class="tbl-scroll">
+          <table class="plain">
+            <thead>
+              <tr>
+                <th>Layer</th>
+                <th>File</th>
+                <th>When it loads</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>L0</td>
+                <td><code>AGENTS.md</code></td>
+                <td>
+                  every session, on every host. Claude Code arrives through <code>CLAUDE.md</code>, which is
+                  exactly <code>@AGENTS.md</code> plus a newline
+                </td>
+              </tr>
+              <tr>
+                <td>L1</td>
+                <td>one file per section in <code>.agents/instructions/</code></td>
+                <td>
+                  on request: the L0 router says when to read each one, and the hook reminds it with a
+                  <code>ROUTE:</code> line
+                </td>
+              </tr>
+              <tr>
+                <td>L2</td>
+                <td>each skill's <code>references/</code></td>
+                <td>on request, named by the section or skill that needs them</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout">
+          <span class="ic">Name</span>
+          <div>
+            <strong>Progressive disclosure</strong> is the term Anthropic uses for the skills mechanism
+            (the description at startup, the body when used). This extends it to project
+            instructions. There is no new L2 layer: each section already had its
+            depth in the <code>references/</code> it cites.
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2><span class="num">03</span>The fixed router</h2>
+        <p class="sub">
+          A table in L0, between <code>&lt;!-- router:start --&gt;</code> and
+          <code>&lt;!-- router:end --&gt;</code>, with three columns: <code>Kind</code>,
+          <code>Load</code> and <code>Also</code>. The rows are <strong>request types</strong>, not
+          features, so the table does not grow with the project: the section and its
+          <code>triggers:</code> grow. A lock enforces the fixed part: the comment
+          <code>&lt;!-- router:lock &lt;fingerprint&gt; &lt;ADR-NNNN&gt; --&gt;</code> stores the fingerprint of
+          the table and the ADR that decided it, and any row change fails until an ADR covers it.
+        </p>
+        <div class="tbl-scroll">
+          <table class="plain">
+            <thead>
+              <tr>
+                <th>Column</th>
+                <th>What it says</th>
+                <th>Example (git row)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Kind</td>
+                <td>the request type that triggers the row</td>
+                <td>git: branch, commit, push, PR, merge, conflict</td>
+              </tr>
+              <tr>
+                <td>Load</td>
+                <td>
+                  the files to read, as paths in <code>backticks</code>; the first one is the
+                  <strong>anchor</strong> of the row
+                </td>
+                <td><code>.agents/instructions/agent-git.md</code></td>
+              </tr>
+              <tr>
+                <td>Also</td>
+                <td>the skill or file loaded together</td>
+                <td><code>git-flow-master</code></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout">
+          <span class="ic">One table only</span>
+          <div>
+            <strong>The hook reads this same table on every request</strong>, along with the frontmatter of
+            each section. There is no generated copy: the table the model reads and the one the
+            classifier uses cannot diverge. The real list of rows is in <code>AGENTS.md</code>; this
+            deck does not copy it.
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2><span class="num">04</span>The LOAD PROTOCOL</h2>
+        <p class="sub">
+          Four lines in the L0 header turn the router into an obligation. Without them, the table
+          would be a suggestion.
+        </p>
+        <ol class="steps">
+          <li>
+            <strong>Before acting</strong>, the request is compared against the router and every
+            file that matches and is not yet in the conversation is read.
+          </li>
+          <li>
+            <strong>A <code>ROUTE:</code> line</strong> injected by the hook is binding and wins
+            over the model's own judgment: its file is read before acting. A
+            <code>ROUTE-OPTIONAL:</code> is not binding (one of its files is read only if the task
+            needs it) and a <code>ROUTE-PENDING:</code> names a binding file that is still unread.
+          </li>
+          <li>
+            <strong>A file already read is not re-read</strong>, unless a compaction removed it
+            from the context. <strong>When in doubt, read</strong>: sections are small; a
+            skipped section is exactly the failure this design avoids.
+          </li>
+          <li>
+            <strong>A section is edited in its own file</strong>, never by pasting its prose into
+            <code>AGENTS.md</code>. A rule that only this project has goes to
+            <code>.agents/instructions/agent-project.md</code>.
+          </li>
+        </ol>
+        <p>
+          Below those lines, a separate paragraph says skills and sections are loaded by
+          meaning in any language. The triggers are in English, so in another language a
+          <code>ROUTE:</code> line can be missing or arrive incomplete, and the agent routes on its own
+          from the router.
+        </p>
+      </section>
+
+      <section>
+        <h2><span class="num">05</span>The hook and the ROUTE: line</h2>
+        <p class="sub">
+          The router in L0 depends on the model consulting it. The hook does not: it classifies every request with
+          code and writes down what to read. It is the same emitter that already put the output contract and the
+          <code>AGENT IDENTITY:</code> line.
+        </p>
+        <div class="figure">
+          <svg viewBox="0 0 760 210" role="img" aria-labelledby="hookTitle">
+            <title id="hookTitle">
+              The request goes through the hook's classifier, which reads the router and the triggers, and a
+              ROUTE line comes out that the model reads before acting
+            </title>
+            <rect class="box" x="10" y="30" width="170" height="74" rx="10" />
+            <text class="t" x="26" y="60">The request</text>
+            <text class="s" x="26" y="82">text + the paths it names</text>
+            <rect class="box sig" x="230" y="30" width="250" height="74" rx="10" />
+            <text class="t" x="246" y="60">Hook classifier</text>
+            <text class="s" x="246" y="82">L0 router + triggers / paths</text>
+            <rect class="box l1" x="530" y="30" width="220" height="74" rx="10" />
+            <text class="t" x="546" y="60">The model reads</text>
+            <text class="s" x="546" y="82">the section before acting</text>
+            <path class="arrow" d="M180,67 L228,67" />
+            <path class="arrow" d="M480,67 L528,67" />
+            <rect class="box l2" x="230" y="134" width="250" height="56" rx="10" />
+            <text class="t" x="246" y="158">State per session</text>
+            <text class="s" x="246" y="178">what was already routed: repeats cost 0</text>
+            <path class="arrow" d="M355,104 L355,132" />
+          </svg>
+        </div>
+        <div class="hookline">
+          <span class="c"># one line per new file, after AGENT IDENTITY: and ORCA:</span><br />
+          <span class="k">ROUTE:</span> read .agents/instructions/agent-git.md (git, &lt;n&gt; lines) before acting on this prompt<br />
+          <span class="k">ROUTE:</span> read package.json (&lt;n&gt; lines) before acting on this prompt<br />
+          <span class="c"># what went past the cap, in a single line that does not bind</span><br />
+          <span class="k">ROUTE-OPTIONAL:</span> the prompt also touches .agents/instructions/agent-harnesses.md (harnesses); read one only if the task needs it.
+        </div>
+        <div class="tbl-scroll">
+          <table class="plain">
+            <thead>
+              <tr>
+                <th>Rule</th>
+                <th>What it does</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Anchor</td>
+                <td>
+                  A row fires when the request matches the first file of its
+                  <code>Load</code> column; then every file of the row is routed. That way a file
+                  shared by two rows does not drag in the other row's files.
+                </td>
+              </tr>
+              <tr>
+                <td>Triggers</td>
+                <td>
+                  Each section declares in its frontmatter <code>triggers:</code> (case-insensitive regex,
+                  in English and Spanish) and <code>paths:</code> (repo prefixes). Tuning
+                  the routing means editing those lists, never L0.
+                </td>
+              </tr>
+              <tr>
+                <td>Scope</td>
+                <td>
+                  A <code>ROUTE-SCOPE:</code> line in the request replaces the request for classification:
+                  each item is a section <code>id</code> (routed directly) or words (they are
+                  classified); <code>none</code> routes nothing. Without it, a request that carries an orchestrator's preamble
+                  is classified only by the task block that follows its marker. Absolute
+                  paths are neutralized first: a folder's name is not an intent.
+                </td>
+              </tr>
+              <tr>
+                <td>Ranking and cap</td>
+                <td>
+                  Fired rows are ordered by the strength of their anchor (an <code>id</code> from the
+                  scope, then <code>paths:</code> hits, then distinct triggers, then the
+                  earliest match). Only the first <code>MAX_ROUTED_SECTIONS</code>
+                  sections get a binding <code>ROUTE:</code>; the rest go to a single
+                  <code>ROUTE-OPTIONAL:</code> line. Measured: an agent reads a lone route far more than one
+                  of five in the same turn (ADR-0018).
+                </td>
+              </tr>
+              <tr>
+                <td>Reminder (Claude Code)</td>
+                <td>
+                  A <code>PostToolUse</code> hook runs the same emitter: the first tool that reads
+                  no routed section, while one is still unread, gets ONE
+                  <code>ROUTE-PENDING:</code> line. It does not repeat within the turn and stays silent for subagents.
+                </td>
+              </tr>
+              <tr>
+                <td>Dedupe per session</td>
+                <td>
+                  A state file in the system temp, per checkout and per session, remembers what was
+                  routed. A request that needs nothing new adds nothing.
+                </td>
+              </tr>
+              <tr>
+                <td>Re-arming after compaction or <code>/clear</code></td>
+                <td>
+                  A <code>SessionStart</code> with <code>matcher: "compact"</code> or
+                  <code>matcher: "clear"</code> runs the emitter again, which clears the state and
+                  prints nothing: whatever the compaction or the <code>/clear</code> removed from the context is
+                  routed again the next time it is needed.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="tbl-scroll" style="margin-top: 18px">
+          <table class="plain">
+            <thead>
+              <tr>
+                <th>Host</th>
+                <th>How the line arrives</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Claude Code</td>
+                <td>
+                  <code>.claude/settings.json</code>: <code>UserPromptSubmit</code> runs the emitter;
+                  <code>SessionStart</code> with <code>compact</code> or <code>clear</code> re-arms it;
+                  <code>PostToolUse</code> with no matcher reminds about an unread route.
+                </td>
+              </tr>
+              <tr>
+                <td>Codex</td>
+                <td>
+                  <code>.codex/hooks.json</code>: the same, only in a trusted project (an untrusted
+                  one loads neither <code>AGENTS.md</code> nor hooks).
+                </td>
+              </tr>
+              <tr>
+                <td>OpenCode 1</td>
+                <td>
+                  <code>.opencode/plugins/personality-reinject.js</code> classifies in
+                  <code>chat.message</code>, pushes the line into the system prompt and re-arms only on compaction (it does not
+                  register anything for <code>/clear</code>).
+                </td>
+              </tr>
+              <tr>
+                <td>OpenCode 2</td>
+                <td>
+                  Router only: no documented hook hands it the request text, so it ships the
+                  L0 router with the LOAD PROTOCOL. It is a declared degradation.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="sub">
+          A prompt that starts with <code>&lt;task-notification&gt;</code> (the harness notice that
+          a background subagent finished), or that carries only harness blocks such as
+          <code>&lt;system-reminder&gt;</code>, routes nothing and does not touch the routing state: nobody
+          asked for those routes.
+        </p>
+      </section>
+
+      <section>
+        <h2><span class="num">06</span>Critical rules: the binding sentence, and the full text apart</h2>
+        <p class="sub">
+          A rule that binds has to be where the agent always reads. But its rationale,
+          edge cases and mechanics do not need to occupy every turn.
+        </p>
+        <div class="hookline">
+          <span class="c"># each rule in L0: its binding sentence, verbatim, and a pointer</span><br />
+          6. <span class="k">**Quality verification**</span>: After code changes, verify in this
+          order: tests, then types, then lint. Run all three; skip none. Full:
+          agent-critical-rules.md#6
+        </div>
+        <div class="cards">
+          <div class="card">
+            <span class="n">In L0</span>
+            <h4>The binding sentence, verbatim</h4>
+            <p>
+              Each rule keeps its binding sentence, word for word, with the same number and name.
+              No rule loses force: what binds still loads in every session.
+            </p>
+          </div>
+          <div class="card agt">
+            <span class="n">In L1</span>
+            <h4>The full text in one file</h4>
+            <p>
+              <code>.agents/instructions/agent-critical-rules.md</code> has each rule under
+              <code>## N. NAME</code>, with its rationale and edge cases. The router has a row
+              to read it when the agent is about to break a rule, is unsure, or is asked about it.
+            </p>
+          </div>
+          <div class="card sig">
+            <span class="n">When editing</span>
+            <h4>Two places, on purpose</h4>
+            <p>
+              Changing a rule means touching its full text in <code>agent-critical-rules.md</code> and its
+              sentence in <code>AGENTS.md</code>, which has to stay verbatim.
+              <code>bun run instructions:check</code> compares the two.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2><span class="num">07</span>Two imports for Claude, a reinforced instruction for the others</h2>
+        <p class="sub">
+          <code>package.json</code> and <code>.agents/project.yaml</code> are the two data files
+          most often consulted. The router rows that name them do two things at once.
+        </p>
+        <div class="tbl-scroll">
+          <table class="plain">
+            <thead>
+              <tr>
+                <th>Host</th>
+                <th>What happens</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Claude Code</td>
+                <td>
+                  The row writes <code>@package.json</code> and <code>@.agents/project.yaml</code> as
+                  plain text, without <code>backticks</code>: Claude Code expands an import at startup and
+                  skips the ones inside code. Both files enter the session whole.
+                </td>
+              </tr>
+              <tr>
+                <td>OpenCode and Codex</td>
+                <td>
+                  They do not expand imports. They read the reinforced instruction in the same row ("whenever any of
+                  these apply, read ...") and open the file when the condition is met.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout warn">
+          <span class="ic">Cost</span>
+          <div>
+            <strong>In Claude Code, imports always load</strong>, so they add to the start of the
+            session even though they do not count against the L0 budget, which measures the file itself. The measurement
+            in bytes and tokens is in <code>.context/ADR/ADR-0009-progressive-disclosure-of-instructions.md</code>.
+            <code>bun run instructions:check</code> rejects any other stray <code>@</code> in L0:
+            the allowed list is <code>ALLOWED_IMPORTS</code> in
+            <code>scripts/lint-instructions.ts</code>.
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2><span class="num">08</span>What never leaves L0</h2>
+        <p class="sub">
+          L0 keeps what has to bind on every turn, whether or not the request asks for it. Everything else lives in
+          a section.
+        </p>
+        <div class="cards">
+          <div class="card">
+            <span class="n">Access</span>
+            <h4>LOAD PROTOCOL and router</h4>
+            <p>Without them no section is reachable.</p>
+          </div>
+          <div class="card sig">
+            <span class="n">§1</span>
+            <h4>The binding sentence of each critical rule</h4>
+            <p>What it forbids has to be where the agent always reads.</p>
+          </div>
+          <div class="card">
+            <span class="n">§2</span>
+            <h4>The behavioral layer, whole</h4>
+            <p>
+              Butler, PM Voice, Visual Mapping, the layer split and how the human is asked to
+              decide. Behavior has to be deterministic, so it is not trimmed.
+            </p>
+          </div>
+          <div class="card agt">
+            <span class="n">§3</span>
+            <h4>The orchestration core</h4>
+            <p>
+              Subagents and the main conversation, the seven-component briefing, the error
+              protocol. It governs every dispatch, whatever the request.
+            </p>
+          </div>
+          <div class="card">
+            <span class="n">§12</span>
+            <h4>The memory triggers</h4>
+            <p>They apply on every turn and take little space.</p>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2><span class="num">09</span>How to edit</h2>
+        <p class="sub">
+          The sections are shared doctrine: <code>bun sync</code> keeps them up to date with the
+          boilerplate. <code>agent-project.md</code> belongs to each project and no sync
+          touches it; a project that does not have it gets it once from
+          <code>.agents/instructions/agent-project.md.template</code>. The golden rule: text goes to the
+          owning file, never back into <code>AGENTS.md</code>.
+        </p>
+        <div class="tbl-scroll">
+          <table class="plain">
+            <thead>
+              <tr>
+                <th>I want to change</th>
+                <th>Where</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>the detail of a topic</td>
+                <td>its file in <code>.agents/instructions/</code></td>
+              </tr>
+              <tr>
+                <td>when a section is routed</td>
+                <td>its <code>triggers:</code> and <code>paths:</code> in the frontmatter</td>
+              </tr>
+              <tr>
+                <td>a critical rule</td>
+                <td>
+                  its text in <code>agent-critical-rules.md</code> and its verbatim sentence in
+                  <code>AGENTS.md</code>
+                </td>
+              </tr>
+              <tr>
+                <td>a rule that only this project has</td>
+                <td><code>.agents/instructions/agent-project.md</code></td>
+              </tr>
+              <tr>
+                <td>a line with NEVER or MUST in a section</td>
+                <td>
+                  it has to name who holds it when the section is not loaded (a critical rule, a skill's
+                  Compact Rules) or be declared local with
+                  <code>&lt;!-- binds-in-section: &lt;reason&gt; --&gt;</code>
+                </td>
+              </tr>
+              <tr>
+                <td><code>CLAUDE.md</code></td>
+                <td>nothing: it is the generated shim (Critical Rule #15)</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout">
+          <span class="ic">Gate</span>
+          <div>
+            <strong><code>bun run instructions:check</code></strong> checks budget, router,
+            frontmatter, rule sentences, who holds each NEVER or MUST, and imports. It runs inside
+            <code>bun run repo:check</code>. It also holds three locks
+            (<code>.context/ADR/ADR-0014-instructions-maintenance-locks.md</code>): the router pinned to its
+            ADR (<code>--accept-router ADR-NNNN</code> records a new decision), the evaluation of the
+            classifier against the labeled prompts on every run, and every section coming
+            complete (frontmatter, router row, its own prompts). The other half is measured by
+            <code>bun run instructions:audit</code>: of the routes the hook injected, how many the agent
+            actually read. The full editing guide is in
+            <code>.agents/instructions/README.md</code>.
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2><span class="num">10</span>Budgets</h2>
+        <p class="sub">
+          L0 has a ceiling because Codex cuts without warning. The values are named constants in
+          <code>scripts/lint-instructions.ts</code>, pinned by
+          <code>.context/ADR/ADR-0009-progressive-disclosure-of-instructions.md</code>: changing one
+          is a new decision, with its ADR.
+        </p>
+        <div class="tbl-scroll">
+          <table class="plain">
+            <thead>
+              <tr>
+                <th>Level</th>
+                <th>Constant</th>
+                <th>If exceeded</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Target</td>
+                <td><code>L0_TARGET</code></td>
+                <td>warning: some detail could live in a section</td>
+              </tr>
+              <tr>
+                <td>Ceiling</td>
+                <td><code>L0_BUDGET</code></td>
+                <td>error: the boilerplate's L0 does not fit</td>
+              </tr>
+              <tr>
+                <td>With project additions</td>
+                <td><code>L0_PROJECT_BUDGET</code></td>
+                <td>error: the project's text goes to <code>agent-project.md</code> or a context skill</td>
+              </tr>
+              <tr>
+                <td>Codex cap</td>
+                <td><code>CODEX_PROJECT_DOC_MAX_BYTES</code></td>
+                <td>always an error, whatever the others say: it is the default value of <code>project_doc_max_bytes</code></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout warn">
+          <span class="ic">Heads up</span>
+          <div>
+            <strong>The target warns on purpose.</strong> §2 comes in whole by the
+            owner's rule, and that leaves L0 above the target and below the ceiling. The warning stays
+            visible so nobody adds text to L0 without thinking. The current size is printed by
+            <code>bun run instructions:check</code>.
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2><span class="num">11</span>How we measure that it works</h2>
+        <p class="sub">
+          Two different questions: whether the classifier routes what it should route, and whether the model
+          then reads what was routed to it.
+        </p>
+        <div class="tbl-scroll">
+          <table class="plain">
+            <thead>
+              <tr>
+                <th>What is measured</th>
+                <th>Where</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Recall, binding recall and precision of the classifier</td>
+                <td>
+                  Requests labeled by hand, in English and Spanish, in
+                  <code>cli/lib/fixtures/instruction-router-eval.json</code>; the thresholds are its
+                  <code>targets</code> field and <code>cli/lib/instruction-router.test.ts</code> checks them
+                  inside <code>bun run test</code>. Binding recall counts only the
+                  <code>ROUTE:</code> lines (the cap must not have pushed an expected section into the optional one) and
+                  so does precision: an optional line binds nothing.
+                </td>
+              </tr>
+              <tr>
+                <td>That it is not slow</td>
+                <td>the same test requires routing a request to stay well under 50 ms</td>
+              </tr>
+              <tr>
+                <td>That hook and lint read the same</td>
+                <td>
+                  <code>scripts/lib/hook-router-parity.test.ts</code> ties the hook's parser to that of
+                  <code>scripts/lib/instructions.ts</code>
+                </td>
+              </tr>
+              <tr>
+                <td>That the model obeys</td>
+                <td>
+                  transcript audit: every <code>ROUTE:</code> should be followed by a
+                  read of the routed file before the first action; it also counts how many
+                  reads followed a <code>ROUTE-PENDING:</code>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout">
+          <span class="ic">If it fails</span>
+          <div>
+            <strong>A request that does not route what it should</strong> is fixed in the section's
+            <code>triggers:</code>, and the request goes into the labeled set so it does not happen
+            again. Relabeling to hide a false positive does not count.
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2><span class="num">12</span>Where to read more</h2>
+        <div class="links">
+          <a href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/AGENTS.md"
+            >AGENTS.md<span>L0: the LOAD PROTOCOL, the router and the rules</span></a
+          >
+          <a
+            href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/.agents/instructions/README.md"
+            >.agents/instructions/README.md<span>the layers, the frontmatter and how to edit</span></a
+          >
+          <a
+            href="https://github.com/upex-galaxy/agentic-dev-boilerplate/blob/main/.context/ADR/ADR-0009-progressive-disclosure-of-instructions.md"
+            >ADR-0009<span>the decision, the measurements and the discarded alternatives</span></a
+          >
+          <a href="../../harnesses.es.html"
+            >One source, every harness<span>how each host reads the instructions and the hook</span></a
+          >
+          <a href="../agentic-dev-core/capa-comportamental.en.html"
+            >The behavioral layer<span>what L0 never trims: §2</span></a
+          >
+        </div>
+      </section>
+
+      <footer>
+        <span
+          >Source of truth: <code>AGENTS.md</code> · <code>.agents/instructions/README.md</code> ·
+          <code>scripts/lint-instructions.ts</code></span
+        >
+        <span><a href="../../index.html">← back to Planos</a></span>
+        <span><code>packages/decks/progressive-disclosure/how-it-works.en.html</code></span>
+      </footer>
+    </div>
+    <!-- ============ MOBILE (UPEX) — scroll deck: reflow by CSS, no scale-to-fit or swipe ============
+         The decks in this repo are pages read by scrolling and rearranged with @media.
+         There are no slides to scale or swipe through: this block only declares the mobile mode.
+         The site that serves the deck validates the id `upex-mobile-nav`. -->
+    <script id="upex-mobile-nav">
+      (function () {
+        var mobile =
+          window.matchMedia &&
+          window.matchMedia('(pointer: coarse)').matches &&
+          window.matchMedia('(max-width: 768px)').matches;
+        document.documentElement.setAttribute('data-mobile', mobile ? 'reflow' : 'off');
+      })();
+    </script>
+  </body>
+</html>

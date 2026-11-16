@@ -1845,7 +1845,8 @@
               <span class="mono">.session/sprint-development/&lt;KEY&gt;/progress.md</span>, la IA
               lee el plan sincronizado y te muestra el objetivo, la última etapa cerrada y lo que
               bloquea. Espera tu respuesta: <b>retomar</b>, <b>reiniciar</b> (archiva lo anterior) o
-              <b>abortar</b>. Bajo <span class="mono">.session/</span> solo se escribe
+              <b>abortar</b>. Si no hay nadie que conteste, un worker toma la respuesta de quien lo lanzó y una
+              rutina retoma sola. Bajo <span class="mono">.session/</span> solo se escribe
               <span class="mono">progress.md</span>: el plan vive en Jira.
             </p>
           </div>
@@ -1957,6 +1958,14 @@
             <div class="kk">Ruta (c)</div>
             <h3>Solo <span class="mono">DESIGN.md</span></h3>
             <p>Fidelidad de tokens, sin pantalla de referencia, con tu aprobación explícita.</p>
+          </div>
+          <div class="alt">
+            <div class="kk">Sin nadie presente</div>
+            <h3>Quién elige la ruta</h3>
+            <p>
+              Un worker supervisado le pregunta a quien lo lanzó. Una rutina sigue la ruta que
+              nombra su brief; si no nombra ninguna, no construye esa pantalla y lo reporta.
+            </p>
           </div>
           <div class="alt">
             <div class="kk">Cuando el orden se invierte</div>
@@ -2147,7 +2156,8 @@
           <p class="sub">
             La implementación camina el plan un paso a la vez. Toca solo lo que la historia dice:
             nada de refactors de paso. Si una función pide TDD, se le pasa a
-            <span class="mono">/unit-testing</span> y se vuelve cuando la unidad está en verde.
+            <span class="mono">/unit-testing</span> y se vuelve cuando la unidad está en verde. El
+            plan nombra las costuras donde probar, y se las entrega.
           </p>
         </div>
 
@@ -2182,6 +2192,14 @@
         </div>
 
         <div class="gotchas r" style="margin-top: 22px">
+          <div class="g">
+            <b>Un bug con causa poco clara</b
+            ><span
+              >Llama a la skill <span class="mono">diagnosing-bugs</span> y la sigue por sus seis
+              fases; después arregla el bug, porque esa skill solo diagnostica. Si no está instalada,
+              escribe primero el comando que falla y lo dice una vez.</span
+            >
+          </div>
           <div class="g">
             <b>Fuera de alcance: tests E2E y de integración</b
             ><span
@@ -2452,6 +2470,15 @@ playwright-cli list   <span class="c"># la prueba: &lt;KEY&gt; ya no está</span
         </div>
 
         <div class="callout r">
+          <b>Dos ejes de revisión.</b> Con una spec detrás de la historia, revisan dos revisores
+          en contextos limpios, uno contra la spec y otro contra los estándares, y cada uno marca el
+          eje de sus hallazgos; en modo solo son dos pasadas seguidas (<span class="mono">review-pr.md</span>, <i>Two-axis review</i>). El PR
+          además declara su <i>Merge danger</i>: puerta de ida o de vuelta, y el radio de impacto;
+          para un diff que no se confía contenido llama a <span class="mono">blast-radius</span>,
+          o lo juzga a mano si no está instalada.
+        </div>
+
+        <div class="callout r">
           <b>Antes del merge, también:</b> los cambios de docs que pide la historia van en la misma
           rama del PR, y si la historia trajo un término de dominio nuevo o ambiguo, se marca para
           que el PM lo sume a <span class="mono">.context/business/domain-glossary.md</span>. La
@@ -2556,7 +2583,8 @@ playwright-cli list   <span class="c"># la prueba: &lt;KEY&gt; ya no está</span
           <h2>Producción es otro evento, con otra aprobación</h2>
           <p class="sub">
             Nunca se encadena desde el Stage 4. Corre solo con QA en verde en staging <b>y</b>
-            aprobación explícita de negocio. Si la sesión ya se archivó, la Phase 0 la reabre y suma
+            aprobación explícita de negocio, de una persona o de un brief que nombre ese ticket y
+            ese deploy. Si la sesión ya se archivó, la Phase 0 la reabre y suma
             las entradas del Stage 5.
           </p>
         </div>
@@ -2636,7 +2664,7 @@ playwright-cli list   <span class="c"># la prueba: &lt;KEY&gt; ya no está</span
               </tr>
               <tr>
                 <th>Review</th>
-                <td>Revisor independiente, después adjudicación</td>
+                <td>Dos revisores (spec y estándares), después adjudicación</td>
                 <td>Una pasada deliberada con ojos nuevos, después la misma adjudicación</td>
               </tr>
               <tr>

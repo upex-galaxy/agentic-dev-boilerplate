@@ -2081,6 +2081,10 @@ bun run tooling:lint:check
                 Propone el commit a través de <span class="mono">/git-flow-master</span>. Nunca lo hace
                 en silencio.
               </li>
+              <li>
+                Ofrece, opcional y de solo lectura, un escaneo de arquitectura (módulos superficiales o
+                que se filtran entre sí). Eliges un candidato en otra sesión.
+              </li>
             </ul>
           </div>
         </div>
@@ -2144,8 +2148,9 @@ bun run tooling:lint:check
           <div class="it">
             <span class="bx"></span
             ><span
-              ><b>Una credencial solo va a <span class="mono">.env</span></b>, nunca al plan, a un
-              reporte o a un commit.</span
+              ><b>Un valor secreto no se escribe en ningún lado</b>: ni en el plan, un reporte o un
+              commit, ni en el <span class="mono">.env</span>. El <span class="mono">.env</span> recibe
+              solo valores no sensibles; el secreto lo escribes tú.</span
             >
           </div>
         </div>
@@ -2155,10 +2160,10 @@ bun run tooling:lint:check
             <div class="tag">Puede escribir</div>
             <h3>Solo con su fila aprobada</h3>
             <ul>
-              <li><span class="mono">.agents/project.yaml</span>, <span class="mono">.env</span> y los catálogos <span class="mono">.agents/jira-*.json</span>.</li>
+              <li><span class="mono">.agents/project.yaml</span>, el <span class="mono">.env</span> (solo valores no sensibles) y los catálogos <span class="mono">.agents/jira-*.json</span>.</li>
               <li><span class="mono">AGENTS.md</span> + <span class="mono">CLAUDE.md</span>, solo a través de la fusión que guardó el instalador.</li>
               <li>Las carpetas de skills del framework que la app había copiado, reemplazadas por la copia de upstream guardada (con su propia aprobación), <span class="mono">api/openapi*</span> cuando no existían antes, y la <span class="mono">description</span> de la skill <span class="mono">&lt;app&gt;-context</span>.</li>
-              <li>El plan, <span class="mono">.session/project-adoption/</span> y las copias en texto plano de credenciales MCP que retira <span class="mono">bun run harness:env</span>.</li>
+              <li>El plan, el escaneo opcional de arquitectura (<span class="mono">.context/reports/project-adoption-architecture.md</span>), <span class="mono">.session/project-adoption/</span> y las copias en texto plano de credenciales MCP que retira <span class="mono">bun run harness:env</span>.</li>
             </ul>
             <div class="path">lista completa: references/adoption-workflow.md §Refusal list</div>
           </div>

@@ -2226,13 +2226,13 @@ git merge-base --is-ancestor <span class="s">&lt;merge-commit&gt;</span> origin/
             <tbody>
               <tr>
                 <td><span class="mono">confirm</span> (por defecto)</td>
-                <td>Pausa y pide aprobación: destino, qué hace, que es aditivo.</td>
-                <td>Pausa y pide aprobación, con una segunda opción real: diferirlo.</td>
+                <td>Escala y termina con una parada limpia. La entrada de escalación pide la aprobación: destino, qué hace, que es aditivo.</td>
+                <td>Escala igual, con una segunda opción real en la entrada: diferirlo.</td>
               </tr>
               <tr>
                 <td><span class="mono">autonomous</span></td>
                 <td>Sigue.</td>
-                <td><b>Igual para.</b> <span class="mono">autonomous</span> nunca cubre esto.</td>
+                <td><b>Igual escala y termina.</b> <span class="mono">autonomous</span> nunca cubre esto.</td>
               </tr>
               <tr>
                 <td><span class="mono">unrestricted</span></td>
@@ -2453,6 +2453,27 @@ git merge-base --is-ancestor <span class="s">&lt;merge-commit&gt;</span> origin/
               <span class="mono">discovery/created-log.md</span> (solo se agrega) y la reporta. Al
               arrancar, lee ese log contra el tracker: un ticket cerrado o borrado es un veto vigente
               y no se recrea, ni con otro título.</span
+            >
+          </div>
+          <div class="g">
+            <b>Tres frenos al arrancar una corrida de arreglo</b
+            ><span
+              >Lo que produce una corrida pasa tres frenos: los checks propios de la app, la
+              revisión del Stage 3 de <span class="mono">/sprint-development</span> hecha por un lector
+              que no escribió el trabajo, y la revisión de una persona después de que la corrida
+              termina. Ninguno hace esperar a la corrida ni estrecha el permiso de merge. Una corrida
+              de arreglo nunca arranca por la falla de otra (anti-patrón A23), y un ticket fallido se
+              reintenta tres veces como máximo antes de reportarse <span class="mono">BLOCKED</span>.</span
+            >
+          </div>
+          <div class="g">
+            <b>Registro de decisiones</b
+            ><span
+              >Cada decisión tomada sola deja una fila en
+              <span class="mono">decisions.tsv</span>, en el directorio de sesión del modo, con
+              seis columnas. Si la skill <span class="mono">show-me-your-work</span> no está instalada,
+              la skill escribe las mismas columnas a mano. Una falla al anotar se reporta y la corrida
+              sigue.</span
             >
           </div>
         </div>
