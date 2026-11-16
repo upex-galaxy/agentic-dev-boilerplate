@@ -70,6 +70,7 @@ import {
 } from './lib/updater-parity';
 import { makePbiCacheMigrationHook } from './lib/updater-pbi';
 import { CLAUDE_SETTINGS_FILE, formatHookCommand, mergeHookGroups, mergePermissionLists, readDeclinedDenies, readDeclinedHooks } from './lib/updater-settings.ts';
+import { runSkillsUpdate, SKILLS_UPDATE_OPT_OUT_ENV, SKILLS_UPDATE_OPT_OUT_FLAG } from './lib/user-skills-update.ts';
 import { DEPRECATED_VARS, parseDotEnvExampleKeys } from './lib/variables-manifest';
 import { checkoutRoots } from './lib/worktree.ts';
 import { plainMsg, runUpPreflight } from './preflight.ts';
@@ -340,6 +341,8 @@ interface ParsedArgs {
   strict: boolean
   /** Skip the post-apply quality gates (`types:check`, `lint:check`, `skills:check`). */
   noGates: boolean
+  /** Skip the closing `bunx skills update` of the installer's community skills. */
+  noSkillsUpdate: boolean
   /** Keep the prompts even when stdin is not a TTY (the default there is `--auto`). */
   interactive: boolean
   /** First run on an EXISTING app: never overwrite what it already has (see `cli/lib/updater-adopt.ts`). */
@@ -350,7 +353,7 @@ interface ParsedArgs {
 const isMcpAgent = (v: string): v is McpAgent => (MCP_TEMPLATE_AGENTS as readonly string[]).includes(v);
 
 export function parseArgs(args: string[]): ParsedArgs {
-  const out: ParsedArgs = { commands: [], help: false, dryRun: false, rollback: false, auto: false, force: false, strict: false, noGates: false, interactive: false, adopt: false, updateMcpTemplate: null };
+  const out: ParsedArgs = { commands: [], help: false, dryRun: false, rollback: false, auto: false, force: false, strict: false, noGates: false, noSkillsUpdate: false, interactive: false, adopt: false, updateMcpTemplate: null };
   const valid = new Set(COMPONENTS.map(c => c.name).concat(['all', 'help', 'rollback']));
   // Pre-cross-harness component names still typed from muscle memory.
   const aliases: Record<string, string> = {
@@ -370,6 +373,7 @@ export function parseArgs(args: string[]): ParsedArgs {
     else if (a === '--force') { out.force = true; }
     else if (a === '--strict') { out.strict = true; }
     else if (a === '--no-gates') { out.noGates = true; }
+    else if (a === SKILLS_UPDATE_OPT_OUT_FLAG) { out.noSkillsUpdate = true; }
     else if (a === '--interactive') { out.interactive = true; }
     else if (a === '--adopt') { out.adopt = true; }
     else if (a === '--update-mcp-template') {
@@ -476,6 +480,15 @@ VERIFICACION POST-SYNC (gates):
   lineas de error, que archivos aplicados esta corrida nombra) y como linea
   "Gates:" en el resumen. --no-gates lo desactiva.
 
+SKILLS DE LA COMUNIDAD (al final):
+  Corre \`bunx skills update <nombres> -g -y\` para las skills de usuario que
+  instala \`bun setup\` (USER_LEVEL_SKILLS) y \`-p\` para las de proyecto
+  (PROJECT_LEVEL_SKILLS), solo las que el CLI de skills tiene instaladas desde
+  esa misma fuente. Omite una skill instalada como symlink fuera del store del
+  CLI (un link de desarrollo) y copia antes cada skill de proyecto a
+  .backups/. Nunca bloquea: un fallo es un aviso. --no-skills-update o
+  ${SKILLS_UPDATE_OPT_OUT_ENV}=1 lo desactivan.
+
 RE-EJECUCION SEGURA:
   El sync deja sus archivos sin commitear a proposito (primero se revisa el
   prompt). La corrida registra lo que escribio en ${LAST_APPLY_FILE}
@@ -545,6 +558,10 @@ FLAGS:
                                   drift de archivos protegidos nunca bloquea.
   --no-gates                      No corre types:check / lint:check /
                                   skills:check tras aplicar
+  --no-skills-update              No corre \`bunx skills update\` al final (las
+                                  skills de la comunidad quedan como estan). La
+                                  primera corrida con un updater viejo no
+                                  conoce el flag: usa la variable de entorno
   --interactive                   Mantiene los prompts aunque stdin no sea TTY
   --adopt                         Primera corrida sobre una app existente:
                                   nunca sobrescribe lo que la app ya tiene
@@ -559,6 +576,9 @@ ENV:
                                   (via gh) o un clon LOCAL (ruta absoluta o
                                   file://, via git, sin sesion gh). Para probar
                                   una rama no publicada contra un consumidor.
+  ${SKILLS_UPDATE_OPT_OUT_ENV}=1        Igual que --no-skills-update, y sirve
+                                  tambien cuando el updater instalado todavia
+                                  no conoce el flag.
 
 EJEMPLOS:
   bun sync                                  # Flujo interactivo (5 fases)
@@ -1798,6 +1818,35 @@ async function closeUi(status: 'done' | 'done-with-pending' | 'failed' | 'aborte
   catch { /* closing the page never changes the run's exit */ }
 }
 
+/**
+ * The closing step: `bunx skills update` for the community skills
+ * `cli/install.ts` declares (logic and measured CLI behaviour in
+ * ./lib/user-skills-update.ts). Runs once, after the sync: in a self-update
+ * the parent exits with the re-exec child's code, so only the child gets here.
+ * Warnings only, so neither the exit code nor `--strict` ever depends on it.
+ * The lists load lazily: `cli/install.ts` pulls the installer's prompt
+ * dependencies, which a sync must not need before this point.
+ */
+async function updateCommunitySkills(sink: ReportSink, parsed: ParsedArgs, lang: 'es' | 'en'): Promise<void> {
+  if (parsed.noSkillsUpdate || process.env[SKILLS_UPDATE_OPT_OUT_ENV] === '1') { return; }
+  try {
+    const { PROJECT_LEVEL_SKILLS, USER_LEVEL_SKILLS } = await import('./install.ts');
+    sink.step(lang === 'en' ? 'Community skills: checking for updates' : 'Skills de la comunidad: buscando actualizaciones');
+    await runSkillsUpdate({
+      cwd: process.cwd(),
+      global: USER_LEVEL_SKILLS,
+      project: PROJECT_LEVEL_SKILLS,
+      dryRun: parsed.dryRun,
+      info: msg => sink.step(msg),
+      warn: msg => sink.warn(msg),
+      lang,
+    });
+  }
+  catch (err) {
+    sink.warn(`skills update: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
 /** Terminal rows of the preflight: nothing when all is clear (today's output), every warn and block otherwise. */
 function printPreflight(pre: PreflightResult): void {
   for (const c of pre.checks) {
@@ -2322,6 +2371,7 @@ async function main(): Promise<void> {
   const aborted = summary.aborted === true;
   if (!aborted) { printEndOfRun(summary, parsed.dryRun); }
   else if (summary.selfUpdateBlocked) { reportSelfUpdateBlocked(summary.selfUpdateBlocked, summary.newHeadSha, priorLockSha); }
+  if (!aborted) { await updateCommunitySkills(sink, parsed, ui?.lang ?? 'es'); }
   if (parsed.adopt && !aborted && !parsed.dryRun) {
     tui.log.info(ADOPT_NEXT_STEP);
   }

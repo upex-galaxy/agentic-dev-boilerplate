@@ -260,7 +260,7 @@ export function buildCommunitySkillArgs(
 // The truly universal CLI-companion skill (playwright-cli) lives at USER level
 // instead — see USER_LEVEL_SKILLS.
 // Users can run `bunx autoskills` later to refine for their concrete stack.
-const PROJECT_LEVEL_SKILLS: ReadonlyArray<CommunitySkill> = [
+export const PROJECT_LEVEL_SKILLS: ReadonlyArray<CommunitySkill> = [
   { package: 'https://github.com/anthropics/skills', skill: 'frontend-design' },
   // Next.js ships its workflow skills from its own repo (vercel-labs/next-skills
   // is an empty pointer now). Reference knowledge and upgrades are no longer
