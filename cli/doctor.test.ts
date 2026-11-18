@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, test } from 'bun:test';
 
-import { legacyCredentialKeys, piTrustStatus, repoCheckRunsAppWideLegs, worktreeSetupAction } from './doctor.ts';
+import { legacyCredentialKeys, piTrustStatus, repoCheckRunsAppWideLegs, userSkillInstalled, worktreeSetupAction } from './doctor.ts';
 
 describe('worktreeSetupAction', () => {
   test('a provisioned worktree needs nothing', () => {
@@ -41,6 +41,21 @@ describe('repoCheckRunsAppWideLegs', () => {
     expect(repoCheckRunsAppWideLegs('bun scripts/tooling-check.ts repo && bun run vars:check')).toBe(false);
     expect(repoCheckRunsAppWideLegs(undefined)).toBe(false);
     expect(repoCheckRunsAppWideLegs('npm run ci')).toBe(false);
+  });
+});
+
+describe('userSkillInstalled', () => {
+  test('found in either user-level store, missing otherwise', () => {
+    const home = mkdtempSync(join(tmpdir(), 'user-skill-'));
+    expect(userSkillInstalled('agent-orchestration', home)).toBe(false);
+    mkdirSync(join(home, '.claude', 'skills', 'agent-orchestration'), { recursive: true });
+    expect(userSkillInstalled('agent-orchestration', home)).toBe(false);
+    writeFileSync(join(home, '.claude', 'skills', 'agent-orchestration', 'SKILL.md'), 'x\n');
+    expect(userSkillInstalled('agent-orchestration', home)).toBe(true);
+    const other = mkdtempSync(join(tmpdir(), 'user-skill-'));
+    mkdirSync(join(other, '.agents', 'skills', 'agent-orchestration'), { recursive: true });
+    writeFileSync(join(other, '.agents', 'skills', 'agent-orchestration', 'SKILL.md'), 'x\n');
+    expect(userSkillInstalled('agent-orchestration', other)).toBe(true);
   });
 });
 
