@@ -2103,6 +2103,55 @@ bun run bootstrap:guard   <span class="c"># exit 0 = greenfield · exit 2 = exis
           the repo root; a project with a different structure declares it in
           <span class="mono">.agents/project.yaml</span>.
         </div>
+
+        <div class="sec-head r" style="margin: 44px 0 22px 0">
+          <div class="eyebrow"><span class="num">06·b</span> · the Baseline target</div>
+          <p class="sub" style="font-size: 1rem">
+            During the frontend analysis the AI asks one more question, after layout and priority
+            components: which Baseline level should the UI code hold to.
+          </p>
+        </div>
+        <div class="tablewrap r">
+          <table class="cmp narrow">
+            <thead>
+              <tr>
+                <th>Option</th>
+                <th>What it means</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th>Baseline Widely available (recommended)</th>
+                <td>
+                  Features every major browser has shipped for roughly 30 months. Right unless the
+                  product needs newer ones.
+                </td>
+              </tr>
+              <tr>
+                <th>Baseline &lt;year&gt;</th>
+                <td>
+                  Admits features that became Baseline Newly available up to that year. Fits a product with
+                  a known modern-browser audience.
+                </td>
+              </tr>
+              <tr>
+                <th>Choose for me</th>
+                <td>It uses Baseline Widely available.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout blue r">
+          <b>Where the answer lands:</b> one line under a <span class="mono">## Web platform</span> heading in
+          <span class="mono">.agents/instructions/agent-project.md</span>: <span class="mono">This project's Baseline target is Baseline Widely available.</span>
+          That file belongs to the project, so <span class="mono">bun sync</span> keeps it. <span class="mono">modern-web-guidance</span>
+          reads the line before its first search; without it, it assumes Baseline Widely available.
+        </div>
+        <div class="callout r">
+          <b>Volatile features stay off.</b> Features that are not Baseline yet are gated by default.
+          Enabling them with <span class="mono">npx modern-web-guidance@latest set-allow-volatile-features</span> is a
+          person's call; the AI never runs it.
+        </div>
       </div>
     </section>
 

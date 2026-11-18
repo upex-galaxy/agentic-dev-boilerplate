@@ -1951,6 +1951,48 @@ bunx create-agentic-dev@latest <span class="k">--adopt</span>   <span class="c">
             >
           </div>
         </div>
+
+        <div class="sec-head r" style="margin: 44px 0 22px 0">
+          <div class="eyebrow"><span class="num">04·b</span> · phase 1.7: the modernization list</div>
+          <p class="sub" style="font-size: 1rem">
+            Still read-only. The AI runs <span class="mono">npx modern-web-guidance@latest legacy-scan .</span> from
+            <span class="mono">stack.app_root</span> and turns what it finds into a list in the plan.
+          </p>
+        </div>
+        <div class="tablewrap r">
+          <table class="cmp narrow">
+            <thead>
+              <tr>
+                <th>Column</th>
+                <th>What the row says</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th>Legacy pattern</th>
+                <td>What the scan found in the app.</td>
+              </tr>
+              <tr>
+                <th>Native replacement</th>
+                <td>The platform feature that replaces it.</td>
+              </tr>
+              <tr>
+                <th>Files</th>
+                <td>The paths it touches.</td>
+              </tr>
+              <tr>
+                <th>Effort</th>
+                <td>S, M or L.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout blue r">
+          <b>A proposal for the team, never applied.</b> The list sits in the plan under
+          <span class="mono">Web platform</span>, next to the Baseline target the questionnaire returned. The adoption
+          changes no file of the app. If the scan fails or is unavailable, that goes under
+          <span class="mono">## Discovery Gaps</span>.
+        </div>
       </div>
     </section>
 
@@ -2030,6 +2072,12 @@ bunx create-agentic-dev@latest <span class="k">--adopt</span>   <span class="c">
           </div>
         </div>
         <div class="gate r"><b>Gate</b> each phase verified at the destination before moving on to the next.</div>
+        <div class="callout r">
+          <b>Phase 6 also writes the Baseline target.</b> If the questionnaire answered it and the plan's
+          approval line allows it, one line goes under <span class="mono">## Web platform</span> in
+          <span class="mono">.agents/instructions/agent-project.md</span>, for example <span class="mono">This project's Baseline target is Baseline Widely available.</span>
+          Volatile features stay gated; enabling them is the team's call.
+        </div>
       </div>
     </section>
 

@@ -1952,6 +1952,67 @@
           dibuja primero, la política la eligió quien compuso la pantalla. Se chequea antes de
           rutear a (a).
         </div>
+
+        <div class="sec-head r" style="margin: 44px 0 22px 0">
+          <div class="eyebrow"><span class="num">03·c</span> · después del build: la pasada post-escritura</div>
+          <p class="sub" style="font-size: 1rem">
+            El design set y <span class="mono">modern-web-guidance</span> se cargan antes de la primera línea de una
+            pantalla. Cuando la pantalla ya está construida, corren dos chequeos más sobre el
+            resultado, en <span class="mono">/sprint-development</span>.
+          </p>
+        </div>
+        <div class="steps r">
+          <div class="step">
+            <h3>Antes de escribir</h3>
+            <p>
+              <span class="mono">modern-web-guidance</span> elige la función nativa (dialog, popover, view transitions,
+              validación de formularios) y su alternativa según Baseline: <span class="mono">search</span> y luego
+              <span class="mono">retrieve</span> sobre la mejor coincidencia. Antes lee el objetivo Baseline del proyecto.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Después de escribir</h3>
+            <p>
+              Los dos chequeos de abajo corren sobre la pantalla ya construida, en el implementador de la
+              Etapa 2 y otra vez en el verificador de la Etapa 3.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Hallazgos</h3>
+            <p>
+              Cada uno se corrige, o se deja a propósito con su razón escrita. Las notas de la crítica y la
+              salida del scan van a <span class="mono">.session/sprint-development/&lt;KEY&gt;/evidence/</span> para que el PR
+              pueda citarlas.
+            </p>
+          </div>
+        </div>
+        <div class="tablewrap r" style="margin-top: 22px">
+          <table class="cmp narrow">
+            <thead>
+              <tr>
+                <th>Chequeo</th>
+                <th>Qué mira</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th>Crítica de <span class="mono">/impeccable</span></th>
+                <td>La pantalla en vivo: jerarquía, estados, comportamiento responsive y textos.</td>
+              </tr>
+              <tr>
+                <th><span class="mono">modern-web-guidance legacy-scan</span></th>
+                <td>
+                  Los archivos de UI cambiados: patrones legacy que la plataforma web ya cubre de forma nativa.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout blue r">
+          <b>Un PR que toca UI lleva los dos.</b> La revisión trata como hallazgo que falten las notas
+          de la crítica o la salida del scan. El instalador deja la skill a nivel de proyecto y
+          <span class="mono">bun sync</span> la mantiene al día.
+        </div>
       </div>
     </section>
 

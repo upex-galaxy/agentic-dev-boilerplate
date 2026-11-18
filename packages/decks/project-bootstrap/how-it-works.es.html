@@ -2103,6 +2103,56 @@ bun run bootstrap:guard   <span class="c"># exit 0 = greenfield · exit 2 = app 
           la raíz del repo; un proyecto con otra estructura la declara en
           <span class="mono">.agents/project.yaml</span>.
         </div>
+
+        <div class="sec-head r" style="margin: 44px 0 22px 0">
+          <div class="eyebrow"><span class="num">06·b</span> · el objetivo Baseline</div>
+          <p class="sub" style="font-size: 1rem">
+            Durante el análisis del frontend la IA hace una pregunta más, después del layout y los
+            componentes prioritarios: a qué nivel de Baseline debe ceñirse el código de UI.
+          </p>
+        </div>
+        <div class="tablewrap r">
+          <table class="cmp narrow">
+            <thead>
+              <tr>
+                <th>Opción</th>
+                <th>Qué significa</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th>Baseline Widely available (recomendada)</th>
+                <td>
+                  Funciones que todos los navegadores principales llevan unos 30 meses soportando. Es lo
+                  correcto salvo que el producto necesite funciones más nuevas.
+                </td>
+              </tr>
+              <tr>
+                <th>Baseline &lt;año&gt;</th>
+                <td>
+                  Admite funciones que pasaron a Baseline Newly available hasta ese año. Encaja con un
+                  producto cuya audiencia usa navegadores modernos.
+                </td>
+              </tr>
+              <tr>
+                <th>Elige por mí</th>
+                <td>Usa Baseline Widely available.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout blue r">
+          <b>Dónde queda la respuesta:</b> una línea bajo el encabezado <span class="mono">## Web platform</span> en
+          <span class="mono">.agents/instructions/agent-project.md</span>: <span class="mono">This project's Baseline target is Baseline Widely available.</span>
+          Ese archivo es del proyecto, así que <span class="mono">bun sync</span> lo respeta. <span class="mono">modern-web-guidance</span>
+          lee la línea antes de su primera búsqueda; sin ella, asume Baseline Widely available.
+        </div>
+        <div class="callout r">
+          <b>Las funciones volátiles quedan apagadas.</b> Las que todavía no son Baseline están
+          bloqueadas por defecto. Activarlas con
+          <span class="mono">npx modern-web-guidance@latest set-allow-volatile-features</span> es decisión de una
+          persona; la IA nunca lo corre.
+        </div>
       </div>
     </section>
 
