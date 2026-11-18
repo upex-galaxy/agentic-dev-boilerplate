@@ -1,6 +1,6 @@
 # Skill Registry (auto-generated)
 
-> Generated: `2026-11-18T05:46:19.230Z`
+> Generated: `2026-11-18T06:24:59.904Z`
 > Generator: `bun scripts/build-skill-registry.ts`
 > Protocol: `.agents/skills/agentic-dev-core/references/skill-resolver.md`
 
@@ -476,6 +476,7 @@ Skills indexed: 22
 **Purpose**: Drives the per-story dev loop from tracker ticket to deployed code: plan, implement, review, staging deploy, gated production deploy.
 
 **Compact Rules**:
+- Critical Rule #18, no comments in code by default: new and edited code carries no comments except a toolchain directive (`eslint-disable-next-line <rule> -- <reason>`, `@ts-expect-error`, `LINT.IfChange`/`LINT.ThenChange`) or one line of WHY the code cannot express and a reader would otherwise get wrong. No JSDoc blocks, section banners, narrated steps or example TODOs; teaching goes to docs and decks. Put this rule in component 7 of every briefing that writes or edits code.
 - Log into a running app only as the account that `testing.automation_identity` in `.agents/project.yaml` names (the file holds variable names, the values live in `.env`). If the slot is unset or a variable is missing, stop and report. Do not substitute another account, look one up in the database, create one, or reuse the human's browser session. See `references/live-ui-identity.md`.
 - Load a stack skill at the step that writes in its domain: `supabase` and `supabase-postgres-best-practices` before a DB MCP schema, RLS or migration call; the design set (`frontend-design`, `ui-ux-pro-max`, `impeccable`, `emil-design-eng`, `modern-web-guidance`, strategy doc §3.5) plus `shadcn` and `tailwind-css-patterns` before a component or layout write; `deploy-to-vercel` next to `vercel-cli` at Stage 4 and 5; `resend-cli` for email; `seo` for a public page. If one is not installed, say so once with the install path (`bun setup`) and continue (`agentic-dev-core/references/skill-composition-strategy.md` §3.5).
 - Never go around the app's own login path: no service-role, secret or admin keys, no admin user-management APIs, no generated magic or password-reset links, no locally signed JWTs, no hand-crafted session cookies, no impersonating an account, not even to look at the admin view. Report the need as a finding instead.
