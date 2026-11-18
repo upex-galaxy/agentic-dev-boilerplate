@@ -441,8 +441,8 @@ export const CONFIG_BLOCK_READERS: Record<string, Record<string, ConfigBlockRead
       requiredBy: 'whether a product call stops the run (`escalate`) or is decided by a scored subagent (`decide`), read before treating any product question as an escalation',
     },
     orchestration: {
-      skill: '/orca-orchestration',
-      requiredBy: 'the worker cap per round, the default harness / model / effort a worker launches with, and which orchestrator CLI and verbs to drive; without the block the skill degrades to one worker, the harness defaults and no orchestrator named',
+      skill: '/agent-orchestration',
+      requiredBy: 'the worker cap per round, the default harness / model / effort a worker launches with, and the permission mode per tier; without the block the user-level skill degrades to one worker and the harness defaults',
     },
     stack: {
       skill: '/project-context',

@@ -639,7 +639,7 @@ describe('projectDelta', () => {
     expect(delta.gaps[0].paths.length).toBeGreaterThan(3);
   });
 
-  // The block the orca-orchestration skill reads: a project scaffolded before
+  // The block the agent-orchestration skill reads: a project scaffolded before
   // it shipped is offered it, with the skill's own defaults.
   test.skipIf(!MAINTAINER_CHECKOUT)('a project scaffolded before orchestration: existed is offered the block', () => {
     const old = edit(source, /\n(?:#.*\n)*orchestration:\n(?: {2}.*\n)+/, '\n');
