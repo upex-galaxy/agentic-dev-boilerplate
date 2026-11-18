@@ -165,10 +165,10 @@ Address: `<<PRIMARY_ROOT>>/.session/sprint-development/sprint-<N>/launch.txt`. O
 6. Every line is validated before launch with a shell syntax check (`sh -n` on a file holding the lines; `zsh -n` where the user's shell is zsh). A line that does not parse is not launched.
 7. The harness invocation itself (binary, model, effort, permission and session-name flags per harness) and which launch path supervises are owned by `agentic-dev-core/references/fleet-launch-seam.md` and the `/agent-orchestration` `launch.txt` template. This skill owns only the payload: the `sprint-development` worker prompt.
 
-Shape for Claude Code (other harnesses use their own binary, `opencode` or `codex`). The line carries no name flag: `--name` marks the name as human-set, and the identity hook then never composes `<KEY>--<handle>` from the prompt token (`agentic-dev-core/references/fleet-project-profile.md` §3):
+Shape for Claude Code (other harnesses use their own binary, `opencode` or `codex`). Without a name flag the identity hook composes `<KEY>--<handle>` from the prompt token. A name flag marks the name as human-set and the hook leaves it alone, so a line that sets one must already carry the handle, as the `/agent-orchestration` `launch.txt` template does (`agentic-dev-core/references/fleet-project-profile.md` §3):
 
 ```
-claude <harness flags per launch-seam.md> '/sprint-development UPEX-123 fleet worker env: staging. Brief: <abs path to brief.md>. Run every stage without returning to the prompt until worker_done is sent; stage boundaries are not checkpoints; the one stop is ending your turn right after an ask. Channel: orca orchestration send. No heartbeats.'
+claude <harness flags per fleet-launch-seam.md> '/sprint-development UPEX-123 fleet worker env: staging. Brief: <abs path to brief.md>. Run every stage without returning to the prompt until worker_done is sent; stage boundaries are not checkpoints; the one stop is ending your turn right after an ask. Channel: orca orchestration send. No heartbeats.'
 ```
 
 ---
