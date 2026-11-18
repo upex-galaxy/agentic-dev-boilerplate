@@ -56,7 +56,7 @@
     "worktree:provision": "bun scripts/provision-worktree.ts",
     "vars:check": "bun scripts/lint-vars.ts",
     "git:policy": "bun scripts/git-policy.ts",
-    "guard:example:check": "cd packages/guard-example && bunx eslint --max-warnings 0 src && bunx tsc -p tsconfig.json && bun ../../scripts/guard-manifest.ts --root src/features --check --out guard-manifest.json && cd ../.. && bun test --preload ./packages/guard-example/test-setup.ts packages/guard-example",
+    "guard:example:check": "bun scripts/guard-example-check.ts",
     "guard:manifest": "bun scripts/guard-manifest.ts",
     "guard:manifest:check": "bun scripts/guard-manifest.ts --check",
     "vars:env:check": "bun scripts/check-vars.ts",
