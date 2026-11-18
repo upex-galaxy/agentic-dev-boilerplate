@@ -21,6 +21,7 @@ Una skill de flujo nueva sin deck es la próxima fila `todo`. La lista real de s
 | --------------------------------------------------------- | ---------------------------------------------- | --------- | ---- |
 | La capa comportamental (Butler, PM Voice, Visual Mapping) | `agentic-dev-core/capa-comportamental.es.html` | **hecho** | |
 | El backlog no se commitea — PBI como caché de Jira        | `agentic-dev-core/pbi-jira-cache.es.html`      | **hecho** | |
+| GUARD: la arquitectura de producto para agentes           | `agentic-dev-core/guard.es.html`               | **hecho** | doctrina en `guard-architecture.md`; decisión en ADR-0023 |
 | Progressive disclosure: las instrucciones en capas        | `progressive-disclosure/how-it-works.es.html` | **hecho** | doctrina de `agentic-dev-core`: L0, secciones, router, línea `ROUTE:`, imports y presupuestos; decisión en ADR-0009 |
 | El comando y sus ejecutores                               | `agentic-dev-core/orquestacion.es.html`        | plegado   | los dos ejecutores y el briefing viven en `orca-orchestration/how-it-works.es.html` |
 | Cómo encadenan las skills, de cero a producción           | `agentic-dev-core/flujo-de-skills.es.html`     | descartado | el hub ya ordena las skills por sección; un deck de cadena tendría que enumerar un conjunto que cambia |
