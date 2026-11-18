@@ -1312,11 +1312,13 @@ export function validateEslintBlockWiring(root = process.cwd()): string[] {
   catch { return []; }
 
   // Scoped blocks are SCREAMING_SNAKE exports; `BASE_ESLINT_OPTIONS` is the
-  // options object spread into the first argument, not a block, so it is
-  // excluded by name.
+  // options object spread into the first argument, and the two GUARD
+  // constants are values the GUARD blocks read (severity string, default layer
+  // map), so none of them is a block and all are excluded by name.
+  const notBlocks = new Set(['BASE_ESLINT_OPTIONS', 'GUARD_ENFORCEMENT_LEVEL', 'GUARD_LAYERS']);
   const blocks = [...base.matchAll(/^export const ([A-Z][A-Z0-9_]*)\s*=/gm)]
     .map(m => m[1])
-    .filter(name => name !== 'BASE_ESLINT_OPTIONS');
+    .filter(name => !notBlocks.has(name));
 
   // Comments are stripped before the search, and the search is word-bounded.
   // Both matter: `eslint.config.js`'s own JSDoc names blocks in prose, so a raw

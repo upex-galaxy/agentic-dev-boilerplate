@@ -1433,6 +1433,13 @@ export const SRC_IMPORT_ALIASES = { files: ['src/**/*.ts'], rules: {} };
     expect(validateEslintBlockWiring(root)).toEqual([]);
   });
 
+  test('GUARD_ENFORCEMENT_LEVEL and GUARD_LAYERS are values, never demanded as blocks', () => {
+    const root = contractFixture();
+    write(root, 'eslint.config.base.js', 'export const GUARD_ENFORCEMENT_LEVEL = \'warn\';\nexport const GUARD_LAYERS = {};\nexport const GUARD_RULES = {};\n');
+    write(root, 'eslint.config.js', 'import { GUARD_RULES } from \'./eslint.config.base.js\';\nexport default antfu({}, GUARD_RULES);\n');
+    expect(validateEslintBlockWiring(root)).toEqual([]);
+  });
+
   test('a repo without the split config is not a finding', () => {
     expect(validateEslintBlockWiring(contractFixture())).toEqual([]);
   });

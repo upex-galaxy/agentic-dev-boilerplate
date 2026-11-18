@@ -142,6 +142,19 @@ framework_gates_pre_commit() {
     }
   fi
 
+  # guard-manifest freshness gate (GUARD rule R4) — only runs when staged files
+  # touch the features root or the manifest, and only where the script exists.
+  # The check prints "no features folder" and passes in a repo with no app code.
+  if echo "$_fg_staged" | grep -qE '^(src/features/|guard-manifest\.json$|scripts/guard-manifest\.ts$)' \
+    && grep -q '"guard:manifest:check"' package.json 2>/dev/null; then
+    bun run guard:manifest:check || {
+      echo ""
+      echo "❌ guard-manifest.json is stale. Fix:"
+      echo "   bun run guard:manifest && git add guard-manifest.json"
+      exit 1
+    }
+  fi
+
   # documentation-contract reminder — WARN-ONLY at commit time (ADR-0017): the
   # pages a marked region names often land in the next commit of the same push.
   # The pre-push run below is the one that blocks.
@@ -157,6 +170,7 @@ framework_gates_pre_commit() {
 #   + conditional agents:compat:check (when staged files affect the contract)
 #   + conditional instructions:check (when staged files affect the instructions)
 #   + conditional agents:schema:check (when staged files affect the project schema)
+#   + conditional guard:manifest:check (when staged files affect the features root)
 #   + the documentation-contract reminder, warn-only.
 # pre-push adds the full-repo checks pre-commit skips for speed:
 #   - format:check / lint:check  full repo (lint-staged only touches staged files at commit)
