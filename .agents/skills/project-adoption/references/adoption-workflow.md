@@ -119,8 +119,13 @@ Run the app's own scripts from `stack.app_root` with its package manager: `build
 - Monorepo: which app, when 1.1 found several.
 - API contract: whether the app serves or commits an OpenAPI spec, and where.
 - Script collisions from 1.3: the team keeps its own (the default) or adopts the composition later by hand.
+- Web platform target: the Baseline target the UI holds to, with Baseline Widely available recommended unless the product needs newer features.
 
 An unanswered item becomes a Discovery Gap.
+
+### 1.7 Web platform scan (read-only)
+
+Run `npx modern-web-guidance@latest legacy-scan .` from `stack.app_root`. It reads the app and changes nothing, so it fits the sealed phases. Turn its findings into a modernization list for the plan: one row per pattern, the native feature that replaces it, the files it touches and the effort. The list is a proposal for the team, never applied by this skill (the refusal list covers every file under `stack.app_root`). A failed or unavailable run goes under `## Discovery Gaps`.
 
 ---
 
@@ -166,7 +171,8 @@ The app's own instruction text never loads at session start. `--adopt` moved it,
 1. Pending merge (only when `.agents/prompts/adopt-instructions.md` exists). Show the saved file's router row and the head of `references/app-instructions.md`. Copy the current `AGENTS.md` and `CLAUDE.md` to `.backups/project-adoption/<date>/`, write the saved file to `AGENTS.md` byte for byte and write `CLAUDE.md` as the shim. Delete the saved file only after the write verified (re-read, byte-compare).
 2. Legacy layout (only when `AGENTS.md` carries `## 0. Project instructions (pre-adoption)`, an app adopted before the skill existed). Back up `AGENTS.md`, move the block's text between that heading and the closing `---` verbatim into `.agents/skills/<app>-context/references/app-instructions.md` (the shape `cli/lib/adopt-app-context.ts` writes: one `## From` heading per original file), write its `SKILL.md`, replace the block with the router row and add the `agent-project.md` pointer. Before deleting the block, prove every original line and heading is in the reference, byte for byte.
 3. Description. The `description` the CLI wrote is mechanical (the app's name, its `package.json` description, its own section titles). Rewrite that one field from the Phase 1 analysis so it routes by the app's real domain (entities, flows, the words its team uses), under 1024 characters. The preserved text stays untouched (anti-pattern A5).
-4. Run `bun run agents:compat`, then `bun run agents:compat:check` (exit 0) and `bun run instructions:check` (the router row resolves and `AGENTS.md` stays under its budget with the row). Every write to `agent-project.md` here follows `agentic-dev-core/references/instructions-doctrine.md` §4.
+4. Baseline target (when the questionnaire answered it and the plan's approval line allows it). Write one line under a `## Web platform` heading in `.agents/instructions/agent-project.md`, in the form `This project's Baseline target is Baseline Widely available.` (or `Baseline <year>`), following `instructions-doctrine.md` §4. Volatile features stay gated, and enabling them (`npx modern-web-guidance@latest set-allow-volatile-features`) is the team's call.
+5. Run `bun run agents:compat`, then `bun run agents:compat:check` (exit 0) and `bun run instructions:check` (the router row resolves and `AGENTS.md` stays under its budget with the row). Every write to `agent-project.md` here follows `agentic-dev-core/references/instructions-doctrine.md` §4.
 
 Without the merge row approved, the instruction signal stays `PENDING` and the plan says so: a plain `bun sync` refuses at its cross-harness preflight until the merge is applied.
 

@@ -97,6 +97,16 @@ Required fields missing on the instance (never created here; fallback per `.agen
 | types | ... | ... | ... | ... |
 | test | <run | not measured: reason> | ... | ... | ... |
 
+### Web platform (Phase 1.7)
+
+Baseline target: <Baseline Widely available | Baseline <year> | not answered (Discovery Gap)>.
+
+| Legacy pattern | Native replacement | Files | Effort |
+|---|---|---|---|
+| <pattern from `legacy-scan`> | <platform feature> | <paths> | <S/M/L> |
+
+A proposal for the team. This skill applies none of it.
+
 ## 10. Team decisions and team-owed prerequisites (never done by this skill)
 
 | Item | Why it matters | Skill that needs it | Proposal |

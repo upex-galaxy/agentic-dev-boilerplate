@@ -132,6 +132,7 @@ The entry-time scan (§3.1) loads a community skill only when the task domain "m
 - `ui-ux-pro-max`: searchable design data (styles, palettes, font pairings, UX guidelines, per-stack UI rules).
 - `impeccable`: the critique and polish pass (hierarchy, states, responsive behaviour, motion, UX copy).
 - `emil-design-eng`: component-level polish and animation decisions.
+- `modern-web-guidance`: platform correctness. It picks the native web feature and its Baseline-aware fallback (dialog, popover, anchor positioning, view transitions, container queries, form validation, scheduling, passkeys, accessibility) where the others pick the look. Before writing UI behaviour, run `npx modern-web-guidance@latest search "<task>"`, then `retrieve "<guide-id>"` on the best match. The project's Baseline target is the line in `agent-project.md` (`This project's Baseline target is Baseline <year>.`): read it before the first `search` and keep it in the conversation, because the skill sees only what is loaded; without one the skill assumes Baseline Widely available. Volatile features stay gated until a person runs `npx modern-web-guidance@latest set-allow-volatile-features`.
 
 Two more join only when the step matches their scope:
 
@@ -141,6 +142,7 @@ Two more join only when the step matches their scope:
 The contract is the same at every step that cites this section:
 
 1. Load the named skills before the first write of the step, not after.
+   After the first write, two checks run on what was built: `impeccable` critiques the built screen (hierarchy, states, responsive behaviour, copy), and `npx modern-web-guidance@latest legacy-scan <changed UI files>` flags legacy patterns in the touched files. The step records both results.
 2. If one is not installed, say so once in the session (every missing skill in one line, with the step) and point at the install path: `bun setup` installs the project-level list (`PROJECT_LEVEL_SKILLS` in `cli/install.ts`), or one `bunx skills add <package> --skill <name> --yes` with the package from that list. `bun run setup:doctor` checks the machine. Then continue with the step. A missing community skill is never a hard stop and never a silent skip, so record `skill_resolution: "fallback-inline"` (§3.4).
 3. The skill guides how. The step's own rules (the project's ADRs, `DESIGN.md` tokens, Critical Rules) still win on a conflict.
 

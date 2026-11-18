@@ -149,6 +149,14 @@ A UI story cannot reach merge with an open, unratified live-UI gap. On any gap:
 
 Non-UI stories skip live-UI validation entirely.
 
+### 5.4 Post-write pass (after the UI is built)
+
+The design set loads before the first write (`agentic-dev-core/references/skill-composition-strategy.md` §3.5); this pass runs after it, on the built screen, in the Stage 2 implementer and again in the Stage 3 verifier.
+
+1. `/impeccable` critiques the live screen (hierarchy, states, responsive behaviour, copy) from the §4 screenshots.
+2. `npx modern-web-guidance@latest legacy-scan <the changed UI files>` (paths under `src/features/<x>/` and the shared components touched) lists legacy patterns the platform now covers.
+3. Record each finding like any other validation finding and loop through §5.3: fix, or ratify a deliberate keep with its reason. Save the critique notes and the scan output in `.session/sprint-development/<KEY>/evidence/` so the PR can cite them.
+
 **Hard rules (carried from `SKILL.md`).** Validate against the running dev server (`{{stack.scripts.dev}}`, confirmed in the app's `package.json`), never against a production build. Log in as the declared automation identity, resolved by variable name from `.env`, never hardcoded and never bypassing the app's login path (§0 and `live-ui-identity.md`), in a named in-memory `/playwright-cli` session (§3). Before reporting, close every session, delete any session material written to disk and disclose `browser_sessions:`, `secrets_materialized:` and `cleaned:` (§6).
 
 ---

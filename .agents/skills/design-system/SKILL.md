@@ -81,7 +81,7 @@ Expected matches (illustrative; the real list depends on what the user has insta
 | `frontend-ui`   | `tailwind-css-patterns`, `shadcn`, `frontend-design`, `ui-ux-pro-max`, `emil-design-eng`, `impeccable`, `design-taste-frontend`, `redesign-existing-projects` (T3) |
 | `accessibility` | `accessibility` (T3)                                                                                                                                               |
 
-The screen phase loads the design set at the step that writes a screen (Mode C below), whatever the entry scan decided (`agentic-dev-core/references/skill-composition-strategy.md` §3.5).
+The screen phase loads the design set at the step that writes a screen (Mode C below), whatever the entry scan decided (`agentic-dev-core/references/skill-composition-strategy.md` §3.5). `modern-web-guidance` sits next to that set and owns platform correctness (native features, Baseline fallbacks), while the design set owns visual direction.
 
 If neither the session skill list nor the `.agents/skills/` folder can be read, skip the scan and log `skill_resolution: "fallback-inline"` plus `missing: [<categories with no resolution>]` in the result envelope (strategy doc §3.4).
 

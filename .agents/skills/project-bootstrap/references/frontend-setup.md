@@ -125,7 +125,7 @@ The questions this phase asks the user cover layout, priority components, packag
 |---|---|
 | 0 | Package manager selection |
 | 0.5 | Backend types integration |
-| 1 | Context analysis: 1.4 `DESIGN.md` pre-flight, 1.5 layout and priority components, 1.6 UI component strategy |
+| 1 | Context analysis: 1.4 `DESIGN.md` pre-flight, 1.5 layout and priority components, 1.5.4 Baseline target, 1.6 UI component strategy |
 | 2 | Demo page decision |
 | 3 | Project setup: dependencies, folders, Tailwind, global styles |
 | 4 | Design system components (4.5: layout components) |
@@ -457,13 +457,27 @@ Based on `DESIGN.md`, your answers and the project analysis, here is the design 
 **Next step:** decide the UI component strategy.
 ```
 
+### Step 1.5.4: question 3, Baseline target
+
+Ask with the `AskUserQuestion` tool.
+
+Question: "Which Baseline target should the UI code hold to?" Header: "Baseline". MultiSelect: false.
+
+Options:
+
+1. **Baseline Widely available** (recommended). Features every major browser has shipped for roughly 30 months. Right unless the product needs newer features.
+2. **Baseline <year>** (a named year, for example the current or previous one). Admits features that became Baseline Newly available up to that year. Fits a product with a known modern-browser audience.
+3. **Choose for me**. Use Baseline Widely available.
+
+Write the answer as one line under a `## Web platform` heading in `.agents/instructions/agent-project.md` (project-owned, so `bun sync` keeps it), in the form `This project's Baseline target is Baseline Widely available.` or `This project's Baseline target is Baseline <year>.`. Without the line, `modern-web-guidance` assumes Baseline Widely available. Say once that volatile features (not yet Baseline) stay gated and off by default, and that a person enables them with `npx modern-web-guidance@latest set-allow-volatile-features`; never run that command here.
+
 ---
 
 ## Phase 1.6: UI component strategy (interactive)
 
 Decide how to implement the design system's components. This choice changes development time and effort a lot.
 
-Required skills, loaded before Step 1.6.1: the design set (`/frontend-design` + `/ui-ux-pro-max` + `/impeccable` + `/emil-design-eng`), `/shadcn` and `/tailwind-css-patterns` (category `frontend-ui`). They own component composition, the shadcn CLI and registry, and the Tailwind patterns every component below is written with; the shadcn MCP, when present, is the catalog, not a substitute. Not installed: say so once, point at `bun setup` or the single `bunx skills add` line from `PROJECT_LEVEL_SKILLS` in `cli/install.ts`, then continue (`agentic-dev-core/references/skill-composition-strategy.md` §3.5).
+Required skills, loaded before Step 1.6.1: the design set (`/frontend-design` + `/ui-ux-pro-max` + `/impeccable` + `/emil-design-eng` + `/modern-web-guidance`), `/shadcn` and `/tailwind-css-patterns` (category `frontend-ui`). They own component composition, the shadcn CLI and registry, and the Tailwind patterns every component below is written with; the shadcn MCP, when present, is the catalog, not a substitute. Not installed: say so once, point at `bun setup` or the single `bunx skills add` line from `PROJECT_LEVEL_SKILLS` in `cli/install.ts`, then continue (`agentic-dev-core/references/skill-composition-strategy.md` §3.5).
 
 ### Step 1.6.1: question, UI component strategy
 
