@@ -110,7 +110,7 @@ Run the interactive installer once after cloning:
 bun setup
 ```
 
-It bootstraps `.agents/`, records the harnesses you pick in `.agents/project.yaml` (`harnesses:`), wires Engram (persistent memory) per agent with `engram setup`, asks where secret values live (`.env` by default, or a secret manager), wires the `.env` keys for every MCP server `.mcp.json` declares, and prints how to connect web search at harness level. Full details are in [`INSTALLER.md`](../../../INSTALLER.md).
+It bootstraps `.agents/`, records the harnesses you pick in `.agents/project.yaml` (`harnesses:`), wires Engram (persistent memory) per agent with `engram setup`, offers RTK token savings on Claude Code (optional, user level), asks where secret values live (`.env` by default, or a secret manager), wires the `.env` keys for every MCP server `.mcp.json` declares, and prints how to connect web search at harness level. Full details are in [`INSTALLER.md`](../../../INSTALLER.md).
 
 After setup, fill `.env` (see "Critical env vars").
 
@@ -265,6 +265,34 @@ A step that loads one of these says `Call the Skill tool with "<name>"` and stat
 ## Persistent memory via Engram
 
 `bun setup` wires Engram per agent with `engram setup <agent>` and offers the Engram Claude Code plugin, so memory survives across sessions and compactions. No gentle-ai bundle is installed. `AGENTS.md` §12 has the proactive-save protocol and `INSTALLER.md` the details.
+
+---
+
+## Token savings with RTK (optional, user level)
+
+RTK (`rtk-ai/rtk`) compresses the output of shell commands such as `git status` before the agent reads it, so sessions spend fewer tokens. `rtk gain` shows the savings. It installs once per machine, in the user-level Claude Code config, and works only with Claude Code here. `bun setup` already offers it in an interactive run ([`INSTALLER.md`](../../../INSTALLER.md), "RTK").
+
+Offer the prompt below only to a newcomer on Claude Code who does not have RTK (`rtk gain` fails or `rtk` is missing), and ask first: it edits `~/.claude/settings.json`. Never install it on your own, and never when the user declined it. The prompt itself shows a dry run and waits for a confirmation before it changes anything.
+
+````text
+Install RTK (rtk-ai/rtk), the token-saving output compressor, for Claude Code on this machine.
+
+First, check the machine state. If `rtk` is already installed (`rtk gain` exits 0) and its Claude Code hook is already in ~/.claude/settings.json (a PreToolUse command containing "rtk hook claude"), report that and change nothing.
+
+Otherwise:
+1. Detect the OS and the package manager, then install with the matching command:
+   - macOS or Linux with Homebrew: brew install rtk
+   - Windows: winget install rtk-ai.rtk
+   - Anything else: curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/refs/heads/master/install.sh | sh
+2. Verify with `rtk --version` and `rtk gain`. A different crate also named "rtk" exists: if `rtk gain` fails, it is the wrong binary, so stop and explain.
+3. Run `rtk -v init --global --dry-run`, show me the full output and wait for my confirmation.
+4. After I confirm, run `rtk init --global --auto-patch`.
+5. Tell me to restart Claude Code so the hook loads.
+6. Validate: `rtk rewrite "git status"` must print a rewritten command, and `rtk rewrite "supabase db diff"` must exit 1 (not rewritten, by design).
+
+Do not use rtk-proxy or any pipeline feature. If any step fails, stop and explain what happened instead of working around it.
+To uninstall later: rtk init --global --uninstall
+````
 
 ---
 

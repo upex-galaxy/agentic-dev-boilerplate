@@ -74,6 +74,7 @@ Before running `bunx create-agentic-dev@latest` or `bun install && bun setup`, i
 | Tool          | Min version | Why                                                                                                                              | Install                                                                                                                                                                                              |
 | ------------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **engram** | `>= 3.0.0` | Engram, the MCP-based persistent memory across sessions; `bun setup` wires it per agent with `engram setup`. Framework still runs without it, but cross-session memory is off. | Homebrew: `brew trust gentleman-programming/tap && brew install gentleman-programming/tap/engram` · Go: `go install github.com/Gentleman-Programming/engram/v3/cmd/engram@latest` · [repo](https://github.com/Gentleman-Programming/engram) |
+| **rtk** (optional) | none | Output compressor for Claude Code: it shortens the output of commands such as `git status` before the agent reads it, so sessions spend fewer tokens (`rtk gain` shows the savings). `bun setup` offers it once, in the Team phase, only for Claude Code and only in an interactive run; it installs at user level, once per machine, and touches nothing when RTK is already there. A non-interactive run prints the manual command instead. See [`INSTALLER.md`](INSTALLER.md#rtk-token-savings-for-claude-code). | `brew install rtk` (macOS / Linux), `winget install rtk-ai.rtk` (Windows), or answer yes when `bun setup` asks. |
 
 `acli` and `gh` missing are warnings too: the Jira phase or the GitHub phase is skipped, and the closing report says how to finish it later.
 
@@ -266,7 +267,7 @@ Prefer to start your project **on GitHub from day one** (your own repo, your own
 4. Install + configure:
    ```bash
    bun install
-   bun setup        # Engram (engram setup), community skills, .env wiring, MCPs
+   bun setup        # Engram (engram setup), RTK (optional), community skills, .env wiring, MCPs
    ```
 5. (Optional) Rename the project inside the codebase: edit `package.json` → `name`, and `.agents/project.yaml` → `project.name`.
 

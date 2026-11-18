@@ -18,11 +18,11 @@ Before any question and any write, `cli/preflight.ts` (Node built-ins only, so i
 
 ### Team
 
-Which AI agents this project works with: Claude Code, OpenCode, Codex, Pi (see [Harness detection](#harness-detection-team-phase)). The selection is recorded in `.agents/project.yaml` as `harnesses:`. Team also asks what the Install phase needs, so the downloads can start without waiting for anyone: the user-level community skills (one checkbox per skill, see [What stays local](#what-stays-local-committed-in-this-repo)) and, on Claude Code, whether to add the Engram plugin.
+Which AI agents this project works with: Claude Code, OpenCode, Codex, Pi (see [Harness detection](#harness-detection-team-phase)). The selection is recorded in `.agents/project.yaml` as `harnesses:`. Team also asks what the Install phase needs, so the downloads can start without waiting for anyone: the user-level community skills (one checkbox per skill, see [What stays local](#what-stays-local-committed-in-this-repo)) and, on Claude Code, whether to add the Engram plugin and whether to install RTK (see [RTK](#rtk-token-savings-for-claude-code)).
 
 ### Install (in the background)
 
-Starts as soon as Team is answered and runs in a background lane ("En segundo plano" in the page) while the next phases ask their questions: `engram setup <agent>` for each selected agent, the project-level and user-level community skills (`bunx skills add`), and the agent compatibility repair (the `.claude/skills` alias, project commands named like a skill moved aside). There are no questions inside this phase; the output of each program streams into its step's log lines.
+Starts as soon as Team is answered and runs in a background lane ("En segundo plano" in the page) while the next phases ask their questions: `engram setup <agent>` for each selected agent, RTK (Claude Code only, if you said yes in Team, see [RTK](#rtk-token-savings-for-claude-code)), the project-level and user-level community skills (`bunx skills add`), and the agent compatibility repair (the `.claude/skills` alias, project commands named like a skill moved aside). There are no questions inside this phase; the output of each program streams into its step's log lines.
 
 ### Project
 
@@ -224,6 +224,7 @@ Then `bun run setup:doctor --json` to confirm the rest.
 | `INSTALL_SECRETS_PROVIDER=1password`        | Opt in to the secret manager (default `.env`); pair with `INSTALL_SECRETS_VAULT=<vault>` |
 | `INSTALL_SKIP_ENGRAM=1`                     | Treat Engram as skipped: no Engram question, no `engram setup`                |
 | `INSTALL_FORCE_ENGRAM=1`                    | Re-run `engram setup` even when the state file says it ran (legacy alias: `INSTALL_FORCE_AGENTS_SETUP=1`) |
+| `INSTALL_FORCE_RTK=1`                       | Re-run the RTK step even when the state file says it ran (also clears a remembered decline) |
 | `INSTALL_FORCE_COMMUNITY_SKILLS=1`          | Re-run the community skills install even when the state file says it ran (declined user-level skills stay out) |
 | `INSTALL_FORCE_GITHUB_REMOTE=1`             | Re-run the GitHub phase even when a remote is recorded                        |
 
@@ -344,6 +345,28 @@ claude plugin marketplace add Gentleman-Programming/engram && claude plugin inst
 > **Why not gentle-ai.** Earlier versions drove `gentle-ai install --preset minimal`. That preset is not "Engram only": it installs Engram plus the SDD skills, and gentle-ai writes its own orchestrator / agent-routing instructions, hooks and telemetry into your user-level agent config, which compete with this repo's orchestration doctrine (`AGENTS.md` §3). The repo's own workflow skills own the dev workflow, so the installer now talks to the engram binary directly.
 
 The integration is **not strict**. If you skip Engram, the repo still works: workflow skills committed locally (`/sprint-development`, `/project-foundation`, etc.) keep functioning, and the canonical MCPs are still configured. What you lose is persistent cross-session memory. Section "How to opt out" below details the trade-off.
+
+---
+
+## RTK: token savings for Claude Code
+
+[RTK](https://github.com/rtk-ai/rtk) compresses the output of shell commands such as `git status` or `ls` before the agent reads it, so a session spends fewer tokens. To see what it saved on your machine, run `rtk gain`. It is optional: nothing in the repo depends on it.
+
+The installer asks once, in the Team phase, and only when Claude Code is one of the selected agents and the run is interactive. The question is skipped when RTK is already installed with its Claude Code hook. A yes installs the binary (Homebrew where available, `winget` on Windows, the upstream install script otherwise) and then runs `rtk init --global --auto-patch`, which adds the hook to your user-level `~/.claude/settings.json`. Restart Claude Code afterwards so the hook loads.
+
+- **User level, once per machine.** The hook is shared by every repo on the machine, so a machine that has both the QA and the DEV boilerplate installs it only once. When the binary and its hook are already there, the installer touches nothing.
+- **Never in a non-interactive run.** It writes your user-level Claude Code config, so the installer prints the manual prompt instead of running anything.
+- **A decline is remembered** and the question is not asked again. `INSTALL_FORCE_RTK=1` asks again.
+- **No proxy and no pipelines.** The installer sets up the command-output hook only.
+- **It never blocks the run.** A failed install prints the reason and the same manual prompt, and the run goes on.
+
+The manual prompt (paste it into an AI session) lives in [`agentic-dev-onboard`](.agents/skills/agentic-dev-onboard/SKILL.md), section "Token savings with RTK". To remove RTK:
+
+```bash
+rtk init --global --uninstall
+```
+
+Other agents are not wired from here: RTK offers `rtk init --agent <name>` for them.
 
 ---
 

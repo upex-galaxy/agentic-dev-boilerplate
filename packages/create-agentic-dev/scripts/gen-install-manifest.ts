@@ -169,10 +169,12 @@ export const PHASE_STEPS: Record<string, StepSpec[]> = {
   team: [
     { step: 'AI agents', what: 'Which agents the project supports (Claude Code, OpenCode, Codex, Pi), recorded in .agents/project.yaml `harnesses:`; the files of an agent you drop can be removed.', probes: ['askAgents(', 'recordHarnessSelection('], prompts: ['agents'] },
     { step: 'Engram', what: 'Detects Engram 3.0+ and, for Claude Code, offers its plugin (session hooks, installed once per machine).', probes: ['detectEngram('], prompts: ['engram-incompatible', 'engram-plugin'] },
+    { step: 'RTK', what: 'Claude Code only, interactive runs only: offers RTK, an output compressor that saves tokens, installed once per machine at user level; skipped when it is already installed with its hook or was declined before.', probes: ['askRtk('], prompts: ['rtk-install'] },
     { step: 'User-level skills', what: 'Which user-level community skills to install, one by one; a declined skill is left out of later runs.', probes: ['askUserLevelSkills('], prompts: ['user-skills'] },
   ],
   install: [
     { step: 'Engram wiring', what: 'engram setup for each selected agent, plus the Claude Code plugin when accepted. Runs in the background while the next phases ask their questions.', probes: ['runEngramStep('] },
+    { step: 'RTK install', what: 'Installs RTK and its Claude Code user-level hook when accepted in Team; never installs in a non-interactive run, where it prints the manual prompt instead.', probes: ['runRtkStep('] },
     { step: 'Community skills', what: 'bunx skills add: project-level skills into .agents/skills/, the chosen user-level skills globally.', probes: ['runCommunityStep('] },
     { step: 'Link the skills', what: 'Repairs the agent contract: the .claude/skills alias onto .agents/skills/ and the CLAUDE.md shim.', probes: ['compatibilityStep('] },
   ],

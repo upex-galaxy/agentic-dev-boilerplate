@@ -8,9 +8,9 @@
  *   pre       Preflight: everything knowable in seconds, before any write
  *             (cli/preflight.ts), then one "Empezamos?" confirmation.
  *   team      Which AI agents this project supports, and the questions the
- *             Install phase needs (user-level skills, the Engram plugin).
+ *             Install phase needs (user-level skills, the Engram plugin, RTK).
  *   install   Background lane `downloads`, started as soon as Team is answered
- *             (owner answer Q2): Engram wiring, community skills, compatibility
+ *             (owner answer Q2): Engram wiring, RTK, community skills, compatibility
  *             repair. The questions below are asked meanwhile.
  *   project   `.agents/project.yaml` identity and environments (agents:setup,
  *             absorbed: the page asks, `agents-setup --non-interactive` writes).
@@ -45,6 +45,7 @@
  *   INSTALL_SECRETS_VAULT=<vault>     the vault its references point at
  *   INSTALL_SKIP_ENGRAM=1             Treat Engram as skipped
  *   INSTALL_FORCE_ENGRAM=1            Force re-run of `engram setup` (legacy alias: INSTALL_FORCE_AGENTS_SETUP=1)
+ *   INSTALL_FORCE_RTK=1               Force re-run of the RTK step (also clears a remembered decline)
  *   INSTALL_FORCE_COMMUNITY_SKILLS=1  Force re-run of community skills install
  *   INSTALL_FORCE_GITHUB_REMOTE=1     Force re-run of GitHub remote setup
  *   INSTALL_SKIP_COMMUNITY=1          Skip `bunx skills add`
@@ -52,6 +53,7 @@
  */
 
 import type { Harness } from './lib/harness-selection.ts';
+import type { RtkDeps } from './lib/rtk-setup.ts';
 import type { NextStep, Tile } from './lib/ui/events.ts';
 import type { InstallerUi } from './lib/ui/installer-run.ts';
 import type { AskInput, StepHandle } from './lib/ui/reporter.ts';
@@ -86,6 +88,7 @@ import {
   withHarnesses,
 } from './lib/harness-selection.ts';
 import { createInstallerTerminal, PromptCancelled } from './lib/install-terminal.ts';
+import { offerRtk, rtkState } from './lib/rtk-setup.ts';
 import {
   ADAPTERS,
   applySecretsChoice,
@@ -480,6 +483,7 @@ const FORCE_ENGRAM = process.env.INSTALL_FORCE_ENGRAM === '1' || process.env.INS
 // Claude Code through the generated `.claude/skills` alias) and user-level
 // skills reach every selected harness. Implies a forced community re-run.
 const SYNC_SKILLS = ARGV.includes('--sync-skills');
+const FORCE_RTK = process.env.INSTALL_FORCE_RTK === '1';
 const FORCE_COMMUNITY_SKILLS = process.env.INSTALL_FORCE_COMMUNITY_SKILLS === '1' || SYNC_SKILLS;
 const FORCE_GITHUB_REMOTE = process.env.INSTALL_FORCE_GITHUB_REMOTE === '1';
 // INSTALL_SKIP_JIRA=1: the Jira phase is skipped (a project that does not use Jira; also the e2e fixtures).
@@ -1039,6 +1043,76 @@ async function runEngramStep(agents: AgentId[], state: InstallState, plan: Engra
   markStepDone(state, key);
   step.end(failed > 0 ? 'warn' : 'ok', agents.join(', '));
 }
+
+// LINT.IfChange(rtk-setup)
+const RTK_STEP_KEY = 'rtkSetupRanAt';
+const RTK_DECLINED_KEY = 'rtk:claude-code';
+
+function realRtkDeps(o: { nonInteractive: boolean, confirm: (message: string) => Promise<boolean>, out: Out }): RtkDeps {
+  return {
+    platform: process.platform,
+    nonInteractive: o.nonInteractive,
+    has: binary => which(binary) !== null,
+    run: (cmd, args) => tryRun(cmd, args),
+    readClaudeSettings: () => {
+      try { return readFileSync(join(homedir(), '.claude', 'settings.json'), 'utf8'); }
+      catch { return null; }
+    },
+    confirm: o.confirm,
+    out: o.out,
+  };
+}
+
+async function askRtk(agents: AgentId[], state: InstallState): Promise<boolean | null> {
+  if (!agents.includes('claude-code') || NON_INTERACTIVE) { return null; }
+  if (FORCE_RTK) { delete state.skills[RTK_DECLINED_KEY]; }
+  else if (state.steps?.[RTK_STEP_KEY] || state.skills[RTK_DECLINED_KEY] === 'declined') { return null; }
+  if (rtkState(realRtkDeps({ nonInteractive: false, confirm: async () => false, out: consoleOut })) === 'ready') { return null; }
+  const answer = await ask<boolean>({
+    id: 'rtk-install',
+    kind: 'confirm',
+    kicker: 'RTK',
+    title: tr('Instalamos RTK para Claude Code?', 'Install RTK for Claude Code?'),
+    why: tr('Comprime la salida de comandos como git status o ls y ahorra tokens. Se instala una vez por máquina, en tu configuración de usuario de Claude Code; si ya está, no se toca.', 'It compresses the output of commands like git status or ls and saves tokens. It installs once per machine, in your Claude Code user config; if it is already there, nothing is touched.'),
+    spec: { yes: tr('Sí, instalarlo', 'Yes, install it'), no: tr('No por ahora', 'Not now') },
+    default: true,
+  });
+  if (!answer) {
+    state.skills[RTK_DECLINED_KEY] = 'declined';
+    saveState(state);
+  }
+  return answer;
+}
+
+async function runRtkStep(agents: AgentId[], state: InstallState, plan: boolean | null, lane: string): Promise<void> {
+  const step = UI!.step({ id: 'rtk', phase: 'install', lane, title: tr('Ahorro de tokens (RTK)', 'Token savings (RTK)') });
+  const out = stepOut(step);
+  const others = agents.filter(a => a !== 'claude-code');
+  if (others.length > 0) {
+    out.info(tr(`Otros agentes (${others.join(', ')}): RTK trae \`rtk init --agent <nombre>\`; no se instala desde aquí.`, `Other agents (${others.join(', ')}): RTK offers \`rtk init --agent <name>\`; it is not installed from here.`));
+  }
+  if (!agents.includes('claude-code')) {
+    step.end('skipped', tr('solo se ofrece para Claude Code', 'only offered for Claude Code'));
+    return;
+  }
+  if (state.steps?.[RTK_STEP_KEY] && !FORCE_RTK) {
+    step.end('skipped', tr('ya resuelto en una corrida anterior (INSTALL_FORCE_RTK=1 para repetir)', 'already settled in an earlier run (INSTALL_FORCE_RTK=1 to repeat)'));
+    return;
+  }
+  if (plan === null && !NON_INTERACTIVE && state.skills[RTK_DECLINED_KEY] === 'declined') {
+    step.end('skipped', tr('rechazado antes, no se vuelve a ofrecer (INSTALL_FORCE_RTK=1 para preguntar de nuevo)', 'declined earlier, not offered again (INSTALL_FORCE_RTK=1 to ask again)'));
+    return;
+  }
+  const outcome = await offerRtk(realRtkDeps({ nonInteractive: NON_INTERACTIVE, confirm: async () => plan === true, out }));
+  if (outcome === 'installed' || outcome === 'already-installed') {
+    markStepDone(state, RTK_STEP_KEY);
+    step.end('ok', outcome === 'installed' ? tr('instalado; reinicia Claude Code', 'installed; restart Claude Code') : tr('ya estaba listo', 'already ready'));
+    return;
+  }
+  if (outcome === 'declined') { markStepDone(state, RTK_STEP_KEY); }
+  step.end(outcome === 'failed' ? 'warn' : 'skipped', outcome);
+}
+// LINT.ThenChange(README.md, INSTALLER.md, docs/onboarding.html, .agents/skills/agentic-dev-onboard/SKILL.md, packages/create-agentic-dev/scripts/gen-install-manifest.ts)
 
 // ============================================================================
 // Install lane: community skills
@@ -3059,6 +3133,7 @@ async function main(): Promise<void> {
       default: true,
     });
   }
+  const rtk = await askRtk(agents, state);
   const pickedUserSkills = await askUserLevelSkills(state, agents);
   ui.phaseEnd('team');
 
@@ -3066,6 +3141,7 @@ async function main(): Promise<void> {
   ui.phase('install', tr('Memoria y skills. Corren en segundo plano mientras respondes lo que sigue.', 'Memory and skills. They run in the background while you answer what comes next.'));
   const installLane = (async () => {
     await runEngramStep(agents, state, { run: engramRun, plugin }, lane);
+    await runRtkStep(agents, state, rtk, lane);
     await runCommunityStep(agents, state, 'project', null, lane);
     await runCommunityStep(agents, state, 'global', pickedUserSkills, lane);
     compatibilityStep(lane);
