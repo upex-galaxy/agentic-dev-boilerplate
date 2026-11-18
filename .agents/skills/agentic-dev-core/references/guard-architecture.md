@@ -36,7 +36,7 @@ An adopted app keeps its folders. The plugin reads the layer map from ESLint `se
 
 ## 4. Severity
 
-`GUARD_ENFORCEMENT_LEVEL` sets the level of every GUARD check. It is `warn` this release and `error` the next, and `scripts/guard-manifest.ts` mirrors it. A rule at `warn` never fails CI, so a warning is work owed, not noise.
+`GUARD_ENFORCEMENT_LEVEL` sets the level of every GUARD check. It is `warn` this release and `error` the next, `scripts/guard-manifest.ts` mirrors it, and so do the `warn` severities in `.oxlintrc.base.json` (`scripts/oxlint-config.test.ts` fails on drift). Flip all three together. A rule at `warn` never fails CI, so a warning is work owed, not noise.
 
 ## 5. The example
 

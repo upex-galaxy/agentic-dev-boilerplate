@@ -110,7 +110,7 @@ function lint(): number {
 /** The legs `repo` runs, in order: script names on greenfield, scoped checks on an adopted app. */
 export function repoLegs(adopted: boolean): Array<{ name: string, run: () => number }> {
   const script = (name: string) => ({ name, run: () => spawnSync('bun', ['run', name], { stdio: 'inherit' }).status ?? 1 });
-  if (!adopted) { return [script('format:check'), script('lint:check'), script('types:check')]; }
+  if (!adopted) { return [script('format:check'), script('lint:check'), script('oxlint:check'), script('types:check')]; }
   return [{ name: 'tooling:lint:check', run: lint }, { name: 'tooling:types:check', run: types }];
 }
 

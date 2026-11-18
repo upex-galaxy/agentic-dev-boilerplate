@@ -126,7 +126,7 @@ export const ADOPT_NEXT_STEP = 'Adopción instalada: nada de la app se sobrescri
 // scope (`cli/`, `scripts/`): an adopted app keeps its root `tsconfig.json` and
 // ESLint config, so `tooling:types:check` / `tooling:lint:check` (and the
 // framework gates on an adopted repo) judge the tooling through these instead.
-const TOOLING_FILES = ['.editorconfig', '.prettierrc', '.gitattributes', 'eslint.config.base.js', 'eslint.config.tooling.mjs', 'tsconfig.tooling.json'];
+const TOOLING_FILES = ['.editorconfig', '.prettierrc', '.gitattributes', 'eslint.config.base.js', 'guard-eslint-plugin.js', '.oxlintrc.base.json', 'eslint.config.tooling.mjs', 'tsconfig.tooling.json'];
 // `agentsFrameworkFiles` overrides bootstrapOnlyPaths for the `agents`
 // component: a basename listed here is synced even when the path also matches
 // a bootstrap-only entry. Keep it to files the boilerplate genuinely owns.
@@ -965,6 +965,7 @@ const PROTECTED_WATCHLIST: ProtectedWatchEntry[] = [
   { path: '.agents/jira-required.yaml', reason: 'methodology manifest: upstream owns the baseline work_types + field slugs, the project owns its fallbacks and omissions. It is the INPUT to jira:sync-workflows, which catalogs only the work_types declared in it — a stale manifest silently regenerates a truncated jira-workflows.json and still exits 0.', structural: true },
   { path: 'tsconfig.json', reason: 'path aliases are the contract every synced file imports through — a new upstream alias breaks synced code in a project whose tsconfig never learned it.' },
   { path: 'eslint.config.js', reason: 'project-owned overrides; lint-staged and lint:check run eslint against this local config. The shared rules and the cli/ import-closure block that guards the updater live in the synced `eslint.config.base.js` this file spreads (`agents:compat:check` fails on a base block it does not wire).' },
+  { path: '.oxlintrc.json', reason: 'project-owned Oxlint overrides (a custom `settings.guard.layers` map goes here); lint-staged runs oxlint against this local config. The shared rules (GUARD plugin, cli/ import closure, size limits) live in the synced `.oxlintrc.base.json` it extends.' },
   { path: '.mcp.json', reason: 'MCP registry with project-specific servers/vars' },
   { path: 'opencode.jsonc', reason: 'OpenCode MCP registry (paired with .mcp.json)' },
   { path: '.codex/config.toml', reason: 'Codex MCP registry (paired with .mcp.json / opencode.jsonc; `agents:compat:check` enforces parity across the hosts)' },
@@ -2039,7 +2040,7 @@ function buildSink(signal: () => AbortSignal | undefined = () => undefined): Rep
       }
 
       // Strip ANSI to render cleanly inside clack note box.
-      // eslint-disable-next-line no-control-regex
+
       const plain = body.replace(/\x1B\[[0-9;]*m/g, '');
       const lines = plain.split('\n');
       const truncated = lines.length > limit;

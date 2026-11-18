@@ -33,7 +33,9 @@
     "jira:components": "bun scripts/sync-jira-components.ts",
     "jira:url": "bun scripts/atlassian-url.ts",
     "lint:check": "eslint .",
-    "lint:fix": "eslint --fix .",
+    "lint:cached": "eslint --cache --cache-location node_modules/.cache/eslint/.eslintcache .",
+    "oxlint:check": "oxlint -c .oxlintrc.json",
+    "lint:fix": "eslint --cache --cache-location node_modules/.cache/eslint/.eslintcache --fix .",
     "onboarding": "bun scripts/onboarding.ts",
     "prepare": "husky && bun scripts/harness-env.ts --placeholders",
     "repo:check": "bun scripts/tooling-check.ts repo && bun run vars:check && bun run vars:env:check && bun run vars:schema:check && bun run skills:check && bun run skills:registry:check && bun run docs:check && bun run shared:check && bun run instructions:check && bun run agents:compat:check && bun run agents:schema:check && bun run guard:manifest:check && bun run guard:example:check",
@@ -75,15 +77,17 @@
     "@types/bun": "^1.4.4",
     "@types/node": "^25.9.9",
     "eslint": "^10.14.0",
+    "eslint-plugin-oxlint": "^1.94.0",
     "husky": "^9.1.7",
     "lint-staged": "^17.6.0",
+    "oxlint": "1.94.0",
     "prettier": "^3.9.10",
     "typescript": "^5.9.3",
     "varlock": "1.20.0"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [
-      "eslint --fix"
+      "oxlint -c .oxlintrc.json"
     ],
     "*.{json,yml,yaml,css,scss,html}": [
       "prettier --write --ignore-path .prettierignore"

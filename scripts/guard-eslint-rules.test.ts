@@ -1,5 +1,5 @@
 /**
- * @fileoverview Tests for the inline `guard` ESLint plugin in `eslint.config.base.js`.
+ * @fileoverview Tests for the inline `guard` ESLint plugin in `guard-eslint-plugin.js`.
  *
  * ESLint's own RuleTester with the TypeScript parser. The filename decides which
  * layer a file is in, so every case names the repo-relative path it pretends to be.

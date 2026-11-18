@@ -16,7 +16,9 @@
  * here; `bun run agents:compat:check` fails on one that is not.
  */
 import antfu from '@antfu/eslint-config';
+import oxlint from 'eslint-plugin-oxlint';
 
 import { BASE_ESLINT_OPTIONS, CLI_IMPORT_CLOSURE, GUARD_RULES, GUARD_SHAPE } from './eslint.config.base.js';
 
-export default antfu({ ...BASE_ESLINT_OPTIONS }, CLI_IMPORT_CLOSURE, GUARD_RULES, GUARD_SHAPE);
+// The oxlint block goes first so it only switches off stock rules Oxlint already runs; the scoped blocks after it re-enable what ESLint gates in CI.
+export default antfu({ ...BASE_ESLINT_OPTIONS }, ...oxlint.buildFromOxlintConfigFile('./.oxlintrc.json'), CLI_IMPORT_CLOSURE, GUARD_RULES, GUARD_SHAPE);

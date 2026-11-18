@@ -30,8 +30,8 @@ describe('scopeTscOutput', () => {
 });
 
 describe('repoLegs', () => {
-  test('greenfield runs the three legs repo:check always opened with, in the same order', () => {
-    expect(repoLegs(false).map(l => l.name)).toEqual(['format:check', 'lint:check', 'types:check']);
+  test('greenfield runs the legs repo:check always opened with, in the same order', () => {
+    expect(repoLegs(false).map(l => l.name)).toEqual(['format:check', 'lint:check', 'oxlint:check', 'types:check']);
   });
 
   test('an adopted app runs the tooling-scoped checks and no format leg', () => {

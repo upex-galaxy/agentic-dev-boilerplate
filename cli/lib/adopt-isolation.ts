@@ -56,7 +56,7 @@ function usesPi(root: string): boolean {
 }
 
 /** Root-level tooling config files an app's own ESLint would otherwise lint. */
-export const TOOLING_ROOT_FILES = ['eslint.config.base.js', 'eslint.config.tooling.mjs'] as const;
+export const TOOLING_ROOT_FILES = ['eslint.config.base.js', 'guard-eslint-plugin.js', 'eslint.config.tooling.mjs'] as const;
 
 /** Where the adopt run saves every isolation snippet for review (gitignored, single-use). */
 export const ADOPT_ISOLATION_PROMPT = '.agents/prompts/adopt-tooling-isolation.md';

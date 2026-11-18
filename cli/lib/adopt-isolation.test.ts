@@ -83,7 +83,7 @@ describe('tsconfigIsolation', () => {
 describe('eslintIsolation', () => {
   test('a flat config without ignores misses every tooling path', () => {
     const e = eslintIsolation(tempRoot({ 'eslint.config.mjs': 'export default [];\n' }));
-    expect(e).toEqual({ path: 'eslint.config.mjs', kind: 'flat', missing: ['cli/**', 'scripts/**', '.agents/**', '.opencode/**', 'eslint.config.base.js', 'eslint.config.tooling.mjs'] });
+    expect(e).toEqual({ path: 'eslint.config.mjs', kind: 'flat', missing: ['cli/**', 'scripts/**', '.agents/**', '.opencode/**', 'eslint.config.base.js', 'guard-eslint-plugin.js', 'eslint.config.tooling.mjs'] });
   });
 
   test('the Pi adapter is wanted only where Pi is in use, and named alone', () => {
@@ -108,7 +108,7 @@ describe('eslintIsolation', () => {
 
   test('quoted literals in the config or lines of .eslintignore count; prose and comments do not', () => {
     const root = tempRoot({
-      'eslint.config.mjs': '// cli/** is ignored below? no\nexport default [{ ignores: [\'cli/**\', "./scripts/", \'.agents/**\', \'.opencode\', \'eslint.config.base.js\'] }];\n',
+      'eslint.config.mjs': '// cli/** is ignored below? no\nexport default [{ ignores: [\'cli/**\', "./scripts/", \'.agents/**\', \'.opencode\', \'eslint.config.base.js\', \'guard-eslint-plugin.js\'] }];\n',
       '.eslintignore': 'eslint.config.tooling.mjs\n',
     });
     expect(eslintIsolation(root)).toBeNull();
@@ -134,7 +134,7 @@ describe('isolationFindings + isolationPrompt', () => {
       ['lefthook.yml', true, 'decide'],
     ]);
     expect(rows[0].detail).toContain('"exclude": ["node_modules","cli","scripts"]');
-    expect(rows[1].detail).toContain('"ignorePatterns": ["cli/","scripts/","eslint.config.base.js","eslint.config.tooling.mjs"]');
+    expect(rows[1].detail).toContain('"ignorePatterns": ["cli/","scripts/","eslint.config.base.js","guard-eslint-plugin.js","eslint.config.tooling.mjs"]');
     expect(rows[2].evidence).toContain('husky is NOT installed');
     const prompt = isolationPrompt(a)!;
     expect(prompt).toContain('## tsconfig.json');

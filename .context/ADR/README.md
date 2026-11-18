@@ -84,6 +84,7 @@ Who authors: a human architect directly, **or** an AI workflow that detected an 
 | [ADR-0021](./ADR-0021-project-yaml-values-only-schema-documents.md) | `.agents/project.yaml` carries values only; `.agents/project.schema.yaml` is the documented template, its values synced down from the yaml; Sonnet 5.5 workers at medium with an Opus override for high-risk topics | Accepted | — | — |
 | [ADR-0022](./ADR-0022-pi-as-a-declared-harness.md) | Pi is a declared harness: two files decide detection (`.pi/mcp.json`, `.pi/extensions/agentic-dev.js`), one adapter on the shared emitter, a secret-only seatbelt block for Rule #1, `exposure: deferred` on every server; corrects ADR-0020's Pi naming claim (twin of agentic-qa ADR-0026) | Accepted | — | — |
 | [ADR-0023](./ADR-0023-guard-architecture.md) | GUARD (Guarded Unidirectional Agent-Ready Development) is the product architecture: four layers with one direction (`platform`, `adapters`, `features`, `app`), one door per feature, a generated `guard-manifest.json`, an inline `guard` ESLint plugin at `warn` then `error`, Critical Rule 18, and an example feature the installer pre-inserts (twin of agentic-qa ADR-0027) | Accepted | — | — |
+| [ADR-0024](./ADR-0024-oxlint-at-commit-eslint-as-gate.md) | Oxlint runs the GUARD rules at commit through the shared `guard` plugin file, ESLint stays the CI gate | Accepted | — | — |
 
 > Keep this table in sync whenever an ADR is added or its status changes. It is the fast index every session reads first.
 >

@@ -32,6 +32,7 @@ import {
   validateMcpParity,
   validateMcpParityFindings,
   validateOpenCodePluginEntrypoints,
+  validateOxlintWiring,
   validatePiAdapter,
 } from './agent-compatibility-contracts.ts';
 import {
@@ -1381,6 +1382,55 @@ describe.skipIf(!HAS_OPENCODE)('repairAgentSurfaces', () => {
     // Without the marker, a missing alias is the error it always was.
     rmSync(join(root, '.claude/skills'));
     expect(checkAgentCompatibility(root, 'linux').errors).toContain(SKILLS_ALIAS_MISSING_ERROR);
+  });
+});
+
+describe('oxlint wiring', () => {
+  const BASE = JSON.stringify({ jsPlugins: ['./guard-eslint-plugin.js'] });
+
+  test('the real repository extends the base and ships its plugin', () => {
+    expect(validateOxlintWiring(REPO_ROOT)).toEqual([]);
+  });
+
+  test('a project config that does not extend the base is an error', () => {
+    const root = contractFixture();
+    write(root, '.oxlintrc.base.json', BASE);
+    write(root, 'guard-eslint-plugin.js', 'export default {};\n');
+    write(root, '.oxlintrc.json', '{ "rules": {} }');
+    const errors = validateOxlintWiring(root);
+    expect(errors).toHaveLength(1);
+    expect(errors[0]).toContain('enforce nothing');
+  });
+
+  test('a missing project config is an error', () => {
+    const root = contractFixture();
+    write(root, '.oxlintrc.base.json', BASE);
+    expect(validateOxlintWiring(root)[0]).toContain('.oxlintrc.json is missing');
+  });
+
+  test('a local jsPlugin missing on disk is an error naming it', () => {
+    const root = contractFixture();
+    write(root, '.oxlintrc.base.json', BASE);
+    write(root, '.oxlintrc.json', '{ "extends": ["./.oxlintrc.base.json"] }');
+    const errors = validateOxlintWiring(root);
+    expect(errors).toHaveLength(1);
+    expect(errors[0]).toContain('./guard-eslint-plugin.js');
+  });
+
+  test('a wired project is clean, and a repo without the base is not a finding', () => {
+    const root = contractFixture();
+    expect(validateOxlintWiring(root)).toEqual([]);
+    write(root, '.oxlintrc.base.json', BASE);
+    write(root, 'guard-eslint-plugin.js', 'export default {};\n');
+    write(root, '.oxlintrc.json', '{ "extends": ["./.oxlintrc.base.json"] }');
+    expect(validateOxlintWiring(root)).toEqual([]);
+  });
+
+  test('an adopted app is exempt: it runs no Oxlint', () => {
+    const root = contractFixture();
+    write(root, '.oxlintrc.base.json', BASE);
+    write(root, '.template/installer.lock.json', '{ "adopted": true }');
+    expect(validateOxlintWiring(root)).toEqual([]);
   });
 });
 

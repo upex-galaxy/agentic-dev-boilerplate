@@ -25,7 +25,7 @@ import type { Harness, HarnessSelection } from './harness-selection.ts';
 import { existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, readlinkSync, rmSync, symlinkSync, unlinkSync, writeFileSync } from 'node:fs';
 import { isAbsolute, join, normalize, relative, resolve } from 'node:path';
 
-import { validateEslintBlockWiring, validateHookCompatibility, validateMcpParityFindings } from './agent-compatibility-contracts.ts';
+import { validateEslintBlockWiring, validateHookCompatibility, validateMcpParityFindings, validateOxlintWiring } from './agent-compatibility-contracts.ts';
 import { declaredHarnesses, skippedHarnessNotes } from './harness-selection.ts';
 
 export const CLAUDE_INSTRUCTIONS_SHIM = '@AGENTS.md\n';
@@ -128,7 +128,7 @@ export const COMPATIBILITY_GROUP_LABEL: Record<CompatibilityErrorGroup, string> 
   commands: 'Commands shadowing a skill (.claude/commands, .opencode/commands)',
   hooks: 'Hook adapters',
   mcp: 'MCP parity (.mcp.json, opencode.jsonc, .codex/config.toml, .pi/mcp.json)',
-  lint: 'Lint config wiring (eslint.config.js <- eslint.config.base.js)',
+  lint: 'Lint config wiring (eslint.config.js <- eslint.config.base.js, .oxlintrc.json <- .oxlintrc.base.json)',
 };
 
 /**
@@ -417,6 +417,7 @@ export function checkAgentCompatibility(
   // Independent of the canonical sources: a missing skills dir must not hide an
   // unwired lint block. Never throws (an unreadable config is not a finding).
   errors.push(...validateEslintBlockWiring(paths.root));
+  errors.push(...validateOxlintWiring(paths.root));
 
   const result = (status: CompatibilityCheck['alias']['status']): CompatibilityCheck => ({
     ok: errors.length === 0,
