@@ -5,6 +5,14 @@ All notable changes to this boilerplate are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased — Oxlint at commit, ESLint as the gate, GUARD rules default to `error`
+
+### Changed
+
+- **Pre-commit runs Oxlint** on staged code (well under a second) with the `guard` plugin, the `cli/` import closure and the size limits. ESLint stays the gate in `lint:check`, `repo:check`, `pre-push` and CI. ADR-0024.
+- **GUARD rules now default to `error`** (`GUARD_ENFORCEMENT_LEVEL`, mirrored in `guard-manifest.ts` and `.oxlintrc.base.json`). A project that needs time lowers a rule in its own `eslint.config.js` and `.oxlintrc.json`.
+- **New synced files** `guard-eslint-plugin.js` and `.oxlintrc.base.json`; `.oxlintrc.json` is delivered once when missing. `bun sync` installs nothing, so its report now says to run `bun install` and to switch `lint-staged` to `oxlint -c .oxlintrc.json`. `agents:compat:check` fails when `.oxlintrc.json` does not extend the base. An adopted app runs no Oxlint.
+
 ## Unreleased — `bun sync` updates the community skills; user-level skills portal
 
 ### Added

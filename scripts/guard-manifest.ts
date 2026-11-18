@@ -18,7 +18,7 @@ import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from '
 import { join, relative, resolve, sep } from 'node:path';
 
 // Mirrors GUARD_ENFORCEMENT_LEVEL in eslint.config.base.js. At 'error' a warning fails --check.
-export const GUARD_ENFORCEMENT_LEVEL: 'warn' | 'error' = 'warn';
+export const GUARD_ENFORCEMENT_LEVEL: 'warn' | 'error' = 'error';
 
 export const DEFAULT_ROOT = 'src/features';
 export const DEFAULT_OUT = 'guard-manifest.json';

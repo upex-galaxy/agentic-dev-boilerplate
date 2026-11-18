@@ -190,7 +190,7 @@ export const CLI_IMPORT_CLOSURE = {
  * Severity of every GUARD rule: `warn` this release, `error` the next. Mirrored
  * in `scripts/guard-manifest.ts`.
  */
-export const GUARD_ENFORCEMENT_LEVEL = 'warn';
+export const GUARD_ENFORCEMENT_LEVEL = 'error';
 
 /**
  * The two `guard/*` rules on every TypeScript file. They are layer-aware

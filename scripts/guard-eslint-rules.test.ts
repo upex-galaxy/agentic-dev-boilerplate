@@ -78,9 +78,9 @@ tester.run('guard/feature-door', rules['feature-door'], {
 
 describe('guard config exports', () => {
   it('ships the default layer map and the warn level on both rules', () => {
-    expect(GUARD_ENFORCEMENT_LEVEL).toBe('warn');
+    expect(GUARD_ENFORCEMENT_LEVEL).toBe('error');
     expect(Object.keys(GUARD_LAYERS)).toEqual(['platform', 'adapters', 'features', 'app']);
-    expect(GUARD_RULES.rules).toEqual({ 'guard/layer-imports': 'warn', 'guard/feature-door': 'warn' });
+    expect(GUARD_RULES.rules).toEqual({ 'guard/layer-imports': 'error', 'guard/feature-door': 'error' });
     expect(GUARD_SHAPE).toHaveLength(2);
   });
 });
