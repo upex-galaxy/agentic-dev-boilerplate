@@ -710,7 +710,7 @@
           </div>
           <div class="card">
             <span class="n">La salida</span>
-            <h4>Dar forma y poner un guardia</h4>
+            <h4>Dar una forma y un check</h4>
             <p>
               Un ejemplo real para copiar, un registro que se lee antes de crear y lint que dice
               qué regla se rompió y cuál es el arreglo de raíz.
@@ -732,15 +732,14 @@
             <p>
               Para el código de pruebas, el boilerplate de QA tiene capas, un manifiesto generado y
               un único punto de entrada. KATA nombra conceptos de test (ATC, fixtures, componentes)
-              que no existen en el producto, así que no se aplica tal cual: se toma la idea, no las
-              palabras.
+              que no existen en el producto, así que no se aplica tal cual: se aprovecha la idea y se cambia el vocabulario.
             </p>
           </div>
           <div class="card agt">
             <span class="n">Lauren Tan</span>
             <h4>"All Code Is Slop (Except Mine)"</h4>
             <p>
-              La pirámide de confianza: confías en lo que una máquina verifica. Cada corrección se
+              La pirámide de confianza dice que confías en lo que una máquina verifica. Cada corrección se
               convierte en un check. Una carpeta por feature con prohibiciones de import. Sin
               comentarios.
             </p>
@@ -749,8 +748,7 @@
             <span class="n">Matt Pocock</span>
             <h4>codebase-design</h4>
             <p>
-              La interfaz es la superficie de prueba: se prueba un módulo por su puerta pública, no
-              por sus tripas.
+              Lo que se prueba es la interfaz: un módulo se prueba por su puerta pública, no por sus archivos internos.
             </p>
           </div>
         </div>
@@ -813,7 +811,7 @@
       <section id="reglas" class="r">
         <h2><span class="num">04</span>Las reglas R1 a R6 y quién las hace cumplir</h2>
         <p class="sub">
-          Cada regla tiene un guardia concreto. Cada mensaje de lint nombra la regla y el arreglo de
+          Cada regla tiene un check concreto que la hace cumplir. Cada mensaje de lint nombra la regla y el arreglo de
           raíz: mover el código a la capa correcta o abrir la puerta de la feature.
         </p>
         <div class="tbl-scroll">
@@ -893,12 +891,10 @@
             <span class="cmd">bun run lint:check &amp;&amp; bun run guard:manifest:check</span>
           </li>
           <li>
-            <strong>Test unitario por la puerta.</strong> Se prueba lo que la feature exporta, no
-            sus archivos internos.
+            <strong>Test unitario por la puerta.</strong> Prueba lo que la feature exporta, no sus archivos internos.
           </li>
           <li>
-            <strong>Verificación en vivo.</strong> Se comprueba el comportamiento real, no solo que
-            compila.
+            <strong>Verificación en vivo.</strong> Comprueba el comportamiento real, no solo que compila.
           </li>
           <li>
             <strong>La revisión humana juzga lo que una máquina no puede.</strong> Nombres, intención,
@@ -952,7 +948,7 @@ export default async function NotesPage() {
         <div class="callout">
           <span class="ic">Verificar</span>
           <div>
-            Este repo la revisa para que no se pudra: <code>bun run guard:example:check</code>
+            Este repo la comprueba para que no quede desactualizada: <code>bun run guard:example:check</code>
             (lint, tipos, manifiesto y tests).
           </div>
         </div>
@@ -1010,7 +1006,7 @@ export default async function NotesPage() {
         <h2><span class="num">09</span>Severidad: primero aviso, después error</h2>
         <p class="sub">
           <code>GUARD_ENFORCEMENT_LEVEL</code> fija el nivel de todos los checks de GUARD y
-          <code>scripts/guard-manifest.ts</code> lo refleja. Se despliega en dos pasos: primero
+          <code>scripts/guard-manifest.ts</code> lo refleja. El despliegue tiene dos pasos: primero
           <code>warn</code> y, en un release posterior, <code>error</code>. El valor vigente está en
           esos dos archivos. Un check en <code>warn</code> nunca rompe el CI, así
           que un aviso es trabajo pendiente, no ruido.
