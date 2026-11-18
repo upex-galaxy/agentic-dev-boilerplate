@@ -710,7 +710,7 @@
           </div>
           <div class="card">
             <span class="n">The way out</span>
-            <h4>Give it a shape and put a guard on it</h4>
+            <h4>Give it a shape and a check</h4>
             <p>
               A real example to copy, a registry to read before creating, and lint that names the
               broken rule and the root-cause fix.
@@ -732,14 +732,14 @@
             <p>
               For test code, the QA boilerplate has layers, a generated manifest and a single entry
               point. KATA names test concepts (ATCs, fixtures, components) that have no product
-              equivalent, so it does not apply as is: we take the idea, not the words.
+              equivalent, so it does not apply as is: we reuse the idea and change the vocabulary.
             </p>
           </div>
           <div class="card agt">
             <span class="n">Lauren Tan</span>
             <h4>"All Code Is Slop (Except Mine)"</h4>
             <p>
-              The trust pyramid: you trust what a machine verifies. Every correction becomes a
+              The trust pyramid says you trust what a machine verifies. Every correction becomes a
               check. One folder per feature with import bans. No comments.
             </p>
           </div>
@@ -747,8 +747,7 @@
             <span class="n">Matt Pocock</span>
             <h4>codebase-design</h4>
             <p>
-              The interface is the test surface: you test a module through its public door, not
-              through its guts.
+              The interface is what you test: a module is tested through its public door, not through its internal files.
             </p>
           </div>
         </div>
@@ -811,7 +810,7 @@
       <section id="rules" class="r">
         <h2><span class="num">04</span>Rules R1 to R6 and what enforces each</h2>
         <p class="sub">
-          Every rule has a concrete guard. Every lint message names the rule and the root-cause fix:
+          Every rule has a concrete check that enforces it. Every lint message names the rule and the root-cause fix:
           move the code to the right layer or open the feature's door.
         </p>
         <div class="tbl-scroll">
@@ -891,11 +890,10 @@
             <span class="cmd">bun run lint:check &amp;&amp; bun run guard:manifest:check</span>
           </li>
           <li>
-            <strong>Unit test through the door.</strong> You test what the feature exports, not its
-            internal files.
+            <strong>Unit test through the door.</strong> Test what the feature exports, not its internal files.
           </li>
           <li>
-            <strong>Live check.</strong> Verify the real behavior, not only that it compiles.
+            <strong>Live check.</strong> Check the real behavior, not only that it compiles.
           </li>
           <li>
             <strong>Human review judges what a machine cannot.</strong> Naming, intent, product.
@@ -947,7 +945,7 @@ export default async function NotesPage() {
         <div class="callout">
           <span class="ic">Verify</span>
           <div>
-            This repo checks it so it never rots: <code>bun run guard:example:check</code>
+            This repo checks it so it does not go stale: <code>bun run guard:example:check</code>
             (lint, types, manifest and tests).
           </div>
         </div>
@@ -967,7 +965,7 @@ export default async function NotesPage() {
           <span class="ic">Order</span>
           <div>
             <strong>Warn first.</strong> The mapping is a step of the <code>project-adoption</code>
-            skill. Warnings are owed work you sort out layer by layer, without breaking CI.
+            skill. Warnings are pending work that you sort layer by layer without breaking CI.
           </div>
         </div>
       </section>
@@ -1004,7 +1002,7 @@ export default async function NotesPage() {
         <h2><span class="num">09</span>Severity: warn first, then error</h2>
         <p class="sub">
           <code>GUARD_ENFORCEMENT_LEVEL</code> sets the level of every GUARD check and
-          <code>scripts/guard-manifest.ts</code> mirrors it. The rollout has two steps: first
+          <code>scripts/guard-manifest.ts</code> mirrors it. The rollout takes two steps: first
           <code>warn</code> and, in a later release, <code>error</code>. The current value is in
           those two files. A check at <code>warn</code> never fails CI, so a warning is work owed,
           not noise.
