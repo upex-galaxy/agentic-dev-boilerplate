@@ -5,6 +5,28 @@ All notable changes to this boilerplate are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased: the orchestration doctrine moves to the user-level skill `agent-orchestration`
+
+### Changed
+
+- **Fleet orchestration is a user-level skill now** (ADR-0025). `bun setup` installs
+  `agent-orchestration` from `upex-galaxy/agentic-user-skills`, `bun sync` keeps it current, and
+  `bun run setup:doctor` shows whether it is installed. The router, the `orca` CLI mapping and every
+  workflow skill cite it by name.
+- **This repo keeps only its own parts**, in `agentic-dev-core/references/`: `fleet-launch-seam.md`
+  (how `sprint-development`, `autonomous-delivery` and `product-management` hand work to a fleet),
+  `fleet-provisioning.md` (what a fresh worktree lacks, `worktree:provision`, the `orca.yaml` hooks)
+  and `fleet-project-profile.md` (profile keys, routines, identity, conductor-only operations,
+  `ROUTE-SCOPE`, the `COMMON.md` fill-ins). The unattended split is
+  `autonomous-delivery/references/worker-dispatch.md`.
+
+### Removed
+
+- **`.agents/skills/orca-orchestration/` keeps only a transition stub** `SKILL.md` that says
+  "renamed, load agent-orchestration". `bun sync` deletes the other twenty files downstream
+  (`RETIRED_ORCHESTRATION_FILES`, each backed up first). The `orca-orchestration` deck is gone; its
+  card points at the user skill's published deck.
+
 ## Unreleased — Oxlint at commit, ESLint as the gate, GUARD rules default to `error`
 
 ### Changed
