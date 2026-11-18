@@ -105,6 +105,7 @@ const SKILL_PURPOSES: Record<string, string> = {
   'impeccable': 'Visual design-quality review and polish for frontend UI.',
   'design-taste-frontend': 'Frontend design taste and visual quality review.',
   'redesign-existing-projects': 'Systematic redesign of existing UI projects.',
+  'modern-web-guidance': 'Modern web platform features with Baseline-aware fallbacks and a legacy-pattern scan.',
   'supabase': 'Supabase CLI companion skill — local stack, migrations, type gen.',
   'supabase-postgres-best-practices': 'PostgreSQL and Supabase database best practices.',
   'deploy-to-vercel': 'Vercel deployment CLI and project linking.',

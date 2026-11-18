@@ -280,6 +280,9 @@ export const PROJECT_LEVEL_SKILLS: ReadonlyArray<CommunitySkill> = [
   { package: 'https://github.com/pbakaus/impeccable', skill: 'impeccable' },
   { package: 'https://github.com/Leonxlnx/taste-skill', skill: 'design-taste-frontend' },
   { package: 'https://github.com/Leonxlnx/taste-skill', skill: 'redesign-existing-projects' },
+  // Google Chrome's own web-platform guidance (the repo also ships a
+  // chrome-extensions skill, so the skill is named).
+  { package: 'https://github.com/GoogleChrome/modern-web-guidance', skill: 'modern-web-guidance' },
   // Stack-specific CLI-companion skills — pinned to project because the
   // underlying infrastructure choice (DB / deploy target / email provider)
   // varies per project.
