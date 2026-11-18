@@ -10,7 +10,7 @@ import { stripYamlComments } from './lib/agents-schema.ts';
 import { unusedHarnessPaths } from './lib/harness-selection.ts';
 import { cleanupDeprecated, isRepoOnlyPath, validateComponentRegistry } from './lib/updater-core.ts';
 import { RETIRED_HARNESS_LAUNCHER, RETIRED_HARNESS_SCRIPTS } from './lib/updater-parity.ts';
-import { backfillProjectYamlFromSchema, COMPONENTS, DEPRECATED_FILES, GATE_SCRIPTS, gateScriptsFor, gatesSummaryLine, MCP_TEMPLATE_AGENTS, MCP_TEMPLATE_FILE, parseArgs, resolveProtectedWatchlist, RETIRED_COMMAND_WRAPPERS, RETIRED_DOCS_FILES, RETIRED_SECTION_FILES, RETIRED_SKILL_FILES, runGate, summarizeGates, worktreeRefusal } from './update-boilerplate.ts';
+import { backfillProjectYamlFromSchema, COMPONENTS, DEPRECATED_FILES, GATE_SCRIPTS, gateScriptsFor, gatesSummaryLine, MCP_TEMPLATE_AGENTS, MCP_TEMPLATE_FILE, parseArgs, resolveProtectedWatchlist, RETIRED_COMMAND_WRAPPERS, RETIRED_DOCS_FILES, RETIRED_ORCHESTRATION_FILES, RETIRED_SECTION_FILES, RETIRED_SKILL_FILES, runGate, summarizeGates, worktreeRefusal } from './update-boilerplate.ts';
 
 const temporaryRoots: string[] = [];
 
@@ -114,6 +114,30 @@ describe('component registry', () => {
     // A folder the cleanup emptied goes with it; one that still holds a file stays.
     expect(existsSync(join(root, '.opencode/commands'))).toBe(false);
     expect(existsSync(join(root, '.agents/compatibility'))).toBe(false);
+  });
+
+  test('the old orchestration skill leaves downstream as its stub alone, edited files backed up', () => {
+    const retired = RETIRED_ORCHESTRATION_FILES.map(d => d.path);
+    expect(DEPRECATED_FILES.map(d => d.path)).toEqual(expect.arrayContaining(retired));
+    expect(retired).toHaveLength(20);
+    expect(retired).not.toContain('.agents/skills/orca-orchestration/SKILL.md');
+    for (const d of RETIRED_ORCHESTRATION_FILES) {
+      expect(d.backup).toBe(true);
+      expect(d.reason).toContain('agent-orchestration');
+    }
+
+    const root = temporaryRoot();
+    for (const p of [...retired, '.agents/skills/orca-orchestration/SKILL.md']) {
+      mkdirSync(join(root, p, '..'), { recursive: true });
+      writeFileSync(join(root, p), 'edited downstream\n');
+    }
+    const cfg = { deprecatedFiles: RETIRED_ORCHESTRATION_FILES } as Parameters<typeof cleanupDeprecated>[0];
+    const backup = join(root, '.backups', 'test');
+    expect(cleanupDeprecated(cfg, root, false, undefined, () => backup)).toBe(20);
+    expect(existsSync(join(root, '.agents/skills/orca-orchestration/SKILL.md'))).toBe(true);
+    expect(existsSync(join(root, '.agents/skills/orca-orchestration/references'))).toBe(false);
+    expect(existsSync(join(root, '.agents/skills/orca-orchestration/templates'))).toBe(false);
+    expect(existsSync(join(backup, '.agents/skills/orca-orchestration/references/gotchas.md'))).toBe(true);
   });
 
   test('the retired sync-ai-memory skill leaves downstream, folder included', () => {
