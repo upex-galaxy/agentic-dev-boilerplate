@@ -67,7 +67,11 @@ Describe the typical flow of one operation.
 8. Return response (201 success or 400 error)
 9. Frontend handles response (redirect or show error)
 
-**5. Security Architecture**
+**5. Code Architecture**
+
+Name GUARD as the product architecture: four layers (app, features, adapters, platform), one direction, one door per feature, a registry. Link `agentic-dev-core/references/guard-architecture.md` instead of restating it, and list the project's first features by their business names, since each becomes a `src/features/<name>/` folder.
+
+**6. Security Architecture**
 
 Include:
 

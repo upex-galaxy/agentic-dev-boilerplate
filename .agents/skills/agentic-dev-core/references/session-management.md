@@ -196,6 +196,7 @@ When the skill's final phase writes a `completed` entry and the orchestrator con
 2. Move the whole directory: `mv .session/<skill-slug>/<scope>/ .session/.archive/<archive-name>/`.
 3. Call Engram's `mem_session_summary` with the session summary template (§11), including the archive path so a later search finds it.
 4. Report the archive path to the user in the closing summary.
+5. Rank check candidates first in the summary: each review finding that repeated in the session, with the `guard` lint rule or guard-manifest check that would have caught it (`references/guard-architecture.md` §7). A finding no machine can judge goes after them as a prose candidate.
 
 ### What not to archive
 

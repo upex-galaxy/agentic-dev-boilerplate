@@ -57,6 +57,7 @@ Each line is the rule's binding text, verbatim (`…` joins excerpts). Full text
 15. **Harness surfaces are generated**: Never hand-edit `CLAUDE.md` (a shim) or `.claude/skills` (an alias). Edit the source (`AGENTS.md`, `.agents/skills/`, `.agents/hooks/`) and run `bun run agents:compat` Full: agent-critical-rules.md#15
 16. **A success code describes the call, never the outcome: verify at the destination**: `ok: true`, exit 0, `201`, `accepted`, a returned id or URL all say the request was well formed. None of them says the thing happened. … So verify by reading the destination back … Where verifying is expensive, say the claim is unverified rather than letting the receipt stand in for it. Full: agent-critical-rules.md#16
 17. **Committed prose names the source of truth, never its current value**: Committed text (`AGENTS.md`, `.agents/**`, `docs/**`, `README.md`, `INSTALLER.md`, `CONTEXT.md`, the decks and the Pages home) never states a fact that changes with the normal life of the repo, the tracker or the deploy platform. … Write the name of the owner instead and let the reader resolve it Full: agent-critical-rules.md#17
+18. **No comments in code by default**: Code carries no comments. A comment stays only as a toolchain directive (`eslint-disable-next-line <rule> -- <reason>`, `@ts-expect-error`, `LINT.IfChange`/`LINT.ThenChange`) or as one line of WHY the code cannot express and a reader would otherwise get wrong. Full: agent-critical-rules.md#18
 
 ---
 

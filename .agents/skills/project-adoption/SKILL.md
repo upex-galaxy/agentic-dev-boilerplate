@@ -21,6 +21,7 @@ compact_rules: |
   - Fail-closed prerequisites a live app may lack (`testing.automation_identity`, `autonomous_delivery.automation_gh_account`, a dedicated DB role) go in the plan as owed by the team. This skill never creates them.
   - An adopted app's product docs are the business maps and the glossary (OD5). Never invent a PRD or SRS: `/sprint-development` accepts the maps instead, and `/project-foundation` Discovery-only adds the dev guide and glossary.
   - Close with the signal table, the plan marked `Status: COMPLETED` with its results block, and the hand-offs of the body table (`/project-context refresh-all` first, in a fresh session). Never chain them automatically, and propose the commit through `/git-flow-master` instead of making it silently.
+  - GUARD on an adopted app (`agentic-dev-core/references/guard-architecture.md` §3): the app keeps its folders and maps them to layers in its own `eslint.config.js` as `settings.guard.layers`. The plan proposes that block, derived from the folders the analysis found, and the team applies it, because eslint config is on the refusal list. Lint runs at `warn` and the team fixes violations over time. Copy no example into the app: the example belongs to new projects.
   - Every gate that waits for a person has a path for a supervised worker and for a routine with nobody (the body section "With nobody at the keyboard", `agentic-dev-core/references/decision-protocol.md` §5.2).
 metadata:
   kind: workflow
@@ -139,6 +140,23 @@ A subagent's report of a write is verified at the destination (Critical Rule #16
 | Where the app's modules are shallow or leak across seams | the read-only architecture scan (`references/adoption-workflow.md` Phase 9 step 4), no skill | optional; a person picks one candidate in a later session |
 | Commit of the adoption writes | `/git-flow-master` | this one, proposed at close |
 
+## GUARD layer map
+
+Phase 1 reads the app's folders and Phase 2 puts one block in the plan for the team to paste into its `eslint.config.js`. The globs below are an example. Each app's analysis supplies its own, and the defaults of `guard-architecture.md` §1 apply to any layer left out.
+
+```js
+settings: {
+  guard: {
+    layers: {
+      app: ['app/**'],
+      features: ['modules/**'],
+      adapters: ['db/**', 'api/clients/**'],
+      platform: ['lib/**'],
+    },
+  },
+},
+```
+
 ---
 
 ## Anti-patterns
@@ -152,6 +170,7 @@ The codes are cited by the evals and by `references/adoption-workflow.md`.
 - A5. The app's instruction text stays as it is. The updater moved it verbatim into the `<app>-context` skill and saved the `AGENTS.md` merge: apply that file, or leave the row blocking. Only the skill's `description` is yours to sharpen.
 - A6. A run is not done while an app script's exit code differs from its baseline.
 - A7. The app's instruction text does not go back into `AGENTS.md`. Every session would pay for it, and an adopted app's L0 has a byte ceiling (`bun run instructions:check`). It stays in the `<app>-context` skill, reached by one router row.
+- A8. No GUARD example is copied into an adopted app, and no folder moves to fit the layers: the map follows the folders.
 
 ---
 

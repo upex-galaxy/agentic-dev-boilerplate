@@ -10,7 +10,7 @@ Loaded on demand. `.agents/instructions/agent-code-quickref.md` §10 holds the 5
 | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Parameters** | At most 2 positional. With 3 or more, use an object parameter                                                                                     |
 | **Utilities**  | Agnostic utilities only, with no domain coupling in shared modules                                                                                |
-| **Imports**    | Use the aliases `tsconfig.json` `paths` declares (Next.js `@/`, or per-layer `@api/`, `@schemas/`, `@utils/`). No deep relative imports          |
+| **Imports**    | Use the aliases `tsconfig.json` `paths` declares (GUARD: `@platform/`, `@adapters/`, `@features/`, `@/`). No deep relative imports          |
 | **Types**      | Define interfaces at the top of the file, after imports                                                                                           |
 | **Errors**     | Public methods fail fast. Utilities fail silently (return null)                                                                                   |
 
@@ -51,7 +51,7 @@ import { UserRepo } from '../../../api/repos/user-repo';
 import { UserRepo } from '@api/repos/user-repo';
 ```
 
-Deep relative imports break under refactor and hide module boundaries; aliases keep the dependency graph readable. Use the ones `tsconfig.json` `paths` declares. A Next.js app usually has the single `@/` root (`@/components/ui/button`, `@/types/supabase`), and a layered backend may add per-layer prefixes (`@api/`, `@schemas/`, `@utils/`, `@db/`, `@features/`). Do not invent a prefix the config lacks.
+Deep relative imports break under refactor and hide module boundaries; aliases keep the dependency graph readable. Use the ones `tsconfig.json` `paths` declares. A GUARD app declares `@platform/*`, `@adapters/*`, `@features/*` and the root `@/*` (`references/guard-architecture.md`). An adopted app may keep its own prefixes, mapped to layers through `settings.guard.layers`. Do not invent a prefix the config lacks.
 
 ---
 
@@ -101,6 +101,6 @@ Where shared code belongs:
 
 - `api/schemas/` holds the OpenAPI type facades (`@schemas/{domain}.types`), the single source of truth for API contracts.
 - Shared utilities (`utils/`, `lib/`) stay framework-agnostic: no React, no Next, no Bun-specific APIs.
-- Domain logic stays inside its feature folder (`features/{domain}/`). Move it to `shared/` only when two or more features import it and the abstraction is stable.
+- Domain logic stays inside its feature folder (`src/features/{domain}/`, public door `index.ts`). Move it to `src/platform/` only when two or more features import it and the abstraction is stable.
 
 Three similar lines are better than a premature abstraction. Wait for the third occurrence rather than extracting on the second, and extract only when the duplicates share the same _reason to change_. Code that looks alike but changes for different reasons stays duplicated.

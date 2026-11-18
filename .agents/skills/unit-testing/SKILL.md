@@ -18,6 +18,7 @@ compact_rules: |
   - **U7.** Mock what you own only with a real reason. Inject a fake or stub at the seam, and reach for `jest.mock` / `vi.mock` only when the seam is unavoidable (module-level side effects, a third-party SDK).
   - **U8.** A flaky test never ships green. Fix the root cause (timing, shared state, network) or quarantine it with a tracked ticket, because ignored flakes erode trust in the whole suite.
   - **U9.** Test your own logic, not the framework's (matcher behavior, library internals, ORM mechanics). The framework has its own test suite.
+  - **U10.** In a GUARD app, test a feature through its door (`@features/<x>`), never its internals; fake adapters at the port. The interface is the test surface (`agentic-dev-core/references/guard-architecture.md` §6).
   - **Runner and command come from `stack:`** (`.agents/project.yaml`): the runner is `stack.test_runner`, the command is `{{stack.package_manager}} run {{stack.scripts.test}}`, and test files live under `stack.app_root` next to their siblings. A non-null runner is the app's own: extend it, never add or swap in a second one. Only `stack.test_runner: null` (not chosen yet) opens runner setup, and the choice is recorded with `bun run agents:setup --stack`. A null `stack.scripts.test` is reported, never invented.
   - **Capabilities** (`metadata.requires_capabilities`): resolve each by tool-name suffix, any prefix. When none is available at the step that needs it, stop per `agentic-dev-core/references/mcp-capabilities.md` §4 and do not substitute silently (built-in `WebSearch` / `WebFetch` only when the user chooses it).
 metadata:
@@ -151,6 +152,7 @@ These are the frontmatter `compact_rules` in short form (the rules carry the rea
 - **U7.** Mocking what you own when a fake or stub at the seam would do.
 - **U8.** Letting a flaky test ship green.
 - **U9.** Testing framework code.
+- **U10.** Reaching into a feature's internals instead of its door.
 
 ## Variables consumed
 

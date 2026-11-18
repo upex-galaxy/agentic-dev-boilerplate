@@ -19,6 +19,7 @@ metadata:
 - A placeholder map counts as no map. Say so and hand the user `project-context` mode `features`; do not place a story as if the product had no features.
 - Take how a screen looks from the live UI and the master design plan (`AGENTS.md` Rule 14), and what a feature does from the map. When they conflict, the running app wins for behaviour.
 - When a session observes something that contradicts a section (a CRUD action, a role gate, a page the inventory lacks), propose the one-section edit with its evidence to the user, or to the conductor when you are a supervised worker, and apply it only on approval. A routine with nobody applies nothing unless its brief names the map or section. Procedure: `references/refresh.md`.
+- Each feature entry carries what proves it works: the test or the live check that shows it works, or an explicit `none yet`. Name the entry as the feature's folder is named (`src/features/<name>/`, `agentic-dev-core/references/guard-architecture.md`), so a story, the map and the manifest share one word.
 - Write only inside this skill's own `references/`: no Jira, no `.context/`, no other skill, no design file, no product code.
 - Keep map content out of this SKILL.md. Judgment goes in `## Rules` or `references/gotchas.md`, dated and measured.
 - Before a step that uses `diagrams` (redrawing a figure), run the point-of-use check in `agentic-dev-core/references/mcp-capabilities.md` §4.

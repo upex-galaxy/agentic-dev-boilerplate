@@ -184,12 +184,16 @@ One section per domain, each feature an `<h3>` inside it:
 | **Owners**       | [roles / actors who use it]          |
 | **Dependencies** | [services, integrations]             |
 | **Evidence**     | [code path(s)]                       |
+| **GUARD folder** | `src/features/<name>/` or `none`     |
+| **Proven by**    | [test or live check] or `none yet`   |
 
 **Capabilities:**
 
 - [x] Implemented capability
 - [ ] Missing or planned capability
 ```
+
+`GUARD folder` names the feature's folder under the GUARD layout (`agentic-dev-core/references/guard-architecture.md`), and the feature keeps that name. `Proven by` names the unit test, QA ATC or live check that shows the feature works; `none yet` is a gap that Step 9 reports.
 
 ### 3. `crud-matrix`: CRUD matrix
 

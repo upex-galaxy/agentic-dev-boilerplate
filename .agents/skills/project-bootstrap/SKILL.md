@@ -15,7 +15,7 @@ complementary_categories:
 # references cite them by code.
 compact_rules: |
   - **B0. Brownfield guard (fail-closed).** Run `bun run bootstrap:guard` at entry, before the session plan, and record its verdict and exit code in `plan.md`. Exit 2 (`existing-app`: an adoption lock, an app `package.json` or app files) refuses the base phases (backend setup and frontend setup: tables, RLS, seed, clients, `middleware.ts` / `proxy.ts`, layout, theme, `tailwind.config`, `shadcn init`, `next@latest`, README, demo pages, demo credentials). Quote the signals and route to `/project-adoption` (design identity: `/design-system extract`). The add-on phases stay available and read `stack:`. A base phase runs only on a plan that recorded exit 0, so a missing verdict means refused. Never override the verdict by reading the tree yourself.
-  - **B1.** Keep the scaffold's architecture layers (the `api/`, `schemas/` and `db/` boundaries in the backend, the design-system structure in the frontend). That structure is framework architecture, and AGENTS.md §2 SIMPLICITY FIRST exempts it from the ban on speculative abstraction.
+  - **B1.** A new project uses the GUARD default layout (`agentic-dev-core/references/guard-architecture.md` §1: `src/app`, `src/features`, `src/adapters`, `src/platform`), with the example already inserted by the installer. The backend `api/`, `schemas/` and `db/` boundaries are its layer map (`api/` routes in `app`, `schemas/` and domain in `features`, `db/` in `adapters`), and the design-system structure stays in the frontend. That structure is framework architecture, and AGENTS.md §2 SIMPLICITY FIRST exempts it from the ban on speculative abstraction.
   - **B2.** Validate env vars at boot (Zod or an equivalent schema check). A missing variable that passes silently shows up as a cryptic production failure far from its cause.
   - **B3.** Never clobber existing scaffolding. B0 refuses the base phases on an existing app, so this rule binds the add-ons and a resumed greenfield run. Detect prior state under `app/`, `lib/` and `db/`, apply upsert semantics, patch surgically and keep the user's edits.
   - **B4.** Keep credentials, URLs and environment-specific values out of scaffolded code: secrets go in `.env`, non-secret config in `.agents/project.yaml`.
@@ -196,6 +196,15 @@ On an existing app (entry gate `existing-app`) the add-ons run against what the 
 - The Supabase project ref is `environments.<env>.db_project_ref`, and a database touch follows `agentic-dev-core/references/db-change-doctrine.md`.
 
 The add-ons, each with its reference in the table below: OpenAPI with the Scalar UI at `/api/docs` (Zod to OpenAPI schema generation, contract publication), API routes and middleware (route conventions, error responses, request logging, auth middleware wiring), bearer-token auth (JWT issuance, refresh tokens, protected-route middleware, session handling), env vars and URL builders (environment-aware helpers and the per-environment URLs in `.agents/project.yaml`) and Supabase types generation (the DB schema to TypeScript types pipeline, the regeneration script, frontend wiring).
+
+### 4. Refresh the GUARD example (on request only)
+
+The installer inserts `packages/guard-example/src/` into the project once, and the updater never ships it. When the person asks and the example changed upstream, refresh it from `https://github.com/upex-galaxy/agentic-dev-boilerplate`:
+
+1. Sparse-clone the repo into a temp dir (`git clone --depth 1 --filter=blob:none --sparse`, then `git sparse-checkout set packages/guard-example`; `gh repo clone` works too).
+2. Copy `packages/guard-example/src/` into the project's `src/` without overwriting a file the team changed (`cp -Rn`, or compare each file first and show the diff of any that differ).
+3. Run `bun run guard:manifest`; done when it exits 0 and the manifest lists the example's actions.
+4. Delete the temp dir.
 
 ---
 

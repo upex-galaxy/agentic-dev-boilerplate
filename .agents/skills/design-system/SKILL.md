@@ -18,6 +18,7 @@ compact_rules: |
   - **D6.** Accept a designer's hand-off only as exported token JSON or a built `DESIGN.md`, never a Figma URL alone. Downstream scaffolds need design intent a machine can read.
   - **D7.** Run the screen phase only on an explicit user opt-in, and take every mockup from a design tool: supplied by the user into `.context/designs/<project>/` (Mode B), commissioned through the Open Design MCP and exported there (Mode A, see `references/screen-design-mapping.md` S1), produced by Claude Code's own `design` skill, or generated as HTML through a loaded design skill (Mode C: the design set loaded before the first line of HTML, `agentic-dev-core/references/skill-composition-strategy.md` §3.5). The orchestrating AI never writes mockup markup itself with no design skill loaded. A prototype that settles one logic question is inspiration only, never a mockup or a spec. A human ratifies every mockup, whatever produced it.
   - **D8.** In `extract` mode, copy the LIVE theme and nothing else: pick no catalog brand, invent no token, write no application code. `DESIGN.md` mirrors `tailwind.config.*`, the stylesheet the root layout imports and `components.json`, each value in its own CSS format with a `# <file> <selector>` provenance comment. A kind the code lacks is omitted and reported as a Discovery Gap. Only `DESIGN.md` (plus an accepted variant) and `.session/design-system/` may change. Lint must reach `errors: 0`, and a sub-AA warning the app ships is reported, never fixed in the token (`references/extract-from-code.md`).
+  - **D9.** Feature UI lives in `src/features/<x>/`, and shared primitives (the components built from the tokens) live in the design system (`agentic-dev-core/references/guard-architecture.md` §1).
 metadata:
   kind: workflow
   stage_owner: true
@@ -345,6 +346,7 @@ The full wording of each rule is in the frontmatter `compact_rules`, which is th
 - D6. A Figma URL accepted as the whole hand-off.
 - D7. Auto-running the screen phase, or hand-authoring a screen mockup with no design skill loaded. The sanctioned sources are the four methods above. When no tool is available the answer is a spec-only build ratified as a §5 divergence, never markup invented here and filed as a design artifact. A logic prototype is inspiration only (see "What the phase produces").
 - D8. Choosing a catalog brand, inventing a token or writing application code in `extract` mode.
+- D9. Feature UI outside its feature folder, or a shared primitive inside one feature.
 
 ---
 

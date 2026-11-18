@@ -70,7 +70,7 @@ Butler and PM Voice set the content, and the user-level reply rules (`## Replies
 
 ## 12. Language detection and mirroring
 
-At the start of every conversation, read the full user message (not just the opening words) to detect the user's working language. Mirror that language in every conversational reply: questions, summaries, explanations, status updates. Repo artifacts are always English regardless of conversation language: code, code comments, commits, PR titles and bodies, branch names, file names, test names, configuration values, and any external action artifact (Jira issues and comments, GitHub issues, PRs and comments, Slack messages, emails, deploy notes, MCP tool inputs). Override: when the user explicitly asks for another language for a specific artifact (for example "write this PR description in Spanish"), honor that request for that artifact only, and default to English for the next ones unless it is requested again.
+At the start of every conversation, read the full user message (not just the opening words) to detect the user's working language. Mirror that language in every conversational reply: questions, summaries, explanations, status updates. Repo artifacts are always English regardless of conversation language: code, any code comment that Rule #18 lets survive, commits, PR titles and bodies, branch names, file names, test names, configuration values, and any external action artifact (Jira issues and comments, GitHub issues, PRs and comments, Slack messages, emails, deploy notes, MCP tool inputs). Override: when the user explicitly asks for another language for a specific artifact (for example "write this PR description in Spanish"), honor that request for that artifact only, and default to English for the next ones unless it is requested again.
 
 ## 13. No global discards (multi-session safety)
 
@@ -107,3 +107,13 @@ Committed text (`AGENTS.md`, `.agents/**`, `docs/**`, `README.md`, `INSTALLER.md
 Write the name of the owner instead and let the reader resolve it: a file (`.mcp.json`), a command (`bun run skills:registry`), a generated artifact (`REGISTRY.md`), a constant (`SURFACE_ORDER` in `cli/lib/updater-parity.ts`). Stable names that change only by decision are fine: stage names, rule numbers, file and command names, "three hosts". Exempt: gitignored files and `.session/**`, generated artifacts, ADRs, `CHANGELOG.md` and dated reports (a number "at the time" is right forever), test fixtures, code constants, and example output inside fenced blocks. A fact that must be stated with its date goes to an ADR and the doctrine links to it; the measurements behind this repo's own doctrine are in `.context/ADR/ADR-0003-forensic-measurements-ledger.md`. `scripts/lint-skills.ts` and `scripts/lint-docs.ts` (`bun run docs:check`) flag the two regex-visible families (`FILE-LINE`, `CURRENT-STATE`) as blocking errors in `repo:check`; a line that must carry one is marked `volatile-ok: <reason>`. Canon and examples: `agentic-dev-core/references/volatile-facts.md`.
 
 ---
+
+## 18. No comments in code by default
+
+Code carries no comments. A comment stays only as a toolchain directive (`eslint-disable-next-line <rule> -- <reason>`, `@ts-expect-error`, `LINT.IfChange`/`LINT.ThenChange`) or as one line of WHY the code cannot express and a reader would otherwise get wrong. A comment that survives is written in English (Rule #12).
+
+Explanations and teaching go to docs and decks, where a reader looks for them and a reviewer maintains them. A comment that restates the code, narrates a step, banners a section or leaves an example TODO costs a line on every read and drifts out of date silently.
+
+A comment never justifies skipping a rule. When a check fires, fix the cause, or disable that one rule on that one line with `eslint-disable-next-line <rule> -- <reason>` so the reason is a directive the toolchain reads.
+
+The rule binds new and edited code everywhere in the repo. Existing comments are not purged retroactively; touch them only when the edit already reaches that line. Decision: ADR-0023 (GUARD, rule R6).
