@@ -1952,6 +1952,66 @@
           drawn first, the policy was chosen by whoever composed the screen. It is checked before
           routing to (a).
         </div>
+
+        <div class="sec-head r" style="margin: 44px 0 22px 0">
+          <div class="eyebrow"><span class="num">03·c</span> · after the build: the post-write pass</div>
+          <p class="sub" style="font-size: 1rem">
+            The design set and <span class="mono">modern-web-guidance</span> load before the first line of a screen.
+            Once the screen is built, two more checks run on the result, in
+            <span class="mono">/sprint-development</span>.
+          </p>
+        </div>
+        <div class="steps r">
+          <div class="step">
+            <h3>Before the write</h3>
+            <p>
+              <span class="mono">modern-web-guidance</span> picks the native feature (dialog, popover, view transitions,
+              form validation) and its Baseline-aware fallback: <span class="mono">search</span>, then
+              <span class="mono">retrieve</span> on the best match. It reads the project's Baseline target first.
+            </p>
+          </div>
+          <div class="step">
+            <h3>After the write</h3>
+            <p>
+              The two checks below run on the built screen, in the Stage 2 implementer and again in
+              the Stage 3 verifier.
+            </p>
+          </div>
+          <div class="step">
+            <h3>Findings</h3>
+            <p>
+              Each one is fixed, or kept on purpose with its reason written down. The critique notes and the scan
+              output go to <span class="mono">.session/sprint-development/&lt;KEY&gt;/evidence/</span> so the PR can cite them.
+            </p>
+          </div>
+        </div>
+        <div class="tablewrap r" style="margin-top: 22px">
+          <table class="cmp narrow">
+            <thead>
+              <tr>
+                <th>Check</th>
+                <th>What it looks at</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th><span class="mono">/impeccable</span> critique</th>
+                <td>The live screen: hierarchy, states, responsive behaviour and copy.</td>
+              </tr>
+              <tr>
+                <th><span class="mono">modern-web-guidance legacy-scan</span></th>
+                <td>
+                  The changed UI files: legacy patterns that the web platform now covers natively.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout blue r">
+          <b>A PR that touches UI carries both.</b> The review treats missing critique notes or a
+          missing scan output as a finding. The skill is installed at project level by the installer
+          and <span class="mono">bun sync</span> keeps it current.
+        </div>
       </div>
     </section>
 

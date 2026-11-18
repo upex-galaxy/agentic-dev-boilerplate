@@ -1951,6 +1951,48 @@ bunx create-agentic-dev@latest <span class="k">--adopt</span>   <span class="c">
             >
           </div>
         </div>
+
+        <div class="sec-head r" style="margin: 44px 0 22px 0">
+          <div class="eyebrow"><span class="num">04·b</span> · fase 1.7: la lista de modernización</div>
+          <p class="sub" style="font-size: 1rem">
+            Sigue siendo solo lectura. La IA corre <span class="mono">npx modern-web-guidance@latest legacy-scan .</span>
+            desde <span class="mono">stack.app_root</span> y convierte lo que encuentra en una lista dentro del plan.
+          </p>
+        </div>
+        <div class="tablewrap r">
+          <table class="cmp narrow">
+            <thead>
+              <tr>
+                <th>Columna</th>
+                <th>Qué dice la fila</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th>Patrón legacy</th>
+                <td>Lo que el scan encontró en la app.</td>
+              </tr>
+              <tr>
+                <th>Reemplazo nativo</th>
+                <td>La función de la plataforma que lo reemplaza.</td>
+              </tr>
+              <tr>
+                <th>Archivos</th>
+                <td>Las rutas que toca.</td>
+              </tr>
+              <tr>
+                <th>Esfuerzo</th>
+                <td>S, M o L.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout blue r">
+          <b>Es una propuesta para el equipo, nunca se aplica.</b> La lista queda en el plan bajo
+          <span class="mono">Web platform</span>, junto al objetivo Baseline que devolvió el cuestionario. La adopción no
+          cambia ningún archivo de la app. Si el scan falla o no está disponible, eso va en
+          <span class="mono">## Discovery Gaps</span>.
+        </div>
       </div>
     </section>
 
@@ -2030,6 +2072,12 @@ bunx create-agentic-dev@latest <span class="k">--adopt</span>   <span class="c">
           </div>
         </div>
         <div class="gate r"><b>Gate</b> cada fase verificada en el destino antes de pasar a la siguiente.</div>
+        <div class="callout r">
+          <b>La fase 6 también escribe el objetivo Baseline.</b> Si el cuestionario lo respondió y la
+          línea de aprobación del plan lo permite, queda una línea bajo <span class="mono">## Web platform</span> en
+          <span class="mono">.agents/instructions/agent-project.md</span>, por ejemplo <span class="mono">This project's Baseline target is Baseline Widely available.</span>
+          Las funciones volátiles siguen bloqueadas; activarlas es decisión del equipo.
+        </div>
       </div>
     </section>
 
