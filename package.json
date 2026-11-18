@@ -77,7 +77,6 @@
     "@types/bun": "^1.4.4",
     "@types/node": "^25.9.9",
     "eslint": "^10.14.0",
-    "eslint-plugin-oxlint": "^1.94.0",
     "husky": "^9.1.7",
     "lint-staged": "^17.6.0",
     "oxlint": "1.94.0",

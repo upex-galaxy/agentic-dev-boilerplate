@@ -357,7 +357,7 @@ describe('--adopt: the agent-context hook joins an app settings file that has no
     write(upstream, CLAUDE_SETTINGS_FILE, settings(['Read']));
     const { added, merged } = mergeAdoptPromptHook(root, upstream);
     expect(added).toBe(true);
-    const out = JSON.parse(merged!) as Record<string, any>;
+    const out = JSON.parse(merged!) as { hooks: Record<string, unknown>, enabledPlugins?: unknown, permissions?: unknown };
     expect(out.hooks.UserPromptSubmit).toEqual([{ hooks: [{ type: 'command', command: 'node hook.mjs' }] }]);
     expect(out.hooks.SessionStart).toEqual(JSON.parse(APP).hooks.SessionStart);
     expect(out.enabledPlugins).toEqual({ 'caveman@caveman': false });
@@ -387,7 +387,7 @@ describe('--adopt: the agent-context hook joins an app settings file that has no
     write(upstream, CLAUDE_SETTINGS_FILE, upstreamWithRearm());
     const { added, rearmAdded, merged } = mergeAdoptPromptHook(root, upstream);
     expect({ added, rearmAdded }).toEqual({ added: true, rearmAdded: ['compact', 'clear'] });
-    const out = JSON.parse(merged!) as Record<string, any>;
+    const out = JSON.parse(merged!) as { hooks: Record<string, unknown>, enabledPlugins?: unknown, permissions?: unknown };
     expect(out.hooks.SessionStart).toEqual([...JSON.parse(APP).hooks.SessionStart, COMPACT, CLEAR]);
     expect(out.enabledPlugins).toEqual({ 'caveman@caveman': false });
   });
@@ -399,7 +399,7 @@ describe('--adopt: the agent-context hook joins an app settings file that has no
     write(upstream, CLAUDE_SETTINGS_FILE, upstreamWithRearm());
     const { added, rearmAdded, merged } = mergeAdoptPromptHook(root, upstream);
     expect({ added, rearmAdded }).toEqual({ added: false, rearmAdded: ['compact', 'clear'] });
-    const out = JSON.parse(merged!) as Record<string, any>;
+    const out = JSON.parse(merged!) as { hooks: Record<string, unknown>, enabledPlugins?: unknown, permissions?: unknown };
     expect(out.hooks.UserPromptSubmit).toEqual([{ hooks: [{ type: 'command', command: 'the app hook' }] }]);
     expect(out.hooks.SessionStart).toEqual([COMPACT, CLEAR]);
   });

@@ -254,6 +254,24 @@ const MCP_HOST_FILE: Record<string, string> = {
 };
 
 /** Order of the surfaces in every table. */
+/** Every task command under the project's `lint-staged` key, or none when absent or unreadable. */
+function readLintStagedCommands(root: string): string[] {
+  try {
+    const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8')) as { 'lint-staged'?: Record<string, unknown> };
+    return Object.values(pkg['lint-staged'] ?? {}).flatMap(v => (Array.isArray(v) ? v : [v])).filter((c): c is string => typeof c === 'string');
+  }
+  catch { return []; }
+}
+
+/** True when package.json lists `name` in `dependencies` or `devDependencies`. */
+function packageDeclares(root: string, name: string): boolean {
+  try {
+    const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8')) as { dependencies?: Record<string, unknown>, devDependencies?: Record<string, unknown> };
+    return name in (pkg.dependencies ?? {}) || name in (pkg.devDependencies ?? {});
+  }
+  catch { return false; }
+}
+
 export const SURFACE_ORDER: ParitySurface[] = ['instructions', 'skills', 'hooks', 'mcp', 'env', 'components', 'package', 'git', 'gates'];
 
 /** English labels for the prompt (the AI reads it). */
@@ -1793,6 +1811,33 @@ export function collectParityFindings(input: ParityInput): ParityFinding[] {
       suggested: 'merge',
       blocking: true,
     });
+  }
+
+  // 8b. Oxlint ships (`.oxlintrc.base.json` is on disk). The sync installs
+  //     nothing and keeps the project's `lint-staged`, so two things stay for
+  //     the agent, each named once: the dependency is declared but not
+  //     installed, and the pre-commit task still runs ESLint on staged code.
+  if (fs.existsSync(path.join(input.root, '.oxlintrc.base.json'))) {
+    const declaresOxlint = packageDeclares(input.root, 'oxlint');
+    if (declaresOxlint && !fs.existsSync(path.join(input.root, 'node_modules', '.bin', 'oxlint'))) {
+      findings.push({
+        surface: 'package',
+        path: 'package.json',
+        evidence: 'informational: `oxlint` is declared in package.json and not installed (the sync installs nothing). Run `bun install` before the next commit or gate: until then a script or hook that calls it fails with "command not found".',
+        suggested: 'decide',
+        blocking: false,
+      });
+    }
+    const lintStaged = readLintStagedCommands(input.root);
+    if (lintStaged.some(c => c.includes('eslint')) && !lintStaged.some(c => c.includes('oxlint'))) {
+      findings.push({
+        surface: 'package',
+        path: 'package.json',
+        evidence: 'informational: upstream now runs Oxlint (well under a second) in pre-commit and keeps ESLint as the gate in `lint:check`, `repo:check`, `pre-push` and CI. Your `lint-staged` still runs ESLint on staged code, so commits stay correct but slow. To switch, set the `*.{ts,tsx,js,jsx}` task to `["oxlint -c .oxlintrc.json"]` (needs `bun install` first and a `.oxlintrc.json` that extends `./.oxlintrc.base.json`); `bun run lint:fix` still autofixes style.',
+        suggested: 'decide',
+        blocking: false,
+      });
+    }
   }
 
   // 9. Quality gates that failed after the apply. Informational (never

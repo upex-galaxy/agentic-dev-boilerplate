@@ -872,6 +872,24 @@ describe('rows the diff-based table could not see before', () => {
     expect(report.fileBody).toContain('```text\nproject (kept):\n  bun run a\nupstream:\n  bun run a && bun run b\n```');
   });
 
+  test('a project that ships Oxlint but has not installed it and still runs ESLint in lint-staged gets two rows', () => {
+    const root = temporaryRoot();
+    write(root, '.oxlintrc.base.json', '{}\n');
+    write(root, 'package.json', JSON.stringify({ 'devDependencies': { oxlint: '1.94.0' }, 'lint-staged': { '*.{ts,tsx,js,jsx}': ['eslint --fix'] } }));
+    const findings = collectParityFindings(base(root, temporaryRoot()));
+    expect(findings).toHaveLength(2);
+    expect(findings[0].evidence).toContain('bun install');
+    expect(findings[1].evidence).toContain('oxlint -c .oxlintrc.json');
+  });
+
+  test('once Oxlint is installed and lint-staged runs it, no row', () => {
+    const root = temporaryRoot();
+    write(root, '.oxlintrc.base.json', '{}\n');
+    write(root, 'node_modules/.bin/oxlint', '#!/bin/sh\n');
+    write(root, 'package.json', JSON.stringify({ 'devDependencies': { oxlint: '1.94.0' }, 'lint-staged': { '*.{ts,tsx,js,jsx}': ['oxlint -c .oxlintrc.json'] } }));
+    expect(collectParityFindings(base(root, temporaryRoot()))).toEqual([]);
+  });
+
   test('a failed gate: informational row with exit code, first errors and the applied files it names; a passing gate is no row', () => {
     const root = temporaryRoot();
     const output = 'cli/lib/updater-core.test.ts(84,19): error TS2352: Conversion of type X may be a mistake.\ncli/other.ts(1,1): error TS1000: nope\n';

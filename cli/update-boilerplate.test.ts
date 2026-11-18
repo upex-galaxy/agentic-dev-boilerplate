@@ -65,6 +65,11 @@ describe('component registry', () => {
     expect(DEPRECATED_FILES.map(d => d.path)).not.toContain(RETIRED_HARNESS_LAUNCHER);
   });
 
+  test('.oxlintrc.json ships once (bootstrap-only): downstream receives a config agents:compat:check accepts, and keeps its own overrides', () => {
+    expect(COMPONENTS.find(c => c.name === 'oxlint-config')).toMatchObject({ type: 'file-list', paths: ['.'], files: ['.oxlintrc.json'], bootstrapOnly: true });
+    expect(COMPONENTS.find(c => c.name === 'tooling')?.files).toEqual(expect.arrayContaining(['.oxlintrc.base.json', 'guard-eslint-plugin.js']));
+  });
+
   test('.claude/settings.json ships once (bootstrap-only) and stays out of every directory component', () => {
     const rootConfig = COMPONENTS.find(c => c.name === 'agent-root-config');
     expect(rootConfig).toMatchObject({ type: 'file-list', paths: ['.claude'], files: ['settings.json'], bootstrapOnly: true });
