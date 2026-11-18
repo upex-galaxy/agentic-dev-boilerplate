@@ -20,6 +20,7 @@ import { log } from './log.ts';
 import { runMenu } from './menu.ts';
 import { installState } from './preflight.ts';
 import {
+  copyGuardExample,
   initGitRepo,
   pruneBootstrapExcludes,
   resetGitStrategyMeta,
@@ -175,6 +176,7 @@ async function main(): Promise<number> {
     s2.start('Preparing project (scrub history + rewrite metadata)…');
     try {
       await scrubGitHistory(projectDir);
+      await copyGuardExample(projectDir);
       await pruneBootstrapExcludes(projectDir);
       await seedProjectInstructions(projectDir);
       await rewritePackageJson(projectDir, projectName);

@@ -1,0 +1,17 @@
+{
+  "version": "1.0",
+  "features": [
+    {
+      "name": "notes",
+      "door": "src/features/notes/index.ts",
+      "exports": [
+        "NewNote",
+        "Note",
+        "NoteList",
+        "createNote",
+        "listNotes"
+      ]
+    }
+  ],
+  "warnings": []
+}

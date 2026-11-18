@@ -1,6 +1,6 @@
 import { spawnSync } from 'node:child_process';
 import { existsSync, readdirSync } from 'node:fs';
-import { readFile, rm, writeFile } from 'node:fs/promises';
+import { copyFile, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import { CliError } from './errors.ts';
@@ -503,6 +503,32 @@ function filesUnder(projectDir: string, dir: string): string[] {
     else { out.push(rel); }
   }
   return out;
+}
+
+export const GUARD_EXAMPLE_DIR = 'packages/guard-example';
+
+/**
+ * First install only: copy the GUARD reference feature (`packages/guard-example/src/**`)
+ * into the project's `src/` and its `guard-manifest.json` to the project root.
+ * Runs BEFORE `pruneBootstrapExcludes` removes `packages/`. Never overwrites an
+ * existing file. Adoption and `bun sync` never call it: the updater does not
+ * sync `packages/` or `src/`. Returns the project-relative paths it created.
+ */
+export async function copyGuardExample(projectDir: string): Promise<string[]> {
+  const copied: string[] = [];
+  const pairs = [
+    ...filesUnder(projectDir, `${GUARD_EXAMPLE_DIR}/src`).map(from => [from, from.slice(GUARD_EXAMPLE_DIR.length + 1)]),
+    ...(existsSync(join(projectDir, GUARD_EXAMPLE_DIR, 'guard-manifest.json')) ? [[`${GUARD_EXAMPLE_DIR}/guard-manifest.json`, 'guard-manifest.json']] : []),
+  ];
+  for (const [from, to] of pairs) {
+    const dest = join(projectDir, to);
+    if (existsSync(dest)) { continue; }
+    await mkdir(join(dest, '..'), { recursive: true });
+    await copyFile(join(projectDir, from), dest);
+    copied.push(to);
+  }
+  if (copied.length > 0) { log.dim(`  GUARD example copied: ${copied.join(', ')}`); }
+  return copied;
 }
 
 /**
