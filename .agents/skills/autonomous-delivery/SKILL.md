@@ -391,7 +391,7 @@ Every dispatch uses the 7-component briefing from `agentic-dev-core/references/b
 - The stack contract: app commands from `{{stack.scripts.*}}`, database changes per `{{stack.database.migrations_tool}}`, and the app's own conventions win.
 - The worktree path, the no-rebase rule for pushed branches, and the context-budget stop procedure.
 
-**Who runs the dispatched skill.** By default, an agent in the ticket's isolated worktree. When the orchestration gate passes (binary present and runtime reachable; canon in `orca-orchestration/SKILL.md`), a `story` or `bug` dispatch may go to one supervised worker per ticket: `[ORCHESTRATION_TOOL] launch: one worker running /sprint-development <KEY> fleet worker, in that ticket's worktree, with this phase's briefing`. Nothing else here changes. The lock, the audit, the selection, the caps (the lower of the mode cap and `orchestration.max_workers` wins), the migration gate and the context-budget contract stay with this skill, and the worker's handle and dispatch id go into the run report the moment it opens. The worker stops at an open PR; the merge and the deploy stay with this run (`sprint-development/references/fleet-mode.md` §2.1). When the gate fails, the default path runs and nothing in the run report or the escalation log names the orchestrator. How the two skills split the work: `orca-orchestration/references/automations.md` §2.6.
+**Who runs the dispatched skill.** By default, an agent in the ticket's isolated worktree. When the orchestration gate passes (binary present and runtime reachable; canon in the user-level skill `/agent-orchestration`), a `story` or `bug` dispatch may go to one supervised worker per ticket: `[ORCHESTRATION_TOOL] launch: one worker running /sprint-development <KEY> fleet worker, in that ticket's worktree, with this phase's briefing`. Nothing else here changes. The lock, the audit, the selection, the caps (the lower of the mode cap and `orchestration.max_workers` wins), the migration gate and the context-budget contract stay with this skill, and the worker's handle and dispatch id go into the run report the moment it opens. The worker stops at an open PR; the merge and the deploy stay with this run (`sprint-development/references/fleet-mode.md` §2.1). When the gate fails, the default path runs and nothing in the run report or the escalation log names the orchestrator. How the two skills split the work: `references/worker-dispatch.md`.
 
 ### Isolation
 
@@ -660,7 +660,7 @@ Each line restates a rule from above where a run is most likely to break it. The
 - Refinement, epics, acceptance criteria and backlog gaps go to `/product-management` (`discovery` mode's only callee).
 - Branch creation, pull requests, merges, conflicts and chained-pull-request planning go to `/git-flow-master`.
 - Stale or missing dependency edges and execution ordering go to `/project-context dev-roadmap`.
-- Launching, supervising and closing the dispatched workers through an orchestration runtime, and registering the run as a scheduled routine there, go to `/orca-orchestration` (only when its gate passes; this skill keeps every WHAT).
+- Launching, supervising and closing the dispatched workers through an orchestration runtime, and registering the run as a scheduled routine there, go to `/agent-orchestration` (only when its gate passes; this skill keeps every WHAT).
 
 ### Out of scope
 
@@ -677,7 +677,7 @@ If a pre-requisite check fails, stop and report. Do not continue and do not impr
 | --- | --- | --- |
 | `[ISSUE_TRACKER_TOOL]` | the project's tracker CLI or MCP | `AGENTS.md` Tool Resolution |
 | `[DB_TOOL]` | the project's database MCP or CLI | `AGENTS.md` Tool Resolution |
-| `[ORCHESTRATION_TOOL]` | the multi-session orchestration layer, used only for the optional Phase 3 worker dispatch; when the gate fails the default dispatch runs and the tag is never named | `orca-orchestration/SKILL.md` |
+| `[ORCHESTRATION_TOOL]` | the multi-session orchestration layer, used only for the optional Phase 3 worker dispatch; when the gate fails the default dispatch runs and the tag is never named | `/agent-orchestration` (user level) |
 
 `git`, `gh` and `bun` are used literally.
 
@@ -707,7 +707,7 @@ If a required key is unset, the run ends in Phase 0 naming the file and the key.
 | `agentic-dev-core/references/briefing-template.md` | The 7-component dispatch briefing |
 | `agentic-dev-core/references/session-management.md` | The session contract this skill adapts for unattended use |
 | `sprint-development/references/rpc-authorization.md` | The authorization gate this run never waives |
-| `orca-orchestration/references/automations.md` §2.6 | How a run dispatched through supervised workers splits the work with the orchestration skill (only when its gate passes) |
+| `references/worker-dispatch.md` | How a run dispatched through supervised workers splits the work with the orchestration skill (only when its gate passes) |
 
 ---
 

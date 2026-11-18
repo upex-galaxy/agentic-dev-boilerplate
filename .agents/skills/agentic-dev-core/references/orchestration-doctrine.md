@@ -14,7 +14,7 @@ The main conversation is the command center and subagents are the executors.
 
 **A harness without subagents** (Pi ships none) runs the work inline, or uses a supervised worker when its gate allows. A brief that says "dispatch" still binds what the dispatch would have done, its report format included.
 
-**Two executors.** One-shot subagents are the default. The optional second executor is a supervised worker: a persistent session coordinated through `/orca-orchestration`, available only when the orchestration binary exists and a runtime is reachable. When either is missing, a workflow skill says nothing about it. How to pick: `./dispatch-patterns.md` and `.agents/instructions/agent-orchestration-detail.md`.
+**Two executors.** One-shot subagents are the default. The optional second executor is a supervised worker: a persistent session coordinated through the user-level skill `/agent-orchestration`, available only when the orchestration binary exists and a runtime is reachable. When either is missing, a workflow skill says nothing about it. How to pick: `./dispatch-patterns.md` and `.agents/instructions/agent-orchestration-detail.md`.
 
 **Briefing format.** Every dispatch carries all seven components:
 

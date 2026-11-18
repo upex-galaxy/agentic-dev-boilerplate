@@ -517,7 +517,7 @@ When work needs isolation from in-progress changes on the current branch (a seco
 create  ->  bun run worktree:provision  ->  work  ->  bun run worktree:audit <wt> --rescue  ->  remove
 ```
 
-- Create: `git worktree add ../dir -b feat/x main` works on any host and is the portable canon. A host's own tool (Claude Code `EnterWorktree` and `ExitWorktree`, a Codex-managed worktree) is a harness path only and still needs the two repo steps around it. Supervised fleets go through `/orca-orchestration`, whose committed `orca.yaml` runs both steps as hooks.
+- Create: `git worktree add ../dir -b feat/x main` works on any host and is the portable canon. A host's own tool (Claude Code `EnterWorktree` and `ExitWorktree`, a Codex-managed worktree) is a harness path only and still needs the two repo steps around it. Supervised fleets go through `/agent-orchestration`, and this repo's committed `orca.yaml` runs both steps as hooks (`agentic-dev-core/references/fleet-provisioning.md`).
 - Provision copies the gitignored inputs a fresh worktree lacks (`.env`, `.vercel/`, local settings), installs dependencies and creates the `.claude/skills` alias.
 - `.session/` is never copied. Durable state lives at `<<PRIMARY_ROOT>>` and is cited by absolute path (`.agents/README.md` §"Checkout roots").
 - Audit before removing: `--rescue` copies state that lives only in the worktree back to the primary, never overwriting.
