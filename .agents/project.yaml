@@ -161,6 +161,16 @@ orchestration:
 updater:
   protected_paths: []
 
+checks:
+  mcp_parity:
+    mode: strict
+    relay: {}
+  vars_check:
+    skip_paths: []
+  docs_check:
+    include: []
+    exclude: []
+
 secrets:
   provider: local
   onepassword:

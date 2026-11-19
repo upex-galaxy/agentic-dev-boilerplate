@@ -5,6 +5,26 @@ All notable changes to this boilerplate are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased: a project can scope MCP parity, vars:check and docs:check
+
+### Added
+
+- **`checks:` in `.agents/project.yaml`** lets an adopted app get three gates green without hiding real
+  defects. Absent or empty, every gate is byte for byte as before, and the boilerplate keeps the defaults.
+  - `checks.mcp_parity.mode: local-only`: the canonical `.mcp.json` is a per-machine file holding literal
+    values. A committed `.gitignore` must ignore it, its local runner is not compared against the pinned
+    shape, a committed host may hold no literal secret-named value, and an absent file (CI, a fresh clone)
+    skips the set and the env contract with a warning while the committed hosts are still checked.
+  - `checks.mcp_parity.relay: { pi: [<command>, <launcher>] }`: a Pi entry that is exactly that prefix
+    plus its own server id is a relay to the canonical entry; the launcher must be repo-relative and
+    tracked, and the relayed entry must be an enabled stdio server with literal values.
+  - `checks.vars_check.skip_paths`: globs of project-owned folders with their own `{{...}}` syntax, where
+    an undeclared bare `{{NAME}}` is ignored and counted in one INFO line.
+  - `checks.docs_check.include` / `exclude`: globs that scope the doc pages `docs:check` scans; the
+    agent-facing markdown, the roster, the contracts and the `AGENTS.md` script check stay unscoped.
+  - A malformed value, a glob that matches nothing, or a skip path over the framework surface fails the
+    gate that owns the key. Every new MCP message passes the same secret masking as the rest.
+
 ## Unreleased: a project can replace the per-prompt output contract
 
 ### Added
