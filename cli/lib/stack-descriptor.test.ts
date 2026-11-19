@@ -336,14 +336,16 @@ describe('identity leaves derived from the stack', () => {
   });
 });
 
+const withStackValue = (source: string, key: string, value: string): string => source.replace(new RegExp(`^( *${key}:).*$`, 'm'), `$1 ${value}`);
+
 describe('validation and drift', () => {
   test('a value outside its set and a null where null is no answer are both reported', () => {
-    const read = readStack(realSource().replace('package_manager: bun', 'package_manager: deno').replace('hosting: vercel', 'hosting: null'));
+    const read = readStack(withStackValue(withStackValue(realSource(), 'package_manager', 'deno'), 'hosting', 'null'));
     expect(validateStack(read).map(i => i.path)).toEqual(['package_manager', 'hosting']);
   });
 
   test('a package manager other than bun is outside v1 (OD3), a shape-valid value all the same', () => {
-    const read = readStack(realSource().replace('package_manager: bun', 'package_manager: pnpm'));
+    const read = readStack(withStackValue(realSource(), 'package_manager', 'pnpm'));
     expect(validateStack(read)).toEqual([]);
     expect(unsupportedInV1(read.values).map(i => i.path)).toEqual(['package_manager']);
   });
