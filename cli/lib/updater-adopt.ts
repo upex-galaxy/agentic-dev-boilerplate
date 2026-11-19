@@ -40,7 +40,7 @@ import * as path from 'node:path';
 
 import { parse as parseYaml } from 'yaml';
 import { appContextSlug, appIdentity, buildAppContextSkill, composeAdoptedL0, withAppContextPointer } from './adopt-app-context.ts';
-import { hiddenPaths } from './adopt-gitignore.ts';
+import { hiddenUntracked, reincludeCovers } from './adopt-gitignore.ts';
 import { ADOPT_ISOLATION_PROMPT, analyzeIsolation, isolationFindings, isolationPrompt } from './adopt-isolation.ts';
 import { CLAUDE_INSTRUCTIONS_SHIM } from './agent-compatibility.ts';
 import { SCHEMA_FILE, SCHEMA_SOURCE, seedFromSchema } from './agents-schema.ts';
@@ -572,7 +572,7 @@ export function adoptFindings(input: AdoptRowsInput): Omit<ParityFinding, 'id'>[
       ? {
           surface: 'components',
           path: '.gitignore',
-          evidence: `the app's ${rules} hid the agentic store; re-included with ${re.added.map(a => `\`${a}\``).join(', ')} in an appended block, the app's own lines untouched`,
+          evidence: `the app's ${rules} hid ${re.hidden.map(h => h.path).join(', ')}; re-included with ${re.added.map(a => `\`${a}\``).join(', ')} in an appended block, the app's own lines untouched`,
           suggested: 'keep project',
           blocking: false,
           note: 'Without it the adoption commit versions nothing under .agents/ and the moved .claude/skills disappear from git. Drop the block only if the team decides to keep the agentic layer local.',
@@ -583,7 +583,7 @@ export function adoptFindings(input: AdoptRowsInput): Omit<ParityFinding, 'id'>[
           evidence: `the app's ${rules} still hide${re.stillHidden.length === 1 ? 's' : ''} ${re.stillHidden.map(h => h.path).join(', ')}: the agentic store would not be versioned`,
           suggested: 'decide',
           blocking: true,
-          note: 'Re-include .agents/ by hand (a `!/.agents/` line, plus `!/.agents/**` when a rule hides its children), then confirm with `git check-ignore -v .agents/project.yaml` (no output).',
+          note: `Re-include each path by hand with a \`!/<path>\` line (\`!/<folder>/\` for a folder) after the rule that hides it, then confirm with \`git check-ignore -v --no-index ${re.stillHidden.map(h => h.path).join(' ')}\` (no output).`,
         });
   }
 
@@ -598,14 +598,22 @@ export function adoptFindings(input: AdoptRowsInput): Omit<ParityFinding, 'id'>[
     });
   }
 
+  const byRule = new Map<string, HiddenPath[]>();
   for (const h of input.hiddenDelivered ?? []) {
+    const rule = `${h.source}\t${h.pattern}`;
+    byRule.set(rule, [...(byRule.get(rule) ?? []), h]);
+  }
+  for (const group of byRule.values()) {
+    const { source, pattern } = group[0];
+    const paths = group.map(h => h.path);
     rows.push({
-      surface: surfaceFor(h.path),
-      path: h.path,
-      evidence: `delivered, but the app's \`${h.pattern}\` (${h.source}) keeps it out of git: a teammate who clones never receives it`,
-      suggested: 'keep project',
-      blocking: false,
-      note: `The app's ignore rule is its own decision and is never edited. Track the file with \`git add -f ${h.path}\` or a \`!/${h.path}\` line only if the team wants it shared.`,
+      surface: surfaceFor(paths[0]),
+      path: paths[0],
+      evidence: `delivered, but the app's \`${pattern}\` (${source}) keeps ${paths.length === 1 ? 'it' : `${paths.length} delivered paths`} out of git: a teammate who clones never receives ${paths.length === 1 ? 'it' : 'them'}`,
+      suggested: 'decide',
+      blocking: true,
+      note: `The app's ignore rule is never edited. Share ${paths.length === 1 ? 'the path' : 'them'} with a \`!/<path>\` line after ${source} (or \`git add -f\`), or record that the team keeps ${paths.length === 1 ? 'it' : 'them'} local.`,
+      ...(paths.length > 1 ? { detail: paths.join('\n') } : {}),
     });
   }
 
@@ -890,7 +898,8 @@ export async function runAdopt(input: AdoptHookInput): Promise<AdoptOutcome> {
     foreignHooks: hooks.foreign,
     reinclude: input.reinclude ?? null,
     ignoreLinesWithheld: input.ignoreLinesWithheld ?? [],
-    hiddenDelivered: dryRun ? [] : hiddenPaths(root, [...input.appliedPaths, ...delivered]),
+    hiddenDelivered: hiddenUntracked(root, [...input.appliedPaths, ...delivered])
+      .filter(h => !dryRun || !(input.reinclude?.added ?? []).some(line => reincludeCovers(line, h.path))),
   });
   findings.push(...isolationFindings(isolation, isolationSaved));
   return { findings, protectedPaths, yamlSeeded, envAdded, instructions, delivered, installerLockWritten: !dryRun, isolationPrompt: isolationSaved, frameworkSkills };

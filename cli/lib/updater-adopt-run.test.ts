@@ -253,7 +253,7 @@ describe('runUpdate --adopt on an existing app', () => {
     expect(row?.blocking).toBe(false);
   });
 
-  test('a delivered file the app\'s own .gitignore hides gets an informational row, never an edit', async () => {
+  test('a delivered file the app\'s own .gitignore hides gets a blocking row, never an edit', async () => {
     const { template, app } = setup();
     write(app, '.gitignore', 'node_modules/\nnew-tool.ts\n');
     git(app, ['add', '-A']);
@@ -266,7 +266,8 @@ describe('runUpdate --adopt on an existing app', () => {
     await runUpdate(cfg, sink(), { auto: true, dryRun: false, rollback: false, adopt: true });
     const row = (adopt as AdoptOutcome | null)?.findings.find(f => f.path === 'scripts/new-tool.ts');
     expect(row?.evidence).toContain('`new-tool.ts` (.gitignore:2)');
-    expect(row?.blocking).toBe(false);
+    expect(row?.blocking).toBe(true);
+    expect(row?.suggested).toBe('decide');
     expect(read(app, '.gitignore').startsWith('node_modules/\nnew-tool.ts\n')).toBe(true);
   });
 

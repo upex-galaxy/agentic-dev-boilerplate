@@ -1,6 +1,7 @@
 import type { AdoptHookInput } from './updater-adopt.ts';
 import type { ParityInput } from './updater-parity.ts';
 import type { PackageJsonDelta } from './updater-types';
+import { spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
@@ -420,6 +421,21 @@ describe('runAdopt', () => {
     expect(out.yamlSeeded).toBe(true);
     expect(out.protectedPaths).toEqual(['.env.example', 'docs/README.md']);
     expect(out.installerLockWritten).toBe(false);
+  });
+
+  test('--dry-run names the delivered paths the app hides, minus tracked files and what the planned re-include covers, one blocking row per rule', async () => {
+    const { root, upstream } = fixture();
+    spawnSync('git', ['-C', root, 'init', '--quiet'], { encoding: 'utf8' });
+    write(root, '.gitignore', '.claude/*\n.env*\n');
+    spawnSync('git', ['-C', root, 'add', '-f', '.env.example'], { encoding: 'utf8' });
+    const out = await runAdopt(input(root, upstream, {
+      dryRun: true,
+      appliedPaths: ['.claude/agents/Explore.md', '.claude/agents/Plan.md', '.env.schema', '.env.example'],
+      reinclude: { hidden: [], added: ['!/.env.schema'], stillHidden: [] },
+    }));
+    const rows = out.findings.filter(f => f.evidence.includes('out of git'));
+    expect(rows.map(r => [r.path, r.blocking, r.suggested, r.detail])).toEqual([['.claude/agents/Explore.md', true, 'decide', '.claude/agents/Explore.md\n.claude/agents/Plan.md']]);
+    expect(rows[0].evidence).toContain('`.claude/*` (.gitignore:1) keeps 2 delivered paths out of git');
   });
 
   test('tooling isolation: app tsconfig + lefthook get blocking rows and one saved file; neither app file is written', async () => {

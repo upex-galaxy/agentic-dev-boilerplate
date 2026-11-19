@@ -13,6 +13,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   assuming `@/` is `src/` (still the default when the app declares no `@/*`). `settings.guard.aliases`
   overrides them, and a layer glob that names one file (`lib/supabase.ts`) now matches its
   extensionless imports. Before, an app whose `@/` is the repo root got no GUARD report at all.
+- **`--adopt` re-includes each delivered path the app's `.gitignore` hides**, one line per path
+  (`!/.agents/hooks/`, `!/.agents/project.schema.yaml`, `!/.env.schema`, ...), instead of
+  `!/.agents/**`, which un-ignored the app's own run state under `.agents/`. The probes now cover the
+  hooks, the store's top-level files and the `.env*.schema` files, a block from an earlier adoption
+  gets only its missing lines, and a delivered path still hidden afterwards is a blocking row (one per
+  rule, tracked files skipped) that `--dry-run` shows too.
 
 ## Unreleased: the orchestration doctrine moves to the user-level skill `agent-orchestration`
 
