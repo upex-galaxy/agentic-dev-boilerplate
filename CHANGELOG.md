@@ -5,6 +5,20 @@ All notable changes to this boilerplate are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased: secret values never reach the compatibility output or the parity prompt
+
+### Security
+
+- **`agents:compat:check`, `setup:doctor` and `bun sync` no longer print or save MCP config values.**
+  On an app whose `.mcp.json` held literal tokens, the MCP-parity errors printed them and the saved
+  `.agents/prompts/parity-plan.md` carried them from a diff of the file. Every value is now masked as
+  `<redacted>` (or the `${VAR}` it references) while the key names stay: the parity errors name the
+  keys whose values differ, parser errors no longer quote the offending token, and every diff, parity
+  row, interactive sync diff and page event goes through `cli/lib/ui/redaction.ts`. The primary layer is
+  exact: the values the repo's MCP configs and `.env*` files hold are masked wherever they appear; a
+  pattern net catches secret-named keys and flags, URL credentials and token-shaped strings.
+  Shared with the QA boilerplate. Rotate any token an earlier run printed.
+
 ## Unreleased: GUARD and `--adopt` fit an app that has no `src/`
 
 ### Fixed
