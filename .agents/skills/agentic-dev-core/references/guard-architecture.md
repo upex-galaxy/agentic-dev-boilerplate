@@ -24,7 +24,7 @@ Aliases: `@platform/*`, `@adapters/*`, `@features/*` and the root `@/*`. Use the
 | R1 one direction | A lower layer never imports a higher one | lint `guard/layer-imports` |
 | R2 one door | Code outside `features/<x>/` imports feature `x` only as `@features/x`, never a deep path | lint `guard/feature-door` |
 | R3 thin app | `src/app/**` never imports `@adapters/*`; data access goes through a feature | lint `guard/layer-imports` |
-| R4 registry | `guard-manifest.json` lists every feature and the names its `index.ts` exports. Read it before creating a feature or an action | `bun run guard:manifest:check`, kept fresh by pre-commit (`scripts/guard-manifest.ts`) |
+| R4 registry | `guard-manifest.json` lists every feature (each folder of the features root, `stack.conventions.features_root` in `.agents/project.yaml`) and the names its `index.ts` exports. Read it before creating a feature or an action | `bun run guard:manifest:check`, kept fresh by pre-commit (`scripts/guard-manifest.ts`) |
 | R5 shape | At most 2 positional params in features and adapters; feature files stay under the `max-lines` limit | core `max-params` and `max-lines` |
 | R6 no comments by default | Toolchain directives and one-line WHY only | Critical Rule 18 |
 

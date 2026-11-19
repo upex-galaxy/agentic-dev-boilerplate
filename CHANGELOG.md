@@ -19,6 +19,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   hooks, the store's top-level files and the `.env*.schema` files, a block from an earlier adoption
   gets only its missing lines, and a delivered path still hidden afterwards is a blocking row (one per
   rule, tracked files skipped) that `--dry-run` shows too.
+- **The GUARD manifest takes its features root from `.agents/project.yaml`**
+  (`stack.conventions.features_root`, relative to `stack.app_root`, default `src/features`), and the
+  pre-commit freshness gate runs on any staged TypeScript file, the manifest or the yaml instead of
+  matching `src/features/`, so an app with its features elsewhere keeps R4 checked.
 
 ## Unreleased: the orchestration doctrine moves to the user-level skill `agent-orchestration`
 

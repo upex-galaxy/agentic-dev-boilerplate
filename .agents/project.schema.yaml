@@ -69,6 +69,7 @@ stack:
   conventions:
     import_alias: '@/' # path alias the app's tsconfig declares for its source root; null = none
     testid_style: null # the app's existing test-id attribute and case (e.g. data-testid kebab-case); null = not established. Skills never rename an existing test id
+    features_root: src/features # GUARD features folder (rule R4: scripts/guard-manifest.ts lists one feature per folder in it), relative to app_root; null = src/features
 
 issue_tracker:
   issue_tracker: null # TODO: fill per project — Issue tracking tool (e.g. Jira)

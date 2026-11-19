@@ -143,9 +143,11 @@ framework_gates_pre_commit() {
   fi
 
   # guard-manifest freshness gate (GUARD rule R4) — only runs when staged files
-  # touch the features root or the manifest, and only where the script exists.
-  # The check prints "no features folder" and passes in a repo with no app code.
-  if echo "$_fg_staged" | grep -qE '^(src/features/|guard-manifest\.json$|scripts/guard-manifest\.ts$)' \
+  # could change a feature door, the manifest or its root, and only where the
+  # script exists. The root is the project's (`stack.conventions.features_root`),
+  # so the filter is any TypeScript file, never a folder. The check prints
+  # "no features folder" and passes in a repo with no app code.
+  if echo "$_fg_staged" | grep -qE '(\.tsx?$|^guard-manifest\.json$|^\.agents/project\.yaml$)' \
     && grep -q '"guard:manifest:check"' package.json 2>/dev/null; then
     bun run guard:manifest:check || {
       echo ""

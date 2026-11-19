@@ -47,6 +47,7 @@ stack:
   conventions:
     import_alias: '@/'
     testid_style: null
+    features_root: src/features
 
 issue_tracker:
   issue_tracker: null

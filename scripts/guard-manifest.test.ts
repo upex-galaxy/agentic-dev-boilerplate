@@ -4,7 +4,7 @@ import { join, resolve } from 'node:path';
 
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 
-import { buildManifest, formatWarning, GUARD_ENFORCEMENT_LEVEL, isStale, parseExports, serializeManifest } from './guard-manifest.ts';
+import { buildManifest, DEFAULT_ROOT, featuresRoot, formatWarning, GUARD_ENFORCEMENT_LEVEL, isStale, parseExports, serializeManifest } from './guard-manifest.ts';
 
 const SCRIPT = resolve(import.meta.dir, 'guard-manifest.ts');
 let tmp: string;
@@ -51,6 +51,29 @@ describe('buildManifest', () => {
   });
 });
 
+describe('featuresRoot', () => {
+  const project = (yaml: string | null) => {
+    const dir = mkdtempSync(join(tmp, 'project-'));
+    if (yaml !== null) {
+      mkdirSync(join(dir, '.agents'));
+      writeFileSync(join(dir, '.agents', 'project.yaml'), yaml);
+    }
+    return dir;
+  };
+
+  test('reads stack.conventions.features_root relative to stack.app_root', () => {
+    expect(featuresRoot(project('stack:\n  app_root: .\n  conventions:\n    features_root: lib # where features live\n'))).toBe('lib');
+    expect(featuresRoot(project('stack:\n  app_root: apps/web\n  conventions:\n    features_root: modules\n'))).toBe('apps/web/modules');
+  });
+
+  test('falls back to src/features below app_root when the key is null, absent or unreadable', () => {
+    expect(featuresRoot(project('stack:\n  conventions:\n    features_root: null\n'))).toBe(DEFAULT_ROOT);
+    expect(featuresRoot(project('stack:\n  app_root: apps/web\n'))).toBe(`apps/web/${DEFAULT_ROOT}`);
+    expect(featuresRoot(project(null))).toBe(DEFAULT_ROOT);
+    expect(featuresRoot(project('stack: [unclosed\n'))).toBe(DEFAULT_ROOT);
+  });
+});
+
 describe('cli', () => {
   const run = (...args: string[]) => Bun.spawnSync(['bun', SCRIPT, ...args], { cwd: tmp });
 
@@ -71,6 +94,17 @@ describe('cli', () => {
     const expected = GUARD_ENFORCEMENT_LEVEL === 'error' ? 1 : 0;
     expect(run('--root', root, '--out', out).exitCode).toBe(expected);
     expect(run('--root', root, '--out', out, '--check').exitCode).toBe(expected);
+  });
+
+  test('with no --root the yaml key picks the folder', () => {
+    const app = mkdtempSync(join(tmp, 'app-'));
+    mkdirSync(join(app, '.agents'));
+    writeFileSync(join(app, '.agents', 'project.yaml'), 'stack:\n  conventions:\n    features_root: lib\n');
+    mkdirSync(join(app, 'lib', 'billing'), { recursive: true });
+    writeFileSync(join(app, 'lib', 'billing', 'index.ts'), 'export const payInvoice = 1;\n');
+    const r = Bun.spawnSync(['bun', SCRIPT], { cwd: app });
+    expect(r.exitCode).toBe(0);
+    expect(JSON.parse(readFileSync(join(app, 'guard-manifest.json'), 'utf8')).features).toEqual([{ name: 'billing', door: 'lib/billing/index.ts', exports: ['payInvoice'] }]);
   });
 
   test('missing features root exits 0 with one line', () => {
