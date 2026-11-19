@@ -5,6 +5,17 @@ All notable changes to this boilerplate are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased: a project can replace the per-prompt output contract
+
+### Added
+
+- **`.agents/personality-override.md`** replaces the `OUTPUT CONTRACT` line the prompt hook injects on
+  every turn, on every harness. The text goes in as one line (CRLF, BOM and line breaks collapsed), at
+  most 2048 bytes; the identity, `ORCA:`, warning and `ROUTE:` lines are unchanged. Without the file the
+  contract stays byte for byte. An empty, oversized or symlinked file, or one that starts with a prefix
+  of the hook's own lines, is ignored, and `agents:compat:check` names why. `bun sync` never ships the
+  file, and `--adopt` re-includes it when the app's `.gitignore` hides `.agents/*`.
+
 ## Unreleased: secret values never reach the compatibility output or the parity prompt
 
 ### Security

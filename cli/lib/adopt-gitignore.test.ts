@@ -42,7 +42,7 @@ describe('hiddenPaths', () => {
   });
 });
 
-const STORE_FILES = ['.agents/project.yaml', '.agents/README.md', '.agents/project.schema.yaml', '.agents/jira-fields.json', '.agents/jira-link-types.json', '.agents/jira-required.yaml', '.agents/jira-workflows.json'];
+const STORE_FILES = ['.agents/project.yaml', '.agents/README.md', '.agents/project.schema.yaml', '.agents/jira-fields.json', '.agents/jira-link-types.json', '.agents/jira-required.yaml', '.agents/jira-workflows.json', '.agents/personality-override.md'];
 
 describe('reincludeAgenticStore', () => {
   test('nothing hidden: the file is untouched', () => {

@@ -163,6 +163,7 @@ export function lintDocMeta(rel: string, html: string): DocFinding[] {
  */
 export const OPTIONAL_PATHS = new Set<string>([
   '.agents/compatibility/command-aliases.project.json',
+  '.agents/personality-override.md',
 ]);
 
 /**

@@ -9,7 +9,9 @@
  * every turn keeps it in front for ~30 tokens.
  *
  * The emitter carries, in this order:
- *   1. `PERSONALITY_CONTRACT`: the AGENTS.md §2 output contract.
+ *   1. `PERSONALITY_CONTRACT`: the AGENTS.md §2 output contract, or the one
+ *      line of `.agents/personality-override.md` when the project has it
+ *      (`personalityContract`).
  *   2. The `AGENT IDENTITY:` line: worktree, session label, harness. It is
  *      forensic metadata: `git-flow-master` copies it into the `Worktree:` /
  *      `Session:` commit trailers (AGENTS.md Critical Rule #3), which name a
@@ -69,7 +71,7 @@
  */
 
 import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { existsSync, lstatSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { homedir, tmpdir } from 'node:os';
 import { basename, delimiter, dirname, join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -81,6 +83,9 @@ export const PERSONALITY_CONTRACT = [
   'Butler bullets as `topic: fragment`.',
   'No em dash. Vary sentence length. No closing recap.',
 ].join(' ');
+
+export const PERSONALITY_OVERRIDE_FILE = '.agents/personality-override.md';
+export const PERSONALITY_OVERRIDE_MAX_BYTES = 2048;
 
 /** Prefix of the forensic identity line. Consumed by `git-flow-master`. */
 export const IDENTITY_PREFIX = 'AGENT IDENTITY:';
@@ -1182,7 +1187,7 @@ export function agentContextLines(options = {}) {
     : options.routeState === undefined
       ? fileRouteState(routerRoot(options), options.sessionId ?? identity.sessionId ?? '')
       : options.routeState;
-  const lines = [PERSONALITY_CONTRACT, identityLine(identity)];
+  const lines = [personalityContract(options), identityLine(identity)];
   if (orca) {
     const launched = options.launched ?? sessionLaunched({ prompt, routeState });
     lines.push(launched ? ORCA_LAUNCHED_LINE : ORCA_CONTEXT_LINE);
@@ -1193,6 +1198,39 @@ export function agentContextLines(options = {}) {
     lines.push(...routeLines({ ...options, sessionId: options.sessionId ?? identity.sessionId, routeState }));
   }
   return lines;
+}
+
+export const RESERVED_LINE_PREFIXES = [IDENTITY_PREFIX, ROUTE_PREFIX, ROUTE_OPTIONAL_PREFIX, ROUTE_PENDING_PREFIX, ROUTE_SCOPE_PREFIX, 'ORCA:', 'CREDENTIALS:', 'WORKTREE:'];
+
+/**
+ * Why the project's override file is not used, or null when it is (or is absent).
+ * Shared by the emitter (falls back to the default) and `agents:compat:check` (reports it).
+ */
+export function personalityOverrideProblem(root) {
+  const file = join(root, PERSONALITY_OVERRIDE_FILE);
+  let stats;
+  try { stats = lstatSync(file); }
+  catch { return null; }
+  if (!stats.isFile()) { return `${PERSONALITY_OVERRIDE_FILE} must be a regular file (not a symlink or a folder)`; }
+  if (stats.size > PERSONALITY_OVERRIDE_MAX_BYTES) { return `${PERSONALITY_OVERRIDE_FILE} is ${stats.size} bytes; the limit is ${PERSONALITY_OVERRIDE_MAX_BYTES} (it is re-injected on every prompt)`; }
+  const text = singleLine(readFileSync(file, 'utf8'));
+  if (text === '') { return `${PERSONALITY_OVERRIDE_FILE} is empty`; }
+  const reserved = RESERVED_LINE_PREFIXES.find(prefix => text.startsWith(prefix));
+  if (reserved) { return `${PERSONALITY_OVERRIDE_FILE} starts with \`${reserved}\`, a prefix the hook's own lines use`; }
+  return null;
+}
+
+/** The output contract: the project's override as one line, else `PERSONALITY_CONTRACT`. */
+export function personalityContract(options = {}) {
+  if (typeof options.contract === 'string') { return options.contract; }
+  try {
+    const root = routerRoot(options);
+    if (!root || personalityOverrideProblem(root) !== null || !existsSync(join(root, PERSONALITY_OVERRIDE_FILE))) { return PERSONALITY_CONTRACT; }
+    return singleLine(readFileSync(join(root, PERSONALITY_OVERRIDE_FILE), 'utf8'));
+  }
+  catch {
+    return PERSONALITY_CONTRACT;
+  }
 }
 
 /** A title is a single line: control characters collapse into spaces. */

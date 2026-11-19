@@ -25,7 +25,7 @@ import type { Harness, HarnessSelection } from './harness-selection.ts';
 import { existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, readlinkSync, rmSync, symlinkSync, unlinkSync, writeFileSync } from 'node:fs';
 import { isAbsolute, join, normalize, relative, resolve } from 'node:path';
 
-import { validateEslintBlockWiring, validateHookCompatibility, validateMcpParityFindings, validateOxlintWiring } from './agent-compatibility-contracts.ts';
+import { validateEslintBlockWiring, validateHookCompatibility, validateMcpParityFindings, validateOxlintWiring, validatePersonalityOverride } from './agent-compatibility-contracts.ts';
 import { declaredHarnesses, skippedHarnessNotes } from './harness-selection.ts';
 import { readSecretValues, redactAll } from './ui/redaction.ts';
 
@@ -408,6 +408,7 @@ export function checkAgentCompatibility(
     }
     errors.push(...validateNoShadowingCommands(paths.root));
     errors.push(...validateHookCompatibility(paths.root, harnesses));
+    errors.push(...validatePersonalityOverride(paths.root));
     const mcp = validateMcpParityFindings(paths.root, { harnesses });
     errors.push(...mcp.errors);
     warnings.push(...mcp.warnings);
