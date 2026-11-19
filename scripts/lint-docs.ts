@@ -76,7 +76,7 @@
 
 import type { VolatileKind } from './lib/volatile-facts';
 import { existsSync, lstatSync, readdirSync, readFileSync, statSync } from 'node:fs';
-import { dirname, join, relative, resolve } from 'node:path';
+import { dirname, join, relative, resolve, sep } from 'node:path';
 import { isBoilerplateOnlyPath } from '../cli/lib/boilerplate-only.ts';
 import { contractsEnforced, scanContracts } from './lib/doc-contracts';
 import { L0_FILE, parseProjectSkills, parseRouter, PROJECT_FILE, SECTIONS_DIR, skillTableSource } from './lib/instructions';
@@ -271,14 +271,21 @@ const PBI_CACHE = join('.context', 'PBI');
 /**
  * The agent-facing markdown files, absolute paths, sorted. Directory symlinks
  * are not followed (`.claude/skills` is an alias of `.agents/skills`), the PBI
- * cache is skipped, and `lintDocs` drops the git-ignored ones.
+ * cache and the third-party skills (community installs and the generated
+ * `REGISTRY.md` that copies their text) are skipped, and `lintDocs` drops the
+ * git-ignored ones.
  */
 export function collectAgentLinkFiles(root: string): string[] {
   const files: string[] = [];
+  const community = communitySlugs(root);
+  const thirdParty = (rel: string): boolean => {
+    const [agents, skills, slug] = rel.split(sep);
+    return agents === '.agents' && skills === 'skills' && (community.has(slug) || slug === 'REGISTRY.md');
+  };
   for (const base of AGENT_LINK_ROOTS) {
     const found: string[] = [];
     walk(join(root, base), ['.md'], found);
-    files.push(...found.filter(file => !relative(root, file).startsWith(`${PBI_CACHE}/`)));
+    files.push(...found.filter(file => !relative(root, file).startsWith(`${PBI_CACHE}/`) && !thirdParty(relative(root, file))));
   }
   return files.sort();
 }
@@ -427,7 +434,12 @@ function communitySlugs(root: string): Set<string> {
   const installTs = join(root, 'cli', 'install.ts');
   if (!existsSync(installTs)) { return new Set(); }
   const src = readFileSync(installTs, 'utf8');
-  return new Set([...src.matchAll(/\bskill:\s*['"]([a-z][a-z0-9-]+)['"]/g)].map(m => m[1]));
+  const slugs = new Set([...src.matchAll(/\bskill:\s*['"]([a-z][a-z0-9-]+)['"]/g)].map(m => m[1]));
+  for (const m of src.matchAll(/\bpackage:\s*['"]([^'"]*)['"]\s*\}/g)) {
+    const last = m[1].split('/').pop()?.replace(/\.git$/, '');
+    if (last) { slugs.add(last); }
+  }
+  return slugs;
 }
 
 /** Repo skills: committed, non-symlinked skill folders that are not community installs. */

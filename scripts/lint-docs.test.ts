@@ -133,6 +133,15 @@ describe('lint-docs agent-facing markdown links', () => {
     expect(lintDocs(root).findings).toEqual([]);
   });
 
+  test('community skills and the generated REGISTRY.md are third-party text, never link-checked', () => {
+    write('cli/install.ts', 'const PROJECT_LEVEL_SKILLS = [{ package: \'x/y\', skill: \'seo\' }, { package: \'resend/resend-cli\' }];');
+    write('.agents/skills/seo/SKILL.md', '[gone](../web-quality-audit/SKILL.md)');
+    write('.agents/skills/resend-cli/SKILL.md', '[gone](references/api-keys.md)');
+    write('.agents/skills/REGISTRY.md', '[gone](references/api-keys.md)');
+    write('.agents/skills/own/SKILL.md', '[gone](./references/gone.md)');
+    expect(lintDocs(root).findings.map(tag)).toEqual(['error:.agents/skills/own/SKILL.md:1:link:./references/gone.md']);
+  });
+
   test('reports only links there, not inline paths or volatile facts', () => {
     write('.agents/README.md', 'Ten skills today. `docs/nope/file.md`');
     expect(lintDocs(root).findings).toEqual([]);
@@ -197,6 +206,14 @@ describe('lint-docs roster and scripts', () => {
     write('AGENTS.md', router(['alpha-flow']));
     const findings = lintDocs(root).findings.filter(f => f.kind === 'roster');
     expect(findings.map(tag)).toEqual(['error:AGENTS.md:1:roster:ghost-flow']);
+  });
+
+  test('a package-only community install (no skill: key) is exempt from the roster too', () => {
+    skill('alpha-flow');
+    skill('resend-cli');
+    write('cli/install.ts', 'const PROJECT_LEVEL_SKILLS = [{ package: \'resend/resend-cli\' }];');
+    write('AGENTS.md', router(['alpha-flow']));
+    expect(lintDocs(root).findings.filter(f => f.kind === 'roster')).toEqual([]);
   });
 
   test('the skills section wins over AGENTS.md when it exists', () => {
