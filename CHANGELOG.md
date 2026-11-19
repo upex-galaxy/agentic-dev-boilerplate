@@ -5,6 +5,15 @@ All notable changes to this boilerplate are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased: GUARD and `--adopt` fit an app that has no `src/`
+
+### Fixed
+
+- **GUARD reads the app's import aliases** from `compilerOptions.paths` in `tsconfig.json` instead of
+  assuming `@/` is `src/` (still the default when the app declares no `@/*`). `settings.guard.aliases`
+  overrides them, and a layer glob that names one file (`lib/supabase.ts`) now matches its
+  extensionless imports. Before, an app whose `@/` is the repo root got no GUARD report at all.
+
 ## Unreleased: the orchestration doctrine moves to the user-level skill `agent-orchestration`
 
 ### Changed

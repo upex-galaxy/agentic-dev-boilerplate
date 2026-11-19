@@ -32,7 +32,7 @@ Each lint message names the rule and the root-cause fix. A fix moves the code to
 
 ## 3. Configurable layer map
 
-An adopted app keeps its folders. The plugin reads the layer map from ESLint `settings.guard.layers`, one glob list per layer, with the defaults of §1 when the setting is absent. An app that keeps `db/`, `api/` and `lib/` maps them to layers there and moves no file. The wiring lives in `eslint.config.js`; `project-adoption` owns the mapping step.
+An adopted app keeps its folders. The plugin reads the layer map from ESLint `settings.guard.layers`, one glob list per layer, with the defaults of §1 when the setting is absent. An app that keeps `db/`, `api/` and `lib/` maps them to layers there and moves no file. A glob that names one file (`lib/supabase.ts`) puts that file in the layer and matches its imports with or without the extension; a folder glob (`lib/github/**`) covers everything below it. Aliases resolve through `compilerOptions.paths` of the `tsconfig.json` in the directory lint runs from (`@/` is `src/` when it declares none); an app whose paths live elsewhere (an `extends` base, a monorepo app folder) declares them in `settings.guard.aliases`, prefix to folder (`{ '@/': './' }`). ESLint's `--cache` does not see a `paths` change, so clear the cache after editing them. The wiring lives in `eslint.config.js` and, for Oxlint, `.oxlintrc.json`; `project-adoption` owns the mapping step.
 
 ## 4. Severity
 
