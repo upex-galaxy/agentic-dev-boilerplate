@@ -5,6 +5,27 @@ All notable changes to this boilerplate are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased: MCP parity records what a relay cannot carry, and local-only scans headers and urls
+
+### Added
+
+- **`checks.mcp_parity.unrelayed: { <host>: [<server ids>] }`** records the canonical servers a relay host
+  cannot carry (an http server, one disabled in the canonical file, or one that takes a value from the
+  host, which the launcher does not expand). Each one is left out of the set comparison and warned by
+  name on every run. An unknown id, an id the relay host declares, a relayable stdio server, or a host
+  without a relay fails and names the key. With `.mcp.json` absent (CI) an id is warned as unverified.
+
+### Changed
+
+- **A Pi relay entry may carry `enabled`.** `enabled: false` passes with a warning naming the server; a
+  non-boolean value fails; an entry whose id the canonical file lacks still fails as before.
+- **`local-only` scans every committed MCP entry for literal credentials**, not only secret-named env
+  keys: header values (`headers`, Codex `http_headers`, a `--header` in args), url userinfo, secret or
+  token-shaped query, fragment and matrix parameters and path segments (also when the url's host is a
+  variable), secret flags in args, token-shaped env values and
+  any other secret-named key such as OpenCode `oauth.clientSecret`. Findings name the server and the
+  key, never the value. With no `checks:` block, or under `strict`, the output is unchanged.
+
 ## Unreleased: a project can scope MCP parity, vars:check and docs:check
 
 ### Added

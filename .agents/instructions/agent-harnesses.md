@@ -176,7 +176,7 @@ Parity normalizes each native format (JSON, JSONC, TOML) into a common shape (tr
 - Codex keeps `startup_timeout_sec = 30` on each stdio server (its 10-second default is too short for a cold `bunx` fetch plus the loader hop), and `bearer_token_env_var` only on a remote one.
 - A missing loader, a host-side reference beside it or a missing Codex budget fails `agents:compat:check` in the boilerplate. Downstream it is a warning naming the file and the exact launch, because the MCP configs are bootstrap-only or protected and a sync never delivers the fix.
 - Pi reads Claude's `mcpServers` shape plus its own keys (`exposure`, `description`), which parity ignores. A `!command` value there runs a shell and is refused.
-- A project scopes parity in `checks.mcp_parity` of `.agents/project.yaml` (documented in `.agents/project.schema.yaml`): `mode: local-only` for a per-machine `.mcp.json` that a committed `.gitignore` ignores, and `relay` for a Pi that reaches every stdio server through one tracked project launcher. Absent, parity runs strict as described here.
+- A project scopes parity in `checks.mcp_parity` of `.agents/project.yaml` (documented in `.agents/project.schema.yaml`): `mode: local-only` for a per-machine `.mcp.json` that a committed `.gitignore` ignores, `relay` for a Pi that reaches every stdio server through one tracked project launcher, and `unrelayed` for the servers that launcher cannot carry, http, disabled or taking a value from the host (warned by name, never silent). Absent, parity runs strict as described here.
 - Critical Rule #9 applies to every host.
 
 ### Harness-specific gotchas
