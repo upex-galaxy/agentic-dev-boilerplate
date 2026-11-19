@@ -216,6 +216,15 @@ describe('lint-docs roster and scripts', () => {
     expect(lintDocs(root).findings.filter(f => f.kind === 'roster')).toEqual([]);
   });
 
+  test('a jitso-managed skill copy is exempt from the roster and its links are not checked', () => {
+    skill('alpha-flow');
+    skill('jitso');
+    write('.agents/skills/jitso/.jitso-skill.json', '{}');
+    write('.agents/skills/jitso/SKILL.md', '[gone](references/gone.md)');
+    write('AGENTS.md', router(['alpha-flow']));
+    expect(lintDocs(root).findings).toEqual([]);
+  });
+
   test('the skills section wins over AGENTS.md when it exists', () => {
     skill('alpha-flow');
     skill('ghost-flow');

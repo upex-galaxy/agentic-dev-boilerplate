@@ -131,6 +131,19 @@ describe('lint-skills package-only community installs', () => {
   });
 });
 
+describe('lint-skills jitso-managed copies', () => {
+  test('a skill folder with .jitso-skill.json and no metadata.kind is third-party and not linted', () => {
+    const root = fixture('(T3)');
+    write(root, '.agents/skills/jitso/SKILL.md', '---\nname: jitso\n---\n\n# jitso\n\nSee `cli/install.ts:403`.\n');
+    write(root, '.agents/skills/jitso/.jitso-skill.json', '{}');
+    const { exitCode, stdout } = runLint(root);
+
+    expect(stdout).not.toContain('KIND-MISSING');
+    expect(stdout).not.toContain('FILE-LINE');
+    expect(exitCode).toBe(0);
+  });
+});
+
 describe('lint-skills volatile facts (Critical Rule #17, checks 16-17)', () => {
   test('a path:line citation and a dated claim in a T1 body are FILE-LINE / CURRENT-STATE errors that fail the gate', () => {
     const root = fixture('(T3)');

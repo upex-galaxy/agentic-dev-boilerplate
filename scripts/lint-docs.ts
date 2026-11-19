@@ -280,7 +280,7 @@ export function collectAgentLinkFiles(root: string): string[] {
   const community = communitySlugs(root);
   const thirdParty = (rel: string): boolean => {
     const [agents, skills, slug] = rel.split(sep);
-    return agents === '.agents' && skills === 'skills' && (community.has(slug) || slug === 'REGISTRY.md');
+    return agents === '.agents' && skills === 'skills' && (community.has(slug) || slug === 'REGISTRY.md' || existsSync(join(root, '.agents', 'skills', slug, '.jitso-skill.json')));
   };
   for (const base of AGENT_LINK_ROOTS) {
     const found: string[] = [];
@@ -448,7 +448,7 @@ function repoSkills(root: string): string[] {
   if (!existsSync(dir)) { return []; }
   const community = communitySlugs(root);
   const candidates = readdirSync(dir)
-    .filter(name => !community.has(name) && !lstatSync(join(dir, name)).isSymbolicLink())
+    .filter(name => !community.has(name) && !existsSync(join(dir, name, '.jitso-skill.json')) && !lstatSync(join(dir, name)).isSymbolicLink())
     .filter(name => statSync(join(dir, name)).isDirectory() && existsSync(join(dir, name, 'SKILL.md')));
   const ignored = gitIgnored(root, candidates.map(slug => `.agents/skills/${slug}/SKILL.md`));
   return candidates.filter(slug => !ignored.has(`.agents/skills/${slug}/SKILL.md`)).sort();

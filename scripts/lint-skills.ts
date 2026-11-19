@@ -801,6 +801,11 @@ interface GrepFinding {
   text: string
 }
 
+/** A skill folder `jitso install skill` wrote carries this marker: a managed third-party copy, never linted as ours. */
+function isJitsoManaged(slug: string): boolean {
+  return existsSync(join(SKILLS_DIR, slug, '.jitso-skill.json'));
+}
+
 function gatherAllSkillMarkdown(): string[] {
   if (!existsSync(SKILLS_DIR)) { return []; }
   return walk(SKILLS_DIR).filter((f) => {
@@ -810,6 +815,7 @@ function gatherAllSkillMarkdown(): string[] {
     // An adopted app's own skills are not this doctrine's (`cli/lib/tooling-scope.ts`).
     if (!rel.includes('/')) { return true; }
     const name = rel.split('/')[0];
+    if (isJitsoManaged(name)) { return false; }
     const owned = readUpstreamOwned(REPO_ROOT);
     return isToolingSkill(name, owned) && !(owned !== null && existsSync(join(REPO_ROOT, ADOPT_UPSTREAM_SKILLS_DIR, name)));
   });
@@ -996,7 +1002,7 @@ function gatherVolatileTargets(communitySlugs: Set<string>): string[] {
       if (lstatSync(full).isSymbolicLink()) { continue; }
       if (statSync(full).isDirectory()) {
         if (dir === agentsDir && e === 'prompts') { continue; }
-        if (dir === SKILLS_DIR && (communitySlugs.has(e) || e.endsWith('-workspace'))) { continue; }
+        if (dir === SKILLS_DIR && (communitySlugs.has(e) || e.endsWith('-workspace') || isJitsoManaged(e))) { continue; }
         visit(full);
       }
       else if (e.endsWith('.md')) {
@@ -1105,7 +1111,7 @@ function main() {
     // projects commit their `bunx skills add` output) is still the tier
     // install.ts says. Classifying it T1 made every `(T3)` annotation that
     // cites it a TIER-MISMATCH.
-    if (t2.has(e) || t3.has(e) || t4.has(e)) { committedCommunity.add(e); continue; }
+    if (t2.has(e) || t3.has(e) || t4.has(e) || isJitsoManaged(e)) { committedCommunity.add(e); continue; }
     // An adopted app's own skill (`cli/lib/tooling-scope.ts`): written before
     // the adoption, to the app's conventions, never to this doctrine.
     if (!isToolingSkill(e, upstreamOwned)) { appOwned.add(e); continue; }
