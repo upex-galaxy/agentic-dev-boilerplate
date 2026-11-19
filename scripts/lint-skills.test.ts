@@ -6,7 +6,7 @@
  * table annotates tiers.
  */
 
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 
@@ -115,6 +115,19 @@ describe('lint-skills tier classification', () => {
 
     expect(stdout).toContain('[ERROR/TIER-MISMATCH] \'shadcn\' annotated as T2 but install.ts says T3');
     expect(exitCode).toBe(1);
+  });
+});
+
+describe('lint-skills package-only community installs', () => {
+  test('a whole-repo install in PROJECT_LEVEL_SKILLS is T3: its kind-less SKILL.md is not linted as a project skill', () => {
+    const root = fixture('(T3)');
+    const installTs = join(root, 'cli/install.ts');
+    write(root, 'cli/install.ts', readFileSync(installTs, 'utf8').replace('];', '  { package: \'resend/resend-cli\' },\n];'));
+    write(root, '.agents/skills/resend-cli/SKILL.md', '---\nname: resend-cli\nmetadata:\n  author: resend\n---\n\n# resend-cli\n');
+    const { exitCode, stdout } = runLint(root);
+
+    expect(stdout).not.toContain('KIND-MISSING');
+    expect(exitCode).toBe(0);
   });
 });
 
