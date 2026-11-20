@@ -22,6 +22,9 @@
  *  - CRLF / LF detected and normalised to the file's existing style.
  *  - Within each section, user's existing key order preserved; new keys
  *    appended at end, sorted alphabetically among themselves.
+ *    Exception: a dependency section already in ascending key order (the
+ *    order package managers write and `jsonc/sort-keys` enforces) gets each
+ *    new key at its sorted position, so the sync never leaves it unsorted.
  *  - Sections not listed in the spec are passed through untouched.
  */
 
@@ -253,6 +256,8 @@ export function detectPackageJsonDelta(
  *   - User's existing keys in each section keep their original order.
  *   - New keys appended AT THE END of the section, sorted alphabetically among
  *     themselves only (no global re-sort).
+ *   - Except a dependency section whose keys are already ascending: the new
+ *     keys land at their sorted position (existing keys never move).
  *   - Sections absent in local are created at the end of the JSON object.
  *
  * Idempotency:
@@ -309,7 +314,7 @@ export function applyPackageJsonAppend(
     }
 
     if (writtenForSection.length > 0) {
-      parsed.data[section] = localMap;
+      parsed.data[section] = staysAscending(section, existingSection) ? sortedByKey(localMap) : localMap;
       written[section] = writtenForSection;
       changed = true;
     }
@@ -394,6 +399,16 @@ export function applyPackageJsonOverride(
 
 /** Every section an app may already declare a package in. */
 const DEPENDENCY_SECTIONS = ['dependencies', 'devDependencies', 'peerDependencies', 'optionalDependencies'];
+
+function staysAscending(section: string, existing: unknown): boolean {
+  if (!DEPENDENCY_SECTIONS.includes(section) || existing === null || typeof existing !== 'object') { return false; }
+  const keys = Object.keys(existing);
+  return keys.every((key, i) => i === 0 || keys[i - 1] <= key);
+}
+
+function sortedByKey(map: Record<string, unknown>): Record<string, unknown> {
+  return Object.fromEntries(Object.keys(map).sort().map(key => [key, map[key]]));
+}
 
 export interface AdoptPackageJsonFold {
   delta: PackageJsonDelta

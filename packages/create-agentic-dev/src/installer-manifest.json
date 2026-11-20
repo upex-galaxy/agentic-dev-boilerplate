@@ -204,7 +204,7 @@
       ]
     },
     "communityUserSkills": {
-      "count": 15,
+      "count": 16,
       "items": [
         {
           "name": "find-skills",
@@ -239,6 +239,11 @@
         {
           "name": "writing-for-agents",
           "purpose": "Structure pass for skills and instructions: pointers, no-op test, completion criteria.",
+          "source": "https://github.com/upex-galaxy/agentic-user-skills"
+        },
+        {
+          "name": "agent-orchestration",
+          "purpose": "Fleet orchestration doctrine: conductor, workers and their mailbox.",
           "source": "https://github.com/upex-galaxy/agentic-user-skills"
         },
         {

@@ -5,6 +5,24 @@ All notable changes to this boilerplate are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased: CI on `main` runs green again
+
+### Fixed
+
+- **The Oxlint config test reads the same output everywhere.** Oxlint drops its summary line and
+  switches formatter when it detects an AI agent session (`CLAUDECODE`, `AI_AGENT` and about a dozen
+  more markers), so "a clean feature is silent" passed in an agent session and failed in CI on
+  `Found 0 warnings and 0 errors.`. `scripts/oxlint-config.test.ts` now runs Oxlint with
+  `--format=json` and asserts on the diagnostic codes: a clean file has none and exits 0.
+- **A synced dependency lands in sorted order.** `bun sync` appended a new upstream dependency at the
+  end of `devDependencies`, so a project whose section was sorted failed `jsonc/sort-keys` right after
+  the sync (the `legacy-updater` consumer leg caught it on `oxlint`). A dependency section already in
+  ascending order now gets each new key at its sorted position; a hand-ordered one, `scripts` and
+  `lint-staged` keep today's append at the end, and existing keys never move.
+- **The installer manifest lists `agent-orchestration`.** The user-level skill was added to
+  `cli/install.ts` without regenerating `packages/create-agentic-dev/src/installer-manifest.json`, so
+  the package's manifest test failed. CI never showed it, because the step before it stopped the job.
+
 ## Unreleased: the lock reaches upstream HEAD, and a new `project.yaml` block lands after one blank line
 
 ### Fixed

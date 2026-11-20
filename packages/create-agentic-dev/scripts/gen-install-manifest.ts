@@ -122,6 +122,7 @@ const SKILL_PURPOSES: Record<string, string> = {
   'writing-for-agents': 'Structure pass for skills and instructions: pointers, no-op test, completion criteria.',
   'mkd': 'Decision-deck CLI — the AI asks, the user answers point by point in a browser deck.',
   'show-me-your-work': 'Decision log for an unattended run, audited against the transcript.',
+  'agent-orchestration': 'Fleet orchestration doctrine: conductor, workers and their mailbox.',
   'retro': 'Learnings harvest at the close of an orchestrated run.',
   'diagnosing-bugs': 'Root-cause method for a bug whose cause is not obvious.',
   'blast-radius': 'Merge blast radius for a diff not trusted to be contained.',

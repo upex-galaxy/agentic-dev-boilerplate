@@ -94,3 +94,25 @@ describe('lint-staged arrays travel with every sync (greenfield included)', () =
     expect(local['lint-staged']).toEqual({ '*.ts': ['eslint --fix'], '*.sh': '[ -x x ] || true' });
   });
 });
+
+describe('a dependency section in ascending order stays in ascending order', () => {
+  const DEPS: PackageJsonSpec = { path: 'package.json', sections: ['scripts', 'devDependencies'] };
+
+  test('a new devDependency lands at its sorted position, not at the end', () => {
+    const { repo } = fixture({}, { devDependencies: { husky: '^9.0.0', prettier: '^3.0.0', typescript: '^5.0.0' } });
+    applyPackageJsonAppend(DEPS, { devDependencies: { 'oxlint': '1.0.0', 'eslint-plugin-x': '^1.0.0' } }, repo);
+    expect(Object.keys(readLocal(repo).devDependencies as Record<string, string>)).toEqual(['eslint-plugin-x', 'husky', 'oxlint', 'prettier', 'typescript']);
+  });
+
+  test('a hand-ordered devDependencies keeps its order and gets the new key at the end', () => {
+    const { repo } = fixture({}, { devDependencies: { typescript: '^5.0.0', husky: '^9.0.0' } });
+    applyPackageJsonAppend(DEPS, { devDependencies: { oxlint: '1.0.0' } }, repo);
+    expect(Object.keys(readLocal(repo).devDependencies as Record<string, string>)).toEqual(['typescript', 'husky', 'oxlint']);
+  });
+
+  test('scripts are never re-sorted, even when they happen to be ascending', () => {
+    const { repo } = fixture({}, { scripts: { b: 'x', c: 'y' } });
+    applyPackageJsonAppend(DEPS, { scripts: { a: 'z' } }, repo);
+    expect(Object.keys(readLocal(repo).scripts as Record<string, string>)).toEqual(['b', 'c', 'a']);
+  });
+});

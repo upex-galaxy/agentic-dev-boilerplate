@@ -27,8 +27,10 @@ function lint(path: string, code: string, config = '.oxlintrc.json'): string {
   const file = join(scratch, path);
   mkdirSync(dirname(file), { recursive: true });
   writeFileSync(file, code);
-  const result = Bun.spawnSync([OXLINT, '-c', config, path], { cwd: scratch });
-  return `${result.stdout.toString()}${result.stderr.toString()}`;
+  const result = Bun.spawnSync([OXLINT, '-c', config, '--format=json', path], { cwd: scratch });
+  const report = JSON.parse(result.stdout.toString()) as { diagnostics: { code: string }[] };
+  if (result.exitCode !== 0 && report.diagnostics.length === 0) { throw new Error(`oxlint exited ${result.exitCode}: ${result.stderr.toString()}`); }
+  return report.diagnostics.map(d => d.code).join('\n');
 }
 
 describe('oxlint severity follows GUARD_ENFORCEMENT_LEVEL', () => {
@@ -69,6 +71,6 @@ describe('oxlint runs the GUARD rules', () => {
   });
 
   it('a clean feature is silent', () => {
-    expect(lint('src/features/notes/g.ts', 'export const g = (a: number) => a;\n')).not.toContain('warning');
+    expect(lint('src/features/notes/g.ts', 'export const g = (a: number) => a;\n')).toBe('');
   });
 });
