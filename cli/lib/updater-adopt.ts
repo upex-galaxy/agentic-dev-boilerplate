@@ -46,7 +46,7 @@ import { CLAUDE_INSTRUCTIONS_SHIM } from './agent-compatibility.ts';
 import { SCHEMA_FILE, SCHEMA_SOURCE, seedFromSchema } from './agents-schema.ts';
 import { BOILERPLATE_TEST_PATHS, BOILERPLATE_TEST_PATTERNS } from './boilerplate-only.ts';
 import { resetGitStrategyProvenance } from './git-strategy-provenance.ts';
-import { detectHookManager, withoutHuskyStep } from './hook-manager.ts';
+import { COMPOSABLE_SCRIPTS, detectHookManager, scriptCoversUpstream, scriptSteps, withoutHuskyStep } from './hook-manager.ts';
 import { ADOPT_UPSTREAM_SKILLS_DIR, collectUpstreamOwned, writeUpstreamOwned } from './tooling-scope.ts';
 import { createBackupDir, normalizeWhitespace } from './updater-core';
 import { deliverProjectInstructionsStub, PROJECT_INSTRUCTIONS_FILE } from './updater-instructions.ts';
@@ -150,9 +150,6 @@ function describeFrameworkSkill(root: string, upstreamDir: string, name: string,
     shortstat: (stat.stdout ?? '').trim(),
   };
 }
-
-/** Scripts whose collision gets a composition proposal: both halves must run for setup to work. */
-const COMPOSABLE_SCRIPTS = new Set(['prepare', 'setup']);
 
 const AGENTS_FILE = 'AGENTS.md';
 const CLAUDE_FILE = 'CLAUDE.md';
@@ -402,20 +399,21 @@ export function isAdopted(root: string): boolean {
 // ============================================================================
 
 /**
- * `"prepare": "<app> && <upstream>"` for a `prepare` / `setup` collision, else
- * null. A step both sides already run (`husky`) appears once, the app's first.
- * With `foreignHooks` (the app's hooks run on another manager) upstream's
- * `husky` step is left out: it would switch the app's hooks off.
+ * `"prepare": "<app> && <missing upstream steps>"` for a `prepare` / `setup`
+ * collision, else null. The app's command is kept verbatim (a `;` in it is
+ * never rewritten into `&&`); a step it already runs, tolerant forms included
+ * (`husky || true`), is not added again, and a script that already runs every
+ * upstream step gets no proposal at all (`scriptCoversUpstream`). With
+ * `foreignHooks` (the app's hooks run on another manager) upstream's `husky`
+ * step is left out: it would switch the app's hooks off.
  */
 export function scriptCompositionProposal(key: string, local: string, upstream: string, foreignHooks = false): string | null {
-  if (!COMPOSABLE_SCRIPTS.has(key)) { return null; }
-  const steps = (cmd: string): string[] => cmd.split('&&').map(part => part.trim()).filter(Boolean);
-  const composed = [...steps(local)];
-  const upstreamSteps = foreignHooks ? steps(withoutHuskyStep(upstream) ?? '') : steps(upstream);
-  for (const step of upstreamSteps) {
-    if (!composed.includes(step)) { composed.push(step); }
-  }
-  return `${JSON.stringify(key)}: ${JSON.stringify(composed.join(' && '))}`;
+  if (!COMPOSABLE_SCRIPTS.has(key) || scriptCoversUpstream(key, local, upstream, foreignHooks)) { return null; }
+  const split = (cmd: string): string[] => cmd.split('&&').map(part => part.trim()).filter(Boolean);
+  const have = scriptSteps(local) ?? split(local);
+  const upstreamSteps = foreignHooks ? split(withoutHuskyStep(upstream) ?? '') : split(upstream);
+  const missing = upstreamSteps.filter((step, index) => !have.includes(step) && upstreamSteps.indexOf(step) === index);
+  return `${JSON.stringify(key)}: ${JSON.stringify([local.trim(), ...missing].filter(Boolean).join(' && '))}`;
 }
 
 /** At most `max` names, then `+N more`. */
@@ -631,6 +629,17 @@ export function adoptFindings(input: AdoptRowsInput): Omit<ParityFinding, 'id'>[
   }
 
   for (const kept of input.scriptsKept) {
+    if (scriptCoversUpstream(kept.key, kept.localValue, kept.upstreamValue, input.foreignHooks === true)) {
+      rows.push({
+        surface: 'package',
+        path: kept.file,
+        evidence: `scripts.${kept.key}: the app's script kept; it already runs every upstream step (a tolerant \`|| true\` or \`;\` form counts), so nothing is proposed`,
+        suggested: 'keep project',
+        blocking: false,
+        detail: `app (kept):\n  ${kept.localValue}\nupstream:\n  ${kept.upstreamValue}`,
+      });
+      continue;
+    }
     const proposal = scriptCompositionProposal(kept.key, kept.localValue, kept.upstreamValue, input.foreignHooks === true);
     rows.push({
       surface: 'package',

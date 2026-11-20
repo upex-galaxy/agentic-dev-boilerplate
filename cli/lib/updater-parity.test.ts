@@ -1393,9 +1393,10 @@ describe('a stale test script after the boilerplate tests stopped travelling', (
       packageJsonKept: [
         { file: 'package.json', section: 'scripts', key: 'test', localValue: 'bun test cli/', upstreamValue: 'bun test --pass-with-no-tests cli/' },
         { file: 'package.json', section: 'scripts', key: 'lint', localValue: 'eslint src', upstreamValue: 'eslint .' },
+        { file: 'package.json', section: 'scripts', key: 'prepare', localValue: 'husky || true; bun scripts/harness-env.ts --placeholders || true', upstreamValue: 'husky && bun scripts/harness-env.ts --placeholders' },
       ],
     });
-    expect(findings.map(f => [f.evidence.split(':')[0], f.blocking, f.suggested])).toEqual([['scripts.test', true, 'take upstream'], ['scripts.lint', false, 'decide']]);
+    expect(findings.map(f => [f.evidence.split(':')[0], f.blocking, f.suggested])).toEqual([['scripts.test', true, 'take upstream'], ['scripts.lint', false, 'decide'], ['scripts.prepare', false, 'keep project']]);
     expect(findings[0].evidence).toContain('`cli`');
   });
 });

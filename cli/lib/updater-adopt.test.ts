@@ -252,10 +252,27 @@ describe('adoptPackageJsonDelta', () => {
   });
 });
 
+const UPSTREAM_PREPARE = 'husky && bun scripts/harness-env.ts --placeholders';
+const GALAXY_PREPARE = 'husky || true; bun scripts/harness-env.ts --placeholders || true';
+
 describe('parity rows', () => {
   test('a prepare composition leaves upstream husky out when the app runs another hook manager', () => {
     expect(scriptCompositionProposal('prepare', 'lefthook install', 'husky && bun x', true)).toBe('"prepare": "lefthook install && bun x"');
     expect(scriptCompositionProposal('prepare', 'lefthook install', 'husky && bun x')).toBe('"prepare": "lefthook install && husky && bun x"');
+  });
+
+  test('a tolerant prepare that already runs every upstream step is recognized and never re-proposed', () => {
+    expect(scriptCompositionProposal('prepare', GALAXY_PREPARE, UPSTREAM_PREPARE)).toBeNull();
+    expect(scriptCompositionProposal('prepare', 'husky || :; bun scripts/harness-env.ts --placeholders', UPSTREAM_PREPARE)).toBeNull();
+    // A missing step is appended after the app's command, verbatim: its `;` is never rewritten into `&&`.
+    expect(scriptCompositionProposal('prepare', 'husky || true; node a.js', UPSTREAM_PREPARE))
+      .toBe('"prepare": "husky || true; node a.js && bun scripts/harness-env.ts --placeholders"');
+    // `|| exit 0` ends the script, so the steps after it never run: not tolerant.
+    expect(scriptCompositionProposal('prepare', 'husky || exit 0; bun scripts/harness-env.ts --placeholders', UPSTREAM_PREPARE)).not.toBeNull();
+    // A real alternative is not a tolerant step.
+    expect(scriptCompositionProposal('prepare', 'husky || npx husky; bun scripts/harness-env.ts --placeholders', UPSTREAM_PREPARE)).not.toBeNull();
+    // Quotes make the split unsafe: the command is read as one step and proposed.
+    expect(scriptCompositionProposal('prepare', 'node -e "a();b()"; husky; bun scripts/harness-env.ts --placeholders', UPSTREAM_PREPARE)).not.toBeNull();
   });
 
   test('prepare and setup collisions carry a composition proposal; other scripts do not', () => {
@@ -265,7 +282,7 @@ describe('parity rows', () => {
     expect(scriptCompositionProposal('test', 'vitest', 'bun test')).toBeNull();
   });
 
-  test('a collision blocks until it is protected; a kept script always blocks', () => {
+  test('a collision blocks until it is protected; a kept script blocks unless it already runs every upstream step', () => {
     const root = tempRoot();
     const upstream = tempRoot();
     write(root, 'docs/README.md', 'app\n');
@@ -276,6 +293,9 @@ describe('parity rows', () => {
     const scriptRow = adoptFindings({ ...base, collisions: [], protectedWritten: true, scriptsKept: [{ file: 'package.json', section: 'scripts', key: 'prepare', localValue: 'husky', upstreamValue: 'husky && bun x', resolution: 'mine' }] })[0];
     expect(scriptRow).toMatchObject({ surface: 'package', blocking: true, suggested: 'decide' });
     expect(scriptRow.evidence).toContain('proposed: "prepare"');
+    const tolerant = adoptFindings({ ...base, collisions: [], protectedWritten: true, scriptsKept: [{ file: 'package.json', section: 'scripts', key: 'prepare', localValue: GALAXY_PREPARE, upstreamValue: UPSTREAM_PREPARE, resolution: 'mine' }] })[0];
+    expect(tolerant).toMatchObject({ surface: 'package', blocking: false, suggested: 'keep project' });
+    expect(tolerant.evidence).not.toContain('proposed: ');
   });
 
   test('a long env list is cut in the evidence and complete in the saved detail', () => {

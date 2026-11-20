@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 
 import { afterEach, describe, expect, test } from 'bun:test';
-import { detectHookManager, FRAMEWORK_GATES_FILE, gatesWired, hookWiringSnippet, withoutHuskyStep } from './hook-manager.ts';
+import { detectHookManager, FRAMEWORK_GATES_FILE, gatesWired, hookWiringSnippet, scriptCoversUpstream, scriptSteps, withoutHuskyStep } from './hook-manager.ts';
 
 const roots: string[] = [];
 function tempRoot(files: Record<string, string> = {}): string {
@@ -92,5 +92,25 @@ describe('withoutHuskyStep', () => {
     expect(withoutHuskyStep('lefthook install && npx husky install && node x.js')).toBe('lefthook install && node x.js');
     expect(withoutHuskyStep('husky')).toBeNull();
     expect(withoutHuskyStep('node husky-like.js')).toBe('node husky-like.js');
+  });
+});
+
+describe('scriptSteps and scriptCoversUpstream', () => {
+  test('split on && and ;, a trailing || true or || : dropped, an unsafe command unread', () => {
+    expect(scriptSteps('husky || true; bun x || true')).toEqual(['husky', 'bun x']);
+    expect(scriptSteps('a && b || : || true ; c')).toEqual(['a', 'b', 'c']);
+    expect(scriptSteps('a || exit 0; b')).toEqual(['a || exit 0', 'b']);
+    expect(scriptSteps('node -e "x;y"')).toBeNull();
+    expect(scriptSteps('a | b')).toBeNull();
+    expect(scriptSteps('a & b')).toBeNull();
+  });
+
+  test('covered only for prepare and setup, and only when every upstream step runs', () => {
+    expect(scriptCoversUpstream('prepare', 'husky || true; bun x || true', 'husky && bun x')).toBe(true);
+    expect(scriptCoversUpstream('prepare', 'husky || true', 'husky && bun x')).toBe(false);
+    expect(scriptCoversUpstream('test', 'bun test || true', 'bun test')).toBe(false);
+    // A foreign hook manager does not need upstream's husky step.
+    expect(scriptCoversUpstream('prepare', 'lefthook install; bun x', 'husky && bun x', true)).toBe(true);
+    expect(scriptCoversUpstream('prepare', 'lefthook install', 'husky', true)).toBe(true);
   });
 });

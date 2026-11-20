@@ -45,6 +45,7 @@ import { compatibilityErrorGroup, HARNESS_COMMAND_DIRS, RETIRED_COMMAND_ALIAS_OV
 import { contextMapAdvice, contextMapStatuses, mapRelPath } from './context-maps.ts';
 import { HARNESS_LEVEL_MCPS } from './harness-level-mcps.ts';
 import { declaredHarnesses } from './harness-selection.ts';
+import { scriptCoversUpstream } from './hook-manager.ts';
 import { harvestSecretValues, holdsEnvValues, readSecretValues, redactAll, redactSecretText } from './ui/redaction.ts';
 import { INSTRUCTIONS_DIR, isSplitL0, legacyHeadingHome, PROJECT_INSTRUCTIONS_FILE, renamedSectionsNote } from './updater-instructions.ts';
 import { CLAUDE_SETTINGS_FILE, DECLINED_DENIES_KEY, DECLINED_HOOKS_KEY, OPENCODE_SETTINGS_FILE, opencodeDenyGap } from './updater-settings.ts';
@@ -1762,13 +1763,16 @@ export function collectParityFindings(input: ParityInput): ParityFinding[] {
     // A kept test script over tests that are gone (the boilerplate's own no
     // longer travel) fails every run: that is not a preference, it blocks.
     const empty = kept.section === 'scripts' ? bunTestFindsNothing(input.root, kept.localValue) : null;
+    const covered = kept.section === 'scripts' && scriptCoversUpstream(kept.key, kept.localValue, kept.upstreamValue);
     findings.push({
       surface: 'package',
       path: kept.file,
       evidence: empty
         ? `${kept.section}.${kept.key}: project value kept, and it will exit 1: \`bun test\` finds no test file under ${empty.map(p => `\`${p}\``).join(', ')} (the boilerplate's own tests no longer travel). Take upstream's value, or add --pass-with-no-tests`
-        : `${kept.section}.${kept.key}: project value kept; upstream differs`,
-      suggested: empty ? 'take upstream' : 'decide',
+        : covered
+          ? `${kept.section}.${kept.key}: project value kept; it already runs every upstream step (a tolerant \`|| true\` or \`;\` form counts)`
+          : `${kept.section}.${kept.key}: project value kept; upstream differs`,
+      suggested: empty ? 'take upstream' : covered ? 'keep project' : 'decide',
       blocking: empty !== null,
       detail: `project (kept):\n  ${kept.localValue}\nupstream:\n  ${kept.upstreamValue}`,
     });

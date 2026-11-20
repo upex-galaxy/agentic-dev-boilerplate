@@ -5,6 +5,36 @@ All notable changes to this boilerplate are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased: hooks follow their inputs, a tolerant prepare is recognized, a broken override warns, a broad project row can yield
+
+### Added
+
+- **`checks.hooks.scope: full | staged`** in `.agents/project.yaml` (default `full`, byte for byte as
+  before). With `staged`, `.husky/framework-gates.sh` runs `types:check`, `vars:check` and
+  `skills:check` only when the staged files touch their inputs, and each pre-push gate only when the
+  files of the push range do (the range comes from the refs git writes on stdin, which the hook hands
+  back to any later project gate). The tooling, `.agents/`, `package.json`, the lockfile and
+  `.gitignore` count for every gate, so a content-only change skips them and the hook names what it
+  skipped. No readable refs or a git error runs everything; an unknown value warns and runs everything.
+  Shared with the QA boilerplate.
+- **An `Unless` column in the "Project context skills" table** of `agent-project.md`: backticked section
+  ids or project-skill slugs. When one of those rows fires on the same prompt, the row does not route,
+  unless the prompt names the skill or a `ROUTE-SCOPE:` line names its id. A four-column table routes
+  as before. `instructions:check` fails an unknown id, a row that names itself and a row with more cells
+  than its header.
+- **`PERSONALITY OVERRIDE IGNORED:`**: when `.agents/personality-override.md` exists but is unusable, the
+  prompt hook keeps the default contract and adds this line after the identity line, naming the reason.
+  `agents:compat:check` still fails on it, and the pre-commit cross-harness gate now runs when the file
+  is staged.
+
+### Changed
+
+- **A tolerant `prepare` or `setup` is recognized.** Steps split on `&&` and `;`, and a trailing
+  `|| true` or `|| :` still counts as the step (`|| exit 0` does not). When the app's script already runs
+  every upstream step, `--adopt` reports it as kept without a proposal and without blocking, a plain
+  `bun sync` keeps and records it instead of warning on every run, and the parity row says
+  `keep project`. A partial match proposes the app's command verbatim plus the missing steps.
+
 ## Unreleased: MCP parity records what a relay cannot carry, and local-only scans headers and urls
 
 ### Added

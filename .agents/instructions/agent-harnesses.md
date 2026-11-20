@@ -149,7 +149,7 @@ The owner is `cli/lib/updater-adopt.ts` plus the `adopt` option of `runUpdate` (
 
 ### Hook: one emitter, one adapter per harness
 
-`.agents/hooks/personality-reinject.mjs` holds the prompt-time context once: the `AGENTS.md` §2 output contract (or the project's own, one paragraph in `.agents/personality-override.md`, which `agents:compat:check` validates), the `AGENT IDENTITY: worktree=… session=… harness=…` line the commit trailers copy (Critical Rule #3), an `ORCA:` line only when the `orca` binary is reachable, at most one setup warning (no `.env` in the checkout, else a linked worktree that never ran `bun run worktree:provision`), and the `ROUTE:` lines (how they are chosen, capped and re-armed is "How a section is reached" in `.agents/instructions/README.md`).
+`.agents/hooks/personality-reinject.mjs` holds the prompt-time context once: the `AGENTS.md` §2 output contract (or the project's own, one paragraph in `.agents/personality-override.md`, which `agents:compat:check` validates; an unusable one keeps the default and adds a `PERSONALITY OVERRIDE IGNORED:` line after the identity line), the `AGENT IDENTITY: worktree=… session=… harness=…` line the commit trailers copy (Critical Rule #3), an `ORCA:` line only when the `orca` binary is reachable, at most one setup warning (no `.env` in the checkout, else a linked worktree that never ran `bun run worktree:provision`), and the `ROUTE:` lines (how they are chosen, capped and re-armed is "How a section is reached" in `.agents/instructions/README.md`).
 
 Each harness runs the emitter through its own adapter:
 

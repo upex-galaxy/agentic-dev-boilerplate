@@ -60,7 +60,7 @@ import * as path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 import { CONTEXT_MAP_SKILLS } from './context-maps';
-import { detectHookManager } from './hook-manager';
+import { detectHookManager, scriptCoversUpstream } from './hook-manager';
 import { harvestSecretValues, holdsEnvValues, redactAll } from './ui/redaction.ts';
 import { applyIgnoreAppend, computeBlobSha, detectIgnoreDelta } from './updater-ignore';
 import { adoptPackageJsonDelta, applyPackageJsonAppend, applyPackageJsonOverride, detectPackageJsonDelta, parsePackageJson } from './updater-package';
@@ -3759,6 +3759,12 @@ export async function runUpdate(
           else if (opts.force === true) {
             resolution = 'theirs';
             sink.step(`[force] ${delta.file} ${section}.${key}: usando versión upstream`);
+          }
+          else if (section === 'scripts' && scriptCoversUpstream(key, drift.localValue, drift.upstreamValue)) {
+            // The project's prepare/setup already runs every upstream step (a
+            // tolerant `|| true` form): kept and recorded, back only when upstream changes.
+            resolution = 'mine';
+            sink.step(`${delta.file} ${section}.${key}: tu script ya corre cada paso upstream; se mantiene`);
           }
           else if (opts.auto || !sink.resolvePackageJsonKey) {
             // CI-safe default (and fallback when the sink has no resolver):

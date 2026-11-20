@@ -166,6 +166,8 @@ checks:
     mode: strict
     relay: {}
     unrelayed: {}
+  hooks:
+    scope: full
   vars_check:
     skip_paths: []
   docs_check:

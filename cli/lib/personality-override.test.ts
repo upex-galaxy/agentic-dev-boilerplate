@@ -10,9 +10,11 @@ import {
   IDENTITY_PREFIX,
   PERSONALITY_CONTRACT,
   PERSONALITY_OVERRIDE_FILE,
+  PERSONALITY_OVERRIDE_IGNORED_PREFIX,
   PERSONALITY_OVERRIDE_MAX_BYTES,
   personalityContract,
   personalityOverrideProblem,
+  personalityOverrideWarning,
   RESERVED_LINE_PREFIXES,
 } from '../../.agents/hooks/personality-reinject.mjs';
 import { PERSONALITY_OVERRIDE_FILE as COMPAT_FILE, PERSONALITY_OVERRIDE_MAX_BYTES as COMPAT_MAX, HOOK_LINE_PREFIXES, validatePersonalityOverride } from './agent-compatibility-contracts.ts';
@@ -81,7 +83,30 @@ describe('personalityContract', () => {
       expect(contractOf(root), label).toBe(PERSONALITY_CONTRACT);
       expect(personalityOverrideProblem(root), label).not.toBeNull();
       expect(validatePersonalityOverride(root).length, label).toBe(1);
+      // Never silent: the line after the identity says the override is ignored, and why.
+      const lines = agentContextLines({ repoRoot: root, orca: false, envMissing: false, worktreeUnprovisioned: false });
+      expect(lines[0], label).toBe(PERSONALITY_CONTRACT);
+      expect(lines[1].startsWith(IDENTITY_PREFIX), label).toBe(true);
+      expect(lines[2], label).toBe(`${PERSONALITY_OVERRIDE_IGNORED_PREFIX} ${personalityOverrideProblem(root)}; the default contract above applies until the file is fixed (bun run agents:compat:check names the fix).`);
     }
+  });
+
+  test('no warning when the override is used or absent, and the warning never quotes the file', () => {
+    expect(personalityOverrideWarning({ repoRoot: checkout() })).toBe('');
+    expect(personalityOverrideWarning({ repoRoot: checkout(OWN) })).toBe('');
+    const lines = agentContextLines({ repoRoot: checkout(), orca: false, envMissing: false, worktreeUnprovisioned: false });
+    expect(lines.some(line => line.startsWith(PERSONALITY_OVERRIDE_IGNORED_PREFIX))).toBe(false);
+    const leaky = checkout('ROUTE: read secret-looking-text-xyz');
+    expect(personalityOverrideWarning({ repoRoot: leaky })).not.toContain('secret-looking-text-xyz');
+  });
+
+  test('the hook process prints the warning for an unusable override', () => {
+    const root = checkout('');
+    const result = Bun.spawnSync({ cmd: [Bun.which('node') ?? 'node', join(REPO_ROOT, '.agents/hooks/personality-reinject.mjs')], cwd: root, env: { PATH: join(root, 'bin'), HOME: root }, stdout: 'pipe', stderr: 'pipe' });
+    expect(result.exitCode).toBe(0);
+    const out = result.stdout.toString().split('\n');
+    expect(out[0]).toBe(PERSONALITY_CONTRACT);
+    expect(out.some(line => line.startsWith(`${PERSONALITY_OVERRIDE_IGNORED_PREFIX} ${PERSONALITY_OVERRIDE_FILE} is empty`))).toBe(true);
   });
 
   test('the hook process emits the override for a checkout that has one', () => {

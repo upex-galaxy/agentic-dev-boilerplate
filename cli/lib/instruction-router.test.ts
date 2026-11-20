@@ -150,7 +150,7 @@ describe('router source: AGENTS.md and the section frontmatter, read at runtime'
 });
 
 /** `agent-project.md` with a "Project context skills" table holding `rows`. */
-function projectMd(rows: string[]): string {
+function projectMd(rows: string[], header = '| Skill | Load when | Triggers | Loaded by |'): string {
   return [
     '---',
     'id: project',
@@ -163,7 +163,7 @@ function projectMd(rows: string[]): string {
     '## Project context skills',
     '',
     '<!-- project-skills:start -->',
-    '| Skill | Load when | Triggers | Loaded by |',
+    header,
     '| --- | --- | --- | --- |',
     ...rows,
     '<!-- project-skills:end -->',
@@ -182,6 +182,46 @@ describe('project skill rows: agent-project.md routes the skills the project cre
     expect(classifyPrompt(router, 'the payouts job stalled')).toEqual(['.agents/skills/billing-context/SKILL.md']);
     expect(routeLines({ repoRoot: root, router, prompt: 'billing bug', routeState: null })).toEqual([`${ROUTE_PREFIX} .agents/skills/billing-context/SKILL.md (billing-context) before acting on this prompt`]);
     expect(classifyPrompt(router, 'commit this')).toEqual(['.agents/instructions/agent-git.md']);
+  });
+
+  describe('an Unless column: a broad row yields to the rows it names', () => {
+    const header = '| Skill | Load when | Triggers | Loaded by | Unless |';
+    const persona = '| `content-manager` | reels and posts | `\\breel\\b`, `\\bpost\\b` | prompt hook | `git`, `billing-context` |';
+    const rows = [persona, billing.replace(/ \|$/, ' | |')];
+    const skill = '.agents/skills/content-manager/SKILL.md';
+    const fixture = (): string => {
+      const root = routerFixture();
+      write(root, '.agents/instructions/agent-project.md', projectMd(rows, header));
+      return root;
+    };
+
+    test('it routes when none of them fired, and is dropped when one did', () => {
+      const router = loadInstructionRouter(fixture());
+      expect(classifyPrompt(router, 'plan the next reel')).toEqual([skill]);
+      expect(classifyPrompt(router, 'commit the reel draft')).toEqual(['.agents/instructions/agent-git.md']);
+      expect(classifyPrompt(router, 'the invoice post is wrong')).toEqual(['.agents/skills/billing-context/SKILL.md']);
+      expect(bindingRoutes(router, 'commit the reel draft')).toEqual(['.agents/instructions/agent-git.md']);
+    });
+
+    test('an explicit ask still wins: the slug in the prompt, or the id in ROUTE-SCOPE', () => {
+      const router = loadInstructionRouter(fixture());
+      expect(classifyPrompt(router, 'commit the reel with content-manager')).toEqual(['.agents/instructions/agent-git.md', skill]);
+      expect(classifyPrompt(router, 'ROUTE-SCOPE: content-manager, git\ncommit the reel')).toEqual(['.agents/instructions/agent-git.md', skill]);
+    });
+
+    test('a suppressor already routed this session still suppresses', () => {
+      const root = fixture();
+      const state = memoryState();
+      expect(routeLines({ repoRoot: root, prompt: 'commit this', routeState: state })).toHaveLength(1);
+      expect(routeLines({ repoRoot: root, prompt: 'commit the reel draft', routeState: state })).toEqual([]);
+      expect(routeLines({ repoRoot: root, prompt: 'plan the next reel', routeState: state })).toEqual([`${ROUTE_PREFIX} ${skill} (content-manager) before acting on this prompt`]);
+    });
+
+    test('a four-column table routes exactly as before', () => {
+      const root = routerFixture();
+      write(root, '.agents/instructions/agent-project.md', projectMd([persona.replace(/ \| `git`, `billing-context` \|$/, ' |')]));
+      expect(classifyPrompt(loadInstructionRouter(root), 'commit the reel draft')).toEqual(['.agents/instructions/agent-git.md', skill]);
+    });
   });
 
   test('no agent-project.md, no markers, or an invalid slug: nothing extra routes, nothing throws', () => {

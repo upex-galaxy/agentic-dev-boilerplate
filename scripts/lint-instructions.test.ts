@@ -138,6 +138,19 @@ describe('lint-instructions', () => {
       'error:router:.agents/instructions/agent-project.md:project skill row `billing-context`: trigger does not compile: (unclosed',
       'error:router:.agents/instructions/agent-project.md:project skill row: `Billing` is not a skill slug (write it backticked, e.g. `billing-context`)',
     ]);
+    write('.agents/skills/content-manager/SKILL.md', '---\nname: content-manager\n---\n');
+    const withUnless = (rows: string[]): string => project(rows).replace('| Skill | Load when | Triggers | Loaded by |\n| --- | --- | --- | --- |', '| Skill | Load when | Triggers | Loaded by | Unless |\n| --- | --- | --- | --- | --- |');
+    write('.agents/instructions/agent-project.md', withUnless(['| `content-manager` | reels | `\\breel\\b` | - | `git`, `billing-context` |', '| `billing-context` | invoices | `invoice` | - | |']));
+    expect(lintInstructions(root)).toEqual([]);
+    write('.agents/instructions/agent-project.md', withUnless(['| `content-manager` | reels | `\\breel\\b` | - | `content-manager`, `nope` |']));
+    expect(lintInstructions(root).map(tag)).toEqual([
+      'error:router:.agents/instructions/agent-project.md:project skill row `content-manager`: Unless names the row itself',
+      'error:router:.agents/instructions/agent-project.md:project skill row `content-manager`: Unless names `nope`, which is no section id and no project skill row',
+    ]);
+    write('.agents/instructions/agent-project.md', project(['| `content-manager` | reels | `\\breel\\b` | - | `git` |']));
+    expect(lintInstructions(root).map(tag)).toEqual([
+      'error:router:.agents/instructions/agent-project.md:project skill row `content-manager` has 5 cells but the header has 4: a cell past the header is hidden from every reader (add the column to the header, e.g. `Unless`)',
+    ]);
   });
 
   test('a section no router row loads fails by name', () => {
@@ -293,6 +306,17 @@ describe('skillTableSource', () => {
 
 describe('parseProjectSkills', () => {
   const table = (rows: string[]): string => ['<!-- project-skills:start -->', '| Skill | Load when | Triggers | Loaded by |', '| --- | --- | --- | --- |', ...rows, '<!-- project-skills:end -->', ''].join('\n');
+
+  test('both parsers read the Unless column by its header name, and only through the header', () => {
+    const five = ['<!-- project-skills:start -->', '| Skill | Load when | Triggers | Loaded by | Unless |', '| --- | --- | --- | --- | --- |', '| `content-manager` | reels | `\\breel\\b` | prompt hook | `git`, `billing-context` |', '<!-- project-skills:end -->', ''].join('\n');
+    const hook = parseProjectSkillRows(five) as Array<{ unless: string[] }>;
+    expect(hook[0].unless).toEqual(['git', 'billing-context']);
+    expect((parseProjectSkills(five) ?? [])[0].unless).toEqual(['git', 'billing-context']);
+    // A fifth cell under a four-column header is hidden from GFM, so neither parser honours it.
+    const hidden = table(['| `content-manager` | reels | `\\breel\\b` | prompt hook | `git` |']);
+    expect((parseProjectSkillRows(hidden) as Array<{ unless: string[] }>)[0].unless).toEqual([]);
+    expect((parseProjectSkills(hidden) ?? [])[0]).toMatchObject({ unless: [], cells: 5, headerCells: 4 });
+  });
 
   test('the hook parser and the lint parser read the same rows (escaped pipe included)', () => {
     const text = table([

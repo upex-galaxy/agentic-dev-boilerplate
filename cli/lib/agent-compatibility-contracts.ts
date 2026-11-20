@@ -1360,20 +1360,20 @@ export const HOOK_ADAPTER_FILE: Record<Harness, string> = {
 
 export const PERSONALITY_OVERRIDE_FILE = '.agents/personality-override.md';
 export const PERSONALITY_OVERRIDE_MAX_BYTES = 2048;
-export const HOOK_LINE_PREFIXES = ['AGENT IDENTITY:', 'ROUTE: read', 'ROUTE-OPTIONAL:', 'ROUTE-PENDING:', 'ROUTE-SCOPE:', 'ORCA:', 'CREDENTIALS:', 'WORKTREE:'];
+export const HOOK_LINE_PREFIXES = ['AGENT IDENTITY:', 'ROUTE: read', 'ROUTE-OPTIONAL:', 'ROUTE-PENDING:', 'ROUTE-SCOPE:', 'ORCA:', 'CREDENTIALS:', 'WORKTREE:', 'PERSONALITY OVERRIDE IGNORED:'];
 
-// The hook falls back to the default contract without a word, so this check is where a broken override shows.
+// An error, not a warning: the hook only warns each prompt, so this check is what blocks a broken override from landing.
 export function validatePersonalityOverride(root = process.cwd()): string[] {
   const file = join(resolve(root), PERSONALITY_OVERRIDE_FILE);
   let stats;
   try { stats = lstatSync(file); }
   catch { return []; }
-  if (!stats.isFile()) { return [`Personality override ${PERSONALITY_OVERRIDE_FILE} must be a regular file, not a symlink or a folder: the hook ignores it.`]; }
-  if (stats.size > PERSONALITY_OVERRIDE_MAX_BYTES) { return [`Personality override ${PERSONALITY_OVERRIDE_FILE} is ${stats.size} bytes, over the ${PERSONALITY_OVERRIDE_MAX_BYTES}-byte limit (it is re-injected on every prompt): the hook ignores it.`]; }
+  if (!stats.isFile()) { return [`Personality override ${PERSONALITY_OVERRIDE_FILE} must be a regular file, not a symlink or a folder: the hook ignores it and warns on every prompt.`]; }
+  if (stats.size > PERSONALITY_OVERRIDE_MAX_BYTES) { return [`Personality override ${PERSONALITY_OVERRIDE_FILE} is ${stats.size} bytes, over the ${PERSONALITY_OVERRIDE_MAX_BYTES}-byte limit (it is re-injected on every prompt): the hook ignores it and warns on every prompt.`]; }
   const text = [...readFileSync(file, 'utf8')].map(c => ((c.codePointAt(0) ?? 0) < 0x20 || c.codePointAt(0) === 0x7F ? ' ' : c)).join('').replace(/\s+/g, ' ').trim();
-  if (text === '') { return [`Personality override ${PERSONALITY_OVERRIDE_FILE} is empty: the hook ignores it. Write the contract as one paragraph, or delete the file.`]; }
+  if (text === '') { return [`Personality override ${PERSONALITY_OVERRIDE_FILE} is empty: the hook ignores it and warns on every prompt. Write the contract as one paragraph, or delete the file.`]; }
   const reserved = HOOK_LINE_PREFIXES.find(prefix => text.startsWith(prefix));
-  if (reserved) { return [`Personality override ${PERSONALITY_OVERRIDE_FILE} starts with \`${reserved}\`, a prefix of the hook's own lines: the hook ignores it.`]; }
+  if (reserved) { return [`Personality override ${PERSONALITY_OVERRIDE_FILE} starts with \`${reserved}\`, a prefix of the hook's own lines: the hook ignores it and warns on every prompt.`]; }
   return [];
 }
 

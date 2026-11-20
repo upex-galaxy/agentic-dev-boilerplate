@@ -384,3 +384,20 @@ describe('the greenfield first run is unchanged (no --adopt)', () => {
     expect(pkg.dependencies).toEqual({ react: '19.0.0', typescript: '5.4.0', yaml: '^2.8.2' });
   });
 });
+
+describe('a tolerant prepare on a plain sync', () => {
+  test('already runs every upstream step: kept and recorded, never warned or offered again', async () => {
+    const template = tempRoot();
+    const pkg = (scripts: Record<string, string>): string => `${JSON.stringify({ name: 'x', scripts }, null, 2)}\n`;
+    initRepo(template, { ...UPSTREAM, 'package.json': pkg({ prepare: 'husky && bun scripts/harness-env.ts --placeholders' }) });
+    const app = tempRoot();
+    initRepo(app, { ...APP, 'package.json': pkg({ prepare: 'husky || true; bun scripts/harness-env.ts --placeholders || true' }) });
+    process.chdir(app);
+    const messages: string[] = [];
+    const summary = await runUpdate(config(template, [], undefined, false), sink(messages), { auto: true, dryRun: false, rollback: false });
+    expect(summary.packageJsonKept).toEqual([expect.objectContaining({ key: 'prepare', resolution: 'mine' })]);
+    expect(messages.some(m => m.includes('divergencia local'))).toBe(false);
+    const lock = JSON.parse(read(app, '.template/boilerplate.lock.json')) as SyncStateV7;
+    expect(lock.packageJsonSync?.['package.json']?.scripts?.keptKeys).toEqual({ prepare: 'husky && bun scripts/harness-env.ts --placeholders' });
+  });
+});
