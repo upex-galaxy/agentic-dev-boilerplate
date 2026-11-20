@@ -26,7 +26,7 @@ The skill reads these keys by path from `.agents/project.yaml` `orchestration:`;
 | `subagent_model` | `{{SUBAGENT_MODEL}}` | one-shot subagents, in the harness's own subagent vocabulary (`sonnet`, `opus`, `haiku`, `fable` on Claude Code), never a full id |
 | `permission_modes` | none (read by path) | the mode per tier, `bypass` / `auto` / `ask` / `inherit`, translated per harness in the skill's machine setup §3; ADR-0020 records the accepted exposure, and a Pi conductor can only run `bypass` (ADR-0022) |
 | `model_overrides` | none (read by path) | entries matched against a brief's topics |
-| `orchestrator_name`, `orchestrator_cli`, `message_verb`, `terminal_verb`, `orchestrator_skills` | `{{ORCHESTRATOR_NAME}}`, `{{ORCHESTRATOR_CLI}}`, `{{MESSAGE_VERB}}`, `{{TERMINAL_VERB}}` | no longer read by the skill, which names Orca and its verbs itself; kept in the file while the profile is the owner's (`.agents/project.schema.yaml`) |
+| `orchestrator_name`, `orchestrator_cli` | `{{ORCHESTRATOR_NAME}}`, `{{ORCHESTRATOR_CLI}}` | no longer read by the skill, which names Orca and its verbs itself; kept in the file while the profile is the owner's (`.agents/project.schema.yaml`) |
 
 A missing `orchestration:` block degrades instead of breaking: cap 1, the harness defaults. Vocabulary: a round is one concurrency group ("Sprint 42, round 2"); an execution sprint is an ordering bucket of `.context/dev-roadmap.md` and is not a round.
 

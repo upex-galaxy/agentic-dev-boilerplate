@@ -259,7 +259,6 @@ A step that loads one of these says `Call the Skill tool with "<name>"` and stat
 | `domain-modeling` | upex-galaxy/agentic-user-skills | `.agents/skills/product-management/references/epic-creation.md` "When the epic is too big to plan" and `.agents/skills/project-foundation/SKILL.md` Phase 4 Step 6: settles the domain terms; when it is not installed the questions run inline |
 | `research` | upex-galaxy/agentic-user-skills | `.agents/skills/product-management/references/epic-creation.md` "When the epic is too big to plan": a `research` decision ticket given to a fresh subagent; when it is not installed the subagent researches inline |
 | `teach` | upex-galaxy/agentic-user-skills | User-invoked only. `/teach` is manual (`disable-model-invocation`), so no flow loads it; the tour tells a person to type it for a multi-session course |
-| `orchestration.orchestrator_skills` | the orchestration binary | `/agent-orchestration`, beside it: the vendor owns the command grammar and the user skill owns when and what; a worker loads only the `orchestration` guide |
 
 ---
 
