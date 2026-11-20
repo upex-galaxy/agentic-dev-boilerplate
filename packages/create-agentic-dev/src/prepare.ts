@@ -476,6 +476,7 @@ export const TEMPLATE_EXCLUDES: readonly string[] = [
   '.agents/jira-workflows.json',
   // The boilerplate's own test fixtures. Mirrors BOILERPLATE_TEST_PATHS
   // (cli/lib/boilerplate-only.ts); a test holds the two lists equal.
+  'scripts/lib/heavy-e2e.ts',
   'scripts/ui-setup-fixture.ts',
   'scripts/ui-up-fixture.ts',
 ];

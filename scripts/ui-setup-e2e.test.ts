@@ -3,19 +3,21 @@
  * delivery 3, plan §12): the page answered over its real HTTP contract, and
  * `--headless` with nobody to answer. Network and user-level steps are switched
  * off (`fixtureEnv`), so the run touches nothing outside its temp directory.
+ * Runs only in CI or with `HEAVY_E2E=1`.
  */
 
 import type { JournalEntry } from '../cli/lib/ui/events.ts';
 import type { SetupFixture } from './ui-setup-fixture.ts';
 
 import { spawn } from 'node:child_process';
-import { existsSync, mkdtempSync, readdirSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 
-import { describe, expect, test } from 'bun:test';
+import { afterAll, describe, expect, test } from 'bun:test';
 
 import { isMaintainerCopy, isSchemaOwner, SCHEMA_SOURCE } from '../cli/lib/agents-schema.ts';
+import { HEAVY_E2E } from './lib/heavy-e2e.ts';
 import { buildSetupFixture, fixtureEnv } from './ui-setup-fixture.ts';
 
 const SECRET = 'atl-fixture-token-7c1e-not-real';
@@ -112,8 +114,10 @@ const ANSWERS: Record<string, unknown> = {
   'gh-create': false,
 };
 
-describe('bun setup on a throwaway project', () => {
-  const root = mkdtempSync(join(tmpdir(), 'ui-setup-e2e-'));
+const root = HEAVY_E2E ? mkdtempSync(join(tmpdir(), 'ui-setup-e2e-')) : '';
+
+describe.if(HEAVY_E2E)('bun setup on a throwaway project', () => {
+  afterAll(() => { rmSync(root, { recursive: true, force: true }); });
 
   test.skipIf(!MAINTAINER_CHECKOUT)('the page: every question answered in it, phases in order, yaml and .env written, no secret anywhere but .env', async () => {
     const f = buildSetupFixture(join(root, 'page'));
@@ -189,4 +193,8 @@ describe('bun setup on a throwaway project', () => {
     expect(run.out).toContain('unknown option --dryrun');
     expect(existsSync(join(f.project, '.template', 'installer.state.json'))).toBe(false);
   }, 60_000);
+});
+
+test.if(HEAVY_E2E)('the fixture projects leave nothing behind in the temp dir', () => {
+  expect(existsSync(root)).toBe(false);
 });

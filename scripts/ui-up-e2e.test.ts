@@ -4,24 +4,26 @@
  * flow without the flag (headless parity), and `--auto` read-only in the page.
  *
  * The fixture is a local clone of this repo (`scripts/ui-up-fixture.ts`), so no
- * gh session and no network are needed. Skipped on a history too short for it
- * (a shallow CI clone).
+ * gh session and no network are needed. Runs only in CI or with `HEAVY_E2E=1`
+ * (about 412 MB of clones a run), and skips on a history too short for it (a
+ * shallow clone).
  */
 
 import type { JournalEntry } from '../cli/lib/ui/events.ts';
 import type { UpFixture } from './ui-up-fixture.ts';
 
 import { spawn, spawnSync } from 'node:child_process';
-import { existsSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 
-import { describe, expect, test } from 'bun:test';
+import { afterAll, describe, expect, test } from 'bun:test';
 
+import { HEAVY_E2E } from './lib/heavy-e2e.ts';
 import { buildUpFixture } from './ui-up-fixture.ts';
 
 const REPO = resolve(import.meta.dir, '..');
-const deep = spawnSync('git', ['-C', REPO, 'rev-parse', '--verify', '-q', 'HEAD~30']).status === 0;
+const deep = HEAVY_E2E && spawnSync('git', ['-C', REPO, 'rev-parse', '--verify', '-q', 'HEAD~30']).status === 0;
 // Random per run: the sync page may show a diff of THIS file, so a literal value
 // would leak through the test's own source (a removed line included) rather than
 // through the run, whenever the fixture's HEAD~30 window holds an edit of it.
@@ -117,8 +119,10 @@ function normalize(out: string): string {
     .join('\n');
 }
 
+const root = deep ? mkdtempSync(join(tmpdir(), 'ui-up-e2e-')) : '';
+
 describe.if(deep)('bun sync on a fixture project', () => {
-  const root = mkdtempSync(join(tmpdir(), 'ui-up-e2e-'));
+  afterAll(() => { rmSync(root, { recursive: true, force: true }); });
 
   test('--headless keeps exactly the terminal flow of a run without the page (headless parity)', async () => {
     const f = buildUpFixture(join(root, 'parity'));
@@ -172,4 +176,8 @@ describe.if(deep)('bun sync on a fixture project', () => {
     expect(run.events.some(e => e.t === 'report')).toBe(true);
     expect(run.events.at(-1)).toMatchObject({ t: 'run.end' });
   }, 180_000);
+});
+
+test.if(deep)('the fixture clones leave nothing behind in the temp dir', () => {
+  expect(existsSync(root)).toBe(false);
 });

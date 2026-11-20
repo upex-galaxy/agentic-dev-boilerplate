@@ -21,6 +21,7 @@ export const BOILERPLATE_TEST_PATTERNS: RegExp[] = [
 ];
 
 export const BOILERPLATE_TEST_PATHS: string[] = [
+  'scripts/lib/heavy-e2e.ts',
   'scripts/ui-setup-fixture.ts',
   'scripts/ui-up-fixture.ts',
 ];
