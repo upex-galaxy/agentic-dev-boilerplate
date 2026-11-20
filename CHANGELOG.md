@@ -5,6 +5,36 @@ All notable changes to this boilerplate are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased: the lock reaches upstream HEAD, and a new `project.yaml` block lands after one blank line
+
+### Fixed
+
+- **`templateCommit` advances.** A component that had nothing to sync kept its old cursor in
+  `.template/boilerplate.lock.json`, and `templateCommit` waits for every component, so it stayed at
+  the first sync for good. Now `bun sync` moves the cursor of a component already identical to
+  upstream to HEAD, provided `computeDelta` walked it and its cursor is an ancestor of HEAD (the QA
+  boilerplate's fix, plus those two guards). A re-run at the same head also heals a lock left behind;
+  once every cursor is at HEAD, a run with nothing to apply leaves the lock byte-identical.
+- **No more false "project edit overwritten" rows.** A component held back by an unconfirmed deletion
+  keeps its cursor while its other files sync. The next run compared those files with the copy at
+  that old cursor and reported them as project edits. A local copy equal to any upstream release of
+  the path since the cursor is now treated as a lag, and the check runs one `git log --raw` per
+  component.
+- **An upstream deletion no longer holds a component back forever.** Answering "keep" in an
+  interactive `bun sync` settles the deletion: the file stays, the component advances, and later
+  syncs stop offering it. In `--auto`, a deleted file whose copy matches no upstream release is the
+  project's own content, so it is kept and the component advances. An unedited copy still waits for
+  a person. Each kept file gets an informational parity row.
+- **The held-back row says why.** It lists, per component, the deletions waiting for an answer and
+  the skipped or failed files (three paths and a count), and how to release a deletion.
+- **One blank line before an inserted `project.yaml` block.** A top-level block appended at the end
+  of the file came after two blank lines, which fails `style/no-multiple-empty-lines`. It now gets
+  exactly one, or none when the file already ends with one; a file without a final newline gets the
+  newline first. Nested keys never get a blank line and go before a top-level block placed at the
+  same spot, and `applyInsertions` refuses a plan whose inserted key does not land at its path.
+- `computeDelta` reads `git log` with a 256 MB buffer. With the default, a long-stale cursor
+  could overflow it and silently drop the deletions of a component.
+
 ## Unreleased: hooks follow their inputs, a tolerant prepare is recognized, a broken override warns, a broad project row can yield
 
 ### Added
