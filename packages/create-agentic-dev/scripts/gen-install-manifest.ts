@@ -180,6 +180,7 @@ export const PHASE_STEPS: Record<string, StepSpec[]> = {
     { step: 'Link the skills', what: 'Repairs the agent contract: the .claude/skills alias onto .agents/skills/ and the CLAUDE.md shim.', probes: ['compatibilityStep('] },
   ],
   project: [
+    { step: 'Issue tracker', what: 'A project whose .agents/project.yaml has no tracker yet picks one: jira (default), github (issues and a GitHub Project) or none. With github or none no Atlassian credential is asked and the Jira phase is skipped.', probes: ['readIssueTrackerValue('], prompts: ['project-tracker'] },
     { step: 'Project identity', what: 'Project name, key, web domain, local and staging URLs and the default environment, written to .agents/project.yaml by agents-setup --non-interactive (bun run agents:setup changes them later).', probes: ['projectPhase(', 'agents-setup.ts'], prompts: ['project-identity', 'project-envs', 'project-default-env'] },
   ],
   creds: [
@@ -191,6 +192,7 @@ export const PHASE_STEPS: Record<string, StepSpec[]> = {
     { step: 'acli session', what: 'Signs the Atlassian CLI in with the .env email and token; a rejected token is asked again.', probes: ['acliAuthStep('], prompts: ['token-retry-*'] },
     { step: 'Jira catalogs', what: 'Custom fields, workflows and link types, from your own Jira (workflow pickers through jira:sync-workflows --plan-json / --answers) or from the UPEX reference catalog; writes .agents/jira-*.json.', probes: ['jiraCatalogsStep(', '\'jira:sync-fields\'', '\'jira:sync-workflows\'', '\'jira:sync-link-types\'', '\'--plan-json\'', '\'--answers\''], prompts: ['jira-catalogs', 'wf-*'] },
     { step: 'Jira check', what: 'bun run jira:check validates the Jira setup manifest against the synced catalogs.', probes: ['jiraCheckStep(', '\'jira:check\''] },
+    { step: 'GitHub Projects access', what: 'Only when issue_tracker is github, in place of the Jira steps: checks gh is signed in and its active account holds the project scope; when it does not, prints gh auth refresh -h github.com -s project for the account owner.', probes: ['githubTrackerStep('] },
   ],
   github: [
     { step: 'GitHub repository', what: 'Optional: creates the remote with gh (account, visibility, name) and pushes the first commit, after the background downloads finish.', probes: ['setupGithubRemote('], prompts: ['gh-create', 'gh-account', 'gh-visibility', 'gh-name'] },

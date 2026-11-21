@@ -72,6 +72,7 @@ export const STACK_FIELDS: readonly StackField[] = [
   { path: 'ui.icons', values: ['lucide', 'other', 'none'], nullable: false, label: 'Icon library' },
   { path: 'hosting', values: ['vercel', 'netlify', 'other', 'none'], nullable: false, label: 'Hosting' },
   { path: 'ci', values: ['github-actions', 'gitlab', 'other', 'none'], nullable: false, label: 'CI' },
+  { path: 'local_build', values: ['true', 'false'], nullable: false, label: 'Run the production build locally (false = rely on the hosting build)' },
   { path: 'test_runner', values: ['vitest', 'jest', 'bun', 'playwright', 'other', 'none'], nullable: true, label: 'Test runner' },
   { path: 'conventions.import_alias', values: null, nullable: true, label: 'Source import alias' },
   { path: 'conventions.testid_style', values: null, nullable: true, label: 'Test-id attribute and case' },
@@ -391,8 +392,9 @@ export function stackDrift(read: StackRead, detection: StackDetection): StackDri
 // WRITE — parser-located splices, never a re-serialization
 // ============================================================================
 
-function renderScalar(value: string | null): string {
+function renderScalar(value: string | null, path?: string): string {
   if (value === null) { return 'null'; }
+  if (path === 'local_build' && (value === 'true' || value === 'false')) { return value; }
   const plain = /^[\w./-][\w./:-]*$/.test(value) && !/^(?:null|true|false|yes|no|on|off|~)$/i.test(value) && !/^-?\d/.test(value);
   return plain ? value : `'${value.replace(/'/g, '\'\'')}'`;
 }
@@ -447,7 +449,7 @@ export function writeStack(projectText: string, schemaText: string | null, updat
     if ((current.values[path] ?? null) === value) { continue; }
     const located = locateLeaf(text, [STACK_BLOCK, ...path.split('.')]);
     if (!located) { return { text: projectText, changed: [], inserted: [], error: `could not locate \`stack.${path}\` in .agents/project.yaml` }; }
-    edits.push({ range: located.value, text: renderScalar(value) });
+    edits.push({ range: located.value, text: renderScalar(value, path) });
     // A filled value answers its TODO.
     if (value !== null && located.trailingComment) {
       const comment = text.slice(located.trailingComment[0], located.trailingComment[1]);

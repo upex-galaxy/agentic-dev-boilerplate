@@ -259,6 +259,30 @@ describe('writeStack', () => {
     expect(result.text.indexOf('\nstack:')).toBeGreaterThan(result.text.indexOf('\ndatabase:'));
   });
 
+  test('local_build is written as a bare boolean and reads back', () => {
+    const result = writeStack(realSource(), realSchema(), { local_build: 'false' });
+    expect(result.error).toBeNull();
+    expect(result.changed).toEqual(['local_build']);
+    expect(result.text).toContain('\n  local_build: false\n');
+    expect(readStack(result.text).values.local_build).toBe('false');
+    expect(validateStack(readStack(result.text))).toEqual([]);
+  });
+
+  test('local_build ships true and refuses anything but a boolean', () => {
+    expect(readStack(realSource()).values.local_build).toBe('true');
+    const bad = realSource().replace('\n  local_build: true\n', '\n  local_build: maybe\n');
+    expect(validateStack(readStack(bad))).toEqual([{ path: 'local_build', message: '`maybe` is not one of true | false' }]);
+  });
+
+  test.skipIf(!MAINTAINER_CHECKOUT)('a project scaffolded before local_build gets it from the schema, defaulting to true', () => {
+    const older = realSource().replace('\n  local_build: true\n', '\n');
+    expect('local_build' in readStack(older).values).toBe(false);
+    const result = writeStack(older, realSchema(), { package_manager: 'bun' });
+    expect(result.error).toBeNull();
+    expect(result.inserted).toContain('stack.local_build');
+    expect(readStack(result.text).values.local_build).toBe('true');
+  });
+
   test('a missing block with no schema on disk is refused, never invented', () => {
     const result = writeStack('project:\n  project_name: null\n', null, { package_manager: 'bun' });
     expect(result.error).toContain('bun sync');

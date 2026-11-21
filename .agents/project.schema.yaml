@@ -65,6 +65,7 @@ stack:
     icons: lucide # lucide | other | none
   hosting: vercel # vercel | netlify | other | none
   ci: github-actions # github-actions | gitlab | other | none
+  local_build: true # true | false. false = the dev loop skips the local production build (stating why) and relies on the hosting build (e.g. Vercel)
   test_runner: null # vitest | jest | bun | playwright | other | none; null = not chosen yet (/unit-testing picks one)
   conventions:
     import_alias: '@/' # path alias the app's tsconfig declares for its source root; null = none
@@ -72,8 +73,13 @@ stack:
     features_root: src/features # GUARD features folder (rule R4: scripts/guard-manifest.ts lists one feature per folder in it), relative to app_root; null = src/features
 
 issue_tracker:
-  issue_tracker: null # TODO: fill per project — Issue tracking tool (e.g. Jira)
-  issue_tracker_cli: null # TODO: fill per project — CLI command to query tickets (e.g. acli (Jira) / gh issue (GitHub))
+  # Which tracker the dev loop drives: jira | github | none. Resolved case-insensitively
+  # by cli/lib/issue-tracker.ts; null, and any older free text (e.g. Jira Cloud), mean
+  # jira, so a project that never answered keeps the Jira path. `bun setup` asks a new
+  # project (default jira). github = GitHub Issues + a GitHub Project (the github: block
+  # below); none = no tracker, the change trail is the only record.
+  issue_tracker: null # TODO: fill per project — jira | github | none (null = jira)
+  issue_tracker_cli: null # TODO: fill per project — CLI command to query tickets (e.g. acli (Jira) / gh (GitHub))
   # SOURCE OF TRUTH for the Atlassian instance. Every jira:sync-* script resolves the
   # host from HERE first and uses .env's ATLASSIAN_URL only as a fallback (see
   # cli/lib/atlassian-instance.ts). Inverse of project_key, on purpose: the host is
@@ -82,6 +88,26 @@ issue_tracker:
   # .agents/*.json catalogs with another site's content. Keep it identical to .env's
   # ATLASSIAN_URL; when they disagree the yaml wins and the scripts print a warning.
   atlassian_url: null # TODO: fill per project — Atlassian instance base URL (e.g. https://company.atlassian.net). The acli `--site` slug is derived from this (strip `https://`); no separate ATLASSIAN_SITE variable.
+  # Used only when issue_tracker is github. Read BY PATH (`issue_tracker.github.<key>`),
+  # never as a {{VAR}}, so vars:check skips it. Cards move by Status option NAME and every
+  # move is read back; no option-id catalog is kept.
+  github:
+    project_owner: '@me' # owner of the GitHub Project: '@me' (the gh account) or an org/user login
+    project_number: null # written by `bun run github:project:bootstrap --apply`; null = no board yet
+    status_field: Status # single-select field the board groups by
+    statuses: # abstract status -> option name, in board order
+      backlog: Backlog
+      in_progress: In progress
+      in_review: In review
+      on_staging: Staging
+      released: Released
+    releases_dir: .context/releases # one committed file per release (milestone), synced by `bun run github:releases:sync`
+
+# The per-change trail (plan, results, decisions) committed under dir/<KEY>-<slug>/.
+# Read BY PATH (`trail.enabled`, `trail.dir`), never as a {{VAR}}.
+trail:
+  enabled: null # null = on for issue_tracker github or none, off for jira; true | false overrides
+  dir: .context/trail # relative to the repo root
 
 testing:
   default_env: null # TODO: fill per project — Default working environment — must match a key under `environments:` (e.g. staging)

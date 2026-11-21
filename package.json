@@ -56,6 +56,8 @@
     "worktree:provision": "bun scripts/provision-worktree.ts",
     "vars:check": "bun scripts/lint-vars.ts",
     "git:policy": "bun scripts/git-policy.ts",
+    "github:project:bootstrap": "bun scripts/github-project-bootstrap.ts",
+    "github:releases:sync": "bun scripts/github-releases.ts",
     "guard:example:check": "bun scripts/guard-example-check.ts",
     "guard:manifest": "bun scripts/guard-manifest.ts",
     "guard:manifest:check": "bun scripts/guard-manifest.ts --check",

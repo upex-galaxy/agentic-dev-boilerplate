@@ -1,9 +1,11 @@
+import type { GhProbe } from './doctor.ts';
 import { mkdirSync, mkdtempSync, realpathSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+
 import { describe, expect, test } from 'bun:test';
 
-import { legacyCredentialKeys, piTrustStatus, repoCheckRunsAppWideLegs, userSkillInstalled, worktreeSetupAction } from './doctor.ts';
+import { envVarApplies, issueTrackerDiagnostic, legacyCredentialKeys, piTrustStatus, repoCheckRunsAppWideLegs, userSkillInstalled, worktreeSetupAction } from './doctor.ts';
 
 describe('worktreeSetupAction', () => {
   test('a provisioned worktree needs nothing', () => {
@@ -93,5 +95,66 @@ describe('piTrustStatus', () => {
   test('no agent directory at all is unknown', () => {
     const { root } = workspace();
     expect(piTrustStatus(root, { PI_CODING_AGENT_DIR: join(root, 'nowhere') })).toBe('unknown');
+  });
+});
+
+describe('issueTrackerDiagnostic', () => {
+  const yaml = (value: string, projectNumber = '7'): string => `issue_tracker:\n  issue_tracker: ${value}\n  atlassian_url: null\n  github:\n    project_owner: '@me'\n    project_number: ${projectNumber}\n`;
+  const status = (scopes: string): string => `github.com\n  ✓ Logged in to github.com account octo (keyring)\n  - Active account: true\n  - Token scopes: ${scopes}\n`;
+  const never = (): GhProbe => { throw new Error('gh must not be probed off the github tracker'); };
+
+  test.each(['null', 'Jira', 'JIRA', '\'Jira Cloud\''])('%s stays on Jira: Atlassian vars required, gh never probed, nothing to fix', (value) => {
+    const { report, actions } = issueTrackerDiagnostic(yaml(value), never);
+    expect(report.tracker).toBe('jira');
+    expect(report.gh).toBeNull();
+    expect(actions).toEqual([]);
+    for (const name of ['ATLASSIAN_EMAIL', 'ATLASSIAN_API_TOKEN']) { expect(envVarApplies(name, report.tracker)).toBe(true); }
+  });
+
+  test('a value outside the enum stays on Jira and says so', () => {
+    const { report, actions } = issueTrackerDiagnostic(yaml('Linear'), never);
+    expect(report).toMatchObject({ tracker: 'jira', recognized: false, value: 'Linear' });
+    expect(actions).toEqual([]);
+    expect(report.note).toContain('jira | github | none');
+    expect(report.note).not.toContain('Did you mean github');
+    expect(issueTrackerDiagnostic(yaml('\'GitHub Issues\''), never).report.note).toContain('Did you mean github');
+  });
+
+  test('github with no board linked yet points at the bootstrap', () => {
+    const scoped = (): GhProbe => ({ installed: true, ok: true, output: status('\'project\'') });
+    for (const n of ['null', '~', '']) {
+      expect(issueTrackerDiagnostic(yaml('github', n), scoped).actions).toEqual([expect.objectContaining({ target: 'bun run github:project:bootstrap --apply' })]);
+    }
+    const elsewhere = `other:\n  block:\n    project_number: 9\n${yaml('github', 'null')}`;
+    expect(issueTrackerDiagnostic(elsewhere, scoped).actions).toHaveLength(1);
+  });
+
+  test('github: a broken inactive account does not hide a healthy active one', () => {
+    const output = `${status('\'project\'')}\n  X Failed to log in to github.com account old (keyring)\n  - Active account: false\n  - The token in keyring is invalid.\n`;
+    const { report, actions } = issueTrackerDiagnostic(yaml('github'), () => ({ installed: true, ok: false, output }));
+    expect(report.gh).toEqual({ installed: true, authenticated: true, account: 'octo', project_scope: true });
+    expect(actions).toEqual([]);
+  });
+
+  test('none: no Atlassian vars, no gh probe', () => {
+    const { report, actions } = issueTrackerDiagnostic(yaml('none'), never);
+    expect(report.tracker).toBe('none');
+    expect(actions).toEqual([]);
+    expect(envVarApplies('ATLASSIAN_EMAIL', 'none')).toBe(false);
+    expect(envVarApplies('RESEND_API_KEY', 'none')).toBe(true);
+    expect(envVarApplies('SUPABASE_ACCESS_TOKEN', 'none')).toBe(true);
+  });
+
+  test('github without the project scope names the exact owner command', () => {
+    const { report, actions } = issueTrackerDiagnostic(yaml('github'), () => ({ installed: true, ok: true, output: status('\'gist\', \'repo\'') }));
+    expect(report.gh).toEqual({ installed: true, authenticated: true, account: 'octo', project_scope: false });
+    expect(actions).toEqual([expect.objectContaining({ type: 'shell_command', target: 'gh auth refresh -h github.com -s project' })]);
+    expect(envVarApplies('ATLASSIAN_API_TOKEN', report.tracker)).toBe(false);
+  });
+
+  test('github with the scope is clean; a missing gh or session is an action', () => {
+    expect(issueTrackerDiagnostic(yaml('github'), () => ({ installed: true, ok: true, output: status('\'project\', \'repo\'') })).actions).toEqual([]);
+    expect(issueTrackerDiagnostic(yaml('github'), () => ({ installed: false, ok: false, output: '' })).actions[0]).toMatchObject({ type: 'system_install', target: 'gh' });
+    expect(issueTrackerDiagnostic(yaml('github'), () => ({ installed: true, ok: false, output: '' })).actions[0]).toMatchObject({ target: 'gh auth login' });
   });
 });

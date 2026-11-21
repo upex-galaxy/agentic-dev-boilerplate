@@ -547,9 +547,15 @@ export interface GenericRule {
  * Every entry here is hand-authored, and that is safe ONLY because
  * `schemaKeyPaths` gates the pair: add a key under `git_strategy` and forget
  * it here and `agents:schema:check` fails naming the path. The hand-authored
- * surface is bounded to the one block that structurally cannot be derived.
+ * surface is bounded to the one block that structurally cannot be derived,
+ * plus `issue_tracker.github.project_owner`, a login once a maintainer points
+ * this repo at a board of its own.
  */
 export const GENERIC_RULES: Readonly<Record<string, GenericRule>> = {
+  'issue_tracker.github.project_owner': {
+    value: '\'@me\'',
+    why: 'a login set here is this repo\'s board owner; every new project starts on the gh account it runs as',
+  },
   'git_strategy.description': {
     value: '>\n    TODO: describe this project\'s branching strategy in prose: which branches are\n    long-lived, how work reaches the release branch, and any operational note the AI\n    needs before it runs a git command. Filled by the git-flow-master Strategy Setup\n    questionnaire, or by hand.',
     why: 'the boilerplate\'s own description narrates its admin-bypass push flow and names its host ruleset',
@@ -632,6 +638,8 @@ export const CHANGED_DEFAULTS_EXEMPT: readonly string[] = [
   'stack.*',
   'external_consumers',
   'testing.automation_identity.*',
+  'issue_tracker.github.*',
+  'trail.*',
 ];
 
 /** Whether a leaf sits under a `CHANGED_DEFAULTS_EXEMPT` pattern. */
@@ -670,6 +678,7 @@ export const IDENTITY_PATHS: readonly string[] = [
   'frontend.*',
   'database.*',
   'issue_tracker.*',
+  'issue_tracker.github.project_number',
   'testing.default_env',
   'testing.automation_identity.email_var',
   'testing.automation_identity.password_var',
@@ -754,6 +763,8 @@ export const FILLED_ELSEWHERE: Readonly<Record<string, string>> = {
   'autonomous_delivery.escalation_channel': 'the project owner, by hand, when it opts into /autonomous-delivery (null is a valid answer)',
   'secrets.onepassword.vault': 'the secret-manager choice of `bun setup` (cli/lib/secret-providers.ts; null while secrets.provider is local)',
   'secrets.onepassword.account': 'the secret-manager choice of `bun setup` (optional: null = the 1Password CLI default account)',
+  'issue_tracker.github.project_number': 'written by `bun run github:project:bootstrap --apply` (null until the board exists)',
+  'trail.enabled': 'null is the answer: the trail follows issue_tracker (on for github and none, off for jira); true or false only to override',
   'harnesses': 'the agent selection of `bun setup` (`recordHarnessSelection` in cli/install.ts; null = detect from the files present, ADR-0013)',
 };
 

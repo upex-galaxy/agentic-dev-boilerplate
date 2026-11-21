@@ -53,6 +53,7 @@
  */
 
 import type { Harness } from './lib/harness-selection.ts';
+import type { IssueTracker } from './lib/issue-tracker.ts';
 import type { RtkDeps } from './lib/rtk-setup.ts';
 import type { NextStep, Tile } from './lib/ui/events.ts';
 import type { InstallerUi } from './lib/ui/installer-run.ts';
@@ -88,6 +89,7 @@ import {
   withHarnesses,
 } from './lib/harness-selection.ts';
 import { createInstallerTerminal, PromptCancelled } from './lib/install-terminal.ts';
+import { GH_PROJECT_SCOPE_FIX, issueTrackerOf, parseGhAuthStatus, readIssueTrackerValue } from './lib/issue-tracker.ts';
 import { offerRtk, rtkState } from './lib/rtk-setup.ts';
 import {
   ADAPTERS,
@@ -172,10 +174,10 @@ interface InstallState {
   steps?: Record<string, string> // step name → ISO timestamp of last successful run; gates re-runs
   postInstall: {
     agentsSetup: 'pending' | 'completed' | 'skipped-non-interactive' | 'failed'
-    acliAuth: 'pending' | 'completed' | 'skipped-non-interactive' | 'skipped-no-binary' | 'skipped-no-auth' | 'failed'
-    jiraSyncFields: 'pending' | 'completed' | 'skipped-non-interactive' | 'skipped-no-auth' | 'skipped-no-admin' | 'failed'
-    jiraSyncWorkflows: 'pending' | 'completed' | 'skipped-non-interactive' | 'skipped-no-auth' | 'skipped-no-admin' | 'failed'
-    jiraCheck: 'pending' | 'completed' | 'skipped-non-interactive' | 'skipped-prereq' | 'failed'
+    acliAuth: 'pending' | 'completed' | 'skipped-non-interactive' | 'skipped-tracker' | 'skipped-no-binary' | 'skipped-no-auth' | 'failed'
+    jiraSyncFields: 'pending' | 'completed' | 'skipped-non-interactive' | 'skipped-tracker' | 'skipped-no-auth' | 'skipped-no-admin' | 'failed'
+    jiraSyncWorkflows: 'pending' | 'completed' | 'skipped-non-interactive' | 'skipped-tracker' | 'skipped-no-auth' | 'skipped-no-admin' | 'failed'
+    jiraCheck: 'pending' | 'completed' | 'skipped-non-interactive' | 'skipped-tracker' | 'skipped-prereq' | 'failed'
   }
 }
 
@@ -489,7 +491,18 @@ const FORCE_RTK = process.env.INSTALL_FORCE_RTK === '1';
 const FORCE_COMMUNITY_SKILLS = process.env.INSTALL_FORCE_COMMUNITY_SKILLS === '1' || SYNC_SKILLS;
 const FORCE_GITHUB_REMOTE = process.env.INSTALL_FORCE_GITHUB_REMOTE === '1';
 // INSTALL_SKIP_JIRA=1: the Jira phase is skipped (a project that does not use Jira; also the e2e fixtures).
-const SKIP_JIRA = process.env.INSTALL_SKIP_JIRA === '1';
+const SKIP_JIRA_ENV = process.env.INSTALL_SKIP_JIRA === '1';
+let TRACKER: IssueTracker = 'jira';
+let SKIP_JIRA = SKIP_JIRA_ENV;
+let GH_PROJECT_SCOPE_MISSING = false;
+let GH_PROJECT_SCOPE_OK = false;
+
+function applyTracker(): IssueTracker {
+  try { TRACKER = issueTrackerOf(readFileSync(PROJECT_YAML_FILE, 'utf8')).tracker; }
+  catch { TRACKER = 'jira'; }
+  SKIP_JIRA = SKIP_JIRA_ENV || TRACKER !== 'jira';
+  return TRACKER;
+}
 // INSTALL_SKIP_COMMUNITY=1: no `bunx skills add` (offline runs, the e2e fixtures).
 const SKIP_COMMUNITY = process.env.INSTALL_SKIP_COMMUNITY === '1';
 
@@ -1651,13 +1664,14 @@ async function configureDayZeroCredentials(state: InstallState): Promise<void> {
   const newValues: Record<string, string> = {};
   const has = (name: string): boolean => (envValues[name] ?? '').trim().length > 0 || (process.env[name] ?? '').trim().length > 0;
 
+  const onJira = TRACKER === 'jira';
   let hostSet = true;
   try { resolveAtlassianInstance(); }
   catch { hostSet = false; }
 
   const plain: Array<'ATLASSIAN_URL' | 'ATLASSIAN_EMAIL'> = [];
-  if (!hostSet) { plain.push('ATLASSIAN_URL'); }
-  if (!has('ATLASSIAN_EMAIL')) { plain.push('ATLASSIAN_EMAIL'); }
+  if (onJira && !hostSet) { plain.push('ATLASSIAN_URL'); }
+  if (onJira && !has('ATLASSIAN_EMAIL')) { plain.push('ATLASSIAN_EMAIL'); }
   if (plain.length > 0) {
     const fields = plain.map(name => name === 'ATLASSIAN_URL'
       ? { id: name, label: tr('Sitio de Atlassian', 'Atlassian site'), short: tr('Sitio', 'Site'), prefix: 'https://', placeholder: 'acme.atlassian.net', pattern: '^(https?://)?[A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)+/?$', patternMsg: tr('Un nombre de sitio, por ejemplo acme.atlassian.net.', 'A site name, for example acme.atlassian.net.') }
@@ -1686,7 +1700,7 @@ async function configureDayZeroCredentials(state: InstallState): Promise<void> {
     });
   }
 
-  if (!has('ATLASSIAN_API_TOKEN')) {
+  if (onJira && !has('ATLASSIAN_API_TOKEN')) {
     const token = await askVar('ATLASSIAN_API_TOKEN', {
       title: tr('Pega tu token de API de Atlassian', 'Paste your Atlassian API token'),
       why: tr('Lo creas en <code>id.atlassian.com/manage-profile/security/api-tokens</code> → Crear token de API. Copia el valor completo: Atlassian lo muestra una sola vez.', 'Create it at <code>id.atlassian.com/manage-profile/security/api-tokens</code> → Create API token. Copy the whole value: Atlassian shows it only once.'),
@@ -2247,16 +2261,39 @@ async function projectPhase(state: InstallState): Promise<void> {
     try { cur.name = (JSON.parse(readFileSync(join(REPO_ROOT, 'package.json'), 'utf8')) as { name?: string }).name ?? ''; }
     catch { cur.name = ''; }
   }
+  let trackerUnset = false;
+  try { trackerUnset = readIssueTrackerValue(readFileSync(PROJECT_YAML_FILE, 'utf8')) === null; }
+  catch { trackerUnset = false; }
+  const tracker = trackerUnset
+    ? await ask<IssueTracker>({
+        id: 'project-tracker',
+        kind: 'select',
+        kicker: tr('Tracker', 'Tracker'),
+        title: tr('Dónde viven las historias y los bugs de este proyecto?', 'Where do this project\'s stories and bugs live?'),
+        why: tr('Queda en <code>.agents/project.yaml</code> (<code>issue_tracker.issue_tracker</code>). Con GitHub o sin tracker no se pide nada de Atlassian.', 'It goes to <code>.agents/project.yaml</code> (<code>issue_tracker.issue_tracker</code>). With GitHub or no tracker nothing from Atlassian is asked.'),
+        spec: {
+          options: [
+            { value: 'jira', label: 'Jira', desc: tr('Equipos con QA: tickets, flujos y campos de Jira, por la CLI de Atlassian.', 'Teams with QA: Jira tickets, workflows and fields, through the Atlassian CLI.'), rec: true },
+            { value: 'github', label: 'GitHub', desc: tr('Issues y un tablero de GitHub Projects, por la CLI de GitHub.', 'Issues and a GitHub Projects board, through GitHub CLI.') },
+            { value: 'none', label: tr('Ninguno', 'None'), desc: tr('Sin tracker: el rastro de cada cambio queda en el repo.', 'No tracker: each change\'s trail stays in the repo.') },
+          ],
+          cta: tr('Elegir', 'Choose'),
+        },
+        default: 'jira',
+      })
+    : null;
   const [name, keyRaw, domain] = await ask<string[]>({
     id: 'project-identity',
     kind: 'text',
     kicker: tr('Identidad', 'Identity'),
     title: tr('Cómo se llama el proyecto que vas a probar?', 'What is the project you are going to test called?'),
-    why: tr('La clave del proyecto es el prefijo de los tickets en Jira (en <code>ACME-123</code> es <code>ACME</code>).', 'The project key is the prefix of the Jira tickets (in <code>ACME-123</code> it is <code>ACME</code>).'),
+    why: (tracker ?? TRACKER) === 'jira'
+      ? tr('La clave del proyecto es el prefijo de los tickets en Jira (en <code>ACME-123</code> es <code>ACME</code>).', 'The project key is the prefix of the Jira tickets (in <code>ACME-123</code> it is <code>ACME</code>).')
+      : tr('La clave del proyecto es un prefijo corto en mayúsculas (por ejemplo <code>ACME</code>).', 'The project key is a short upper-case prefix (for example <code>ACME</code>).'),
     spec: {
       fields: [
         { id: 'pname', label: tr('Nombre del proyecto', 'Project name'), short: tr('Nombre', 'Name'), placeholder: 'Acme Shop', value: cur.name, required: true },
-        { id: 'pkey', label: tr('Clave en Jira', 'Jira key'), short: tr('Clave', 'Key'), placeholder: 'ACME', value: cur.key, hint: tr('Letras y números, como en tus tickets. Vacío = lo completas después.', 'Letters and digits, like in your tickets. Empty = fill it later.'), pattern: '^[A-Za-z][A-Za-z0-9]{0,9}$', patternMsg: tr('Hasta 10 letras o números, empezando por letra (ej. ACME).', 'Up to 10 letters or digits, starting with a letter (e.g. ACME).') },
+        { id: 'pkey', label: (tracker ?? TRACKER) === 'jira' ? tr('Clave en Jira', 'Jira key') : tr('Clave del proyecto', 'Project key'), short: tr('Clave', 'Key'), placeholder: 'ACME', value: cur.key, hint: tr('Letras y números, como en tus tickets. Vacío = lo completas después.', 'Letters and digits, like in your tickets. Empty = fill it later.'), pattern: '^[A-Za-z][A-Za-z0-9]{0,9}$', patternMsg: tr('Hasta 10 letras o números, empezando por letra (ej. ACME).', 'Up to 10 letters or digits, starting with a letter (e.g. ACME).') },
         { id: 'pdomain', label: tr('Dominio de la app', 'App domain'), short: tr('Dominio', 'Domain'), placeholder: 'acme.shop', value: cur.domain, hint: tr('Sin https://. Vacío si todavía no está publicada.', 'Without https://. Empty if it is not published yet.') },
       ],
       cta: tr('Guardar', 'Save'),
@@ -2300,6 +2337,9 @@ async function projectPhase(state: InstallState): Promise<void> {
   if (name) { seeds.PROJECT_NAME = name; }
   if (keyRaw) { seeds.PROJECT_KEY = keyRaw.toUpperCase(); }
   if (domain) { seeds.WEBAPP_DOMAIN = domain.replace(/^https?:\/\//i, '').replace(/\/+$/, ''); }
+  if (tracker) { seeds.ISSUE_TRACKER = tracker; }
+  if (tracker === 'jira') { seeds.ISSUE_TRACKER_CLI = 'acli'; }
+  if (tracker === 'github') { seeds.ISSUE_TRACKER_CLI = 'gh'; }
   if (localRaw) { seeds.WEB_URL_LOCAL = withScheme(localRaw, 'http'); }
   if (stagingRaw) { seeds.WEB_URL_STAGING = withScheme(stagingRaw, 'https'); }
   const env = childEnv(n => seedNames.has(n) || /^(?:WEB_URL|API_URL|DB_PROJECT_REF)_/.test(n), seeds);
@@ -2738,14 +2778,40 @@ async function jiraCheckStep(state: InstallState): Promise<void> {
   step.end(r.code === 0 ? 'ok' : 'warn', r.code === 0 ? undefined : tr('Revisa la salida; después: <code>bun run jira:check</code>', 'Check the output; later: <code>bun run jira:check</code>'));
 }
 
+function githubTrackerStep(): void {
+  const step = UI!.step({ phase: 'jira', title: tr('Acceso a GitHub Projects', 'GitHub Projects access') });
+  if (which('gh') === null) {
+    step.end('warn', tr('falta la CLI de GitHub: <code>cli.github.com</code>, después <code>gh auth login</code>', 'GitHub CLI is missing: <code>cli.github.com</code>, then <code>gh auth login</code>'));
+    return;
+  }
+  const r = spawnSync('gh', ['auth', 'status'], { encoding: 'utf8', timeout: 8000, stdio: ['ignore', 'pipe', 'pipe'] });
+  const scope = parseGhAuthStatus(`${r.stdout ?? ''}\n${r.stderr ?? ''}`);
+  // gh exits non-zero when ANY stored account is broken; the board only needs the active one.
+  if (r.status !== 0 && scope.account === null) {
+    step.end('warn', tr('gh no tiene sesión: <code>gh auth login</code>', 'gh has no session: <code>gh auth login</code>'));
+    return;
+  }
+  if (scope.hasProjectScope === false) {
+    GH_PROJECT_SCOPE_MISSING = true;
+    step.end('warn', tr(`la cuenta ${scope.account ?? 'activa'} no tiene el permiso <code>project</code>: <code>${GH_PROJECT_SCOPE_FIX}</code>`, `account ${scope.account ?? '(active)'} lacks the <code>project</code> scope: <code>${GH_PROJECT_SCOPE_FIX}</code>`));
+    return;
+  }
+  GH_PROJECT_SCOPE_OK = scope.hasProjectScope === true;
+  step.end(scope.hasProjectScope ? 'ok' : 'warn', scope.hasProjectScope
+    ? tr(`${scope.account}: permiso <code>project</code> presente`, `${scope.account}: <code>project</code> scope present`)
+    : tr('no pudimos leer los permisos del token; revisa <code>gh auth status</code>', 'the token\'s scopes could not be read; check <code>gh auth status</code>'));
+}
+
 async function jiraPhase(state: InstallState): Promise<void> {
   if (SKIP_JIRA) {
-    state.postInstall.acliAuth = 'skipped-non-interactive';
-    state.postInstall.jiraSyncFields = 'skipped-non-interactive';
-    state.postInstall.jiraSyncWorkflows = 'skipped-non-interactive';
-    state.postInstall.jiraCheck = 'skipped-non-interactive';
+    const skipped = SKIP_JIRA_ENV ? 'skipped-non-interactive' : 'skipped-tracker';
+    state.postInstall.acliAuth = skipped;
+    state.postInstall.jiraSyncFields = skipped;
+    state.postInstall.jiraSyncWorkflows = skipped;
+    state.postInstall.jiraCheck = skipped;
     saveState(state);
-    UI!.step({ phase: 'jira', title: 'Jira' }).end('skipped', 'INSTALL_SKIP_JIRA=1');
+    UI!.step({ phase: 'jira', title: 'Jira' }).end('skipped', SKIP_JIRA_ENV ? 'INSTALL_SKIP_JIRA=1' : tr(`issue_tracker: ${TRACKER}: este proyecto no usa Jira`, `issue_tracker: ${TRACKER}: this project does not use Jira`));
+    if (!SKIP_JIRA_ENV && TRACKER === 'github') { githubTrackerStep(); }
     return;
   }
   if (NON_INTERACTIVE) {
@@ -2801,6 +2867,9 @@ function buildReport(state: InstallState, ui: InstallerUi): { title: string, ton
   if (state.postInstall.agentsSetup !== 'completed') {
     next.push({ title: tr('Completa los datos del proyecto', 'Fill in the project data'), text: tr('Escribe <code>.agents/project.yaml</code>; los agentes lo leen en cada comando.', 'Writes <code>.agents/project.yaml</code>; the agents read it on every command.'), cmd: 'bun run agents:setup' });
   }
+  if (GH_PROJECT_SCOPE_MISSING) {
+    next.push({ title: tr('Dale a gh el permiso del tablero', 'Give gh the board scope'), text: tr('El tracker es GitHub: <code>gh project</code> necesita el permiso <code>project</code> en la cuenta activa. Lo corre el dueño de la cuenta, una vez.', 'The tracker is GitHub: <code>gh project</code> needs the <code>project</code> scope on the active account. The account owner runs it once.'), cmd: GH_PROJECT_SCOPE_FIX });
+  }
   if (!SKIP_JIRA && state.postInstall.acliAuth !== 'completed') {
     next.push({ title: tr('Inicia sesión en acli', 'Sign in to acli'), text: tr('La skill /acli la necesita. La sesión queda en <code>~/.config/acli/</code>.', 'The /acli skill needs it. The session lives in <code>~/.config/acli/</code>.'), cmd: MANUAL_ACLI_LOGIN });
   }
@@ -2828,7 +2897,7 @@ function buildReport(state: InstallState, ui: InstallerUi): { title: string, ton
   if (logins.length > 0) {
     next.push({ title: tr('Inicia sesión en tus CLIs', 'Sign in to your CLIs'), text: tr(`Cada una abre su propio login, en otra terminal: ${logins.map(([, c]) => `<code>${c}</code>`).join(', ')}.`, `Each opens its own login, in another terminal: ${logins.map(([, c]) => `<code>${c}</code>`).join(', ')}.`) });
   }
-  const missingClis = Object.entries(state.externalClis).filter(([, s]) => s === 'missing').map(([n]) => n);
+  const missingClis = Object.entries(state.externalClis).filter(([n, s]) => s === 'missing' && (TRACKER === 'jira' || n !== 'acli')).map(([n]) => n);
   if (missingClis.length > 0) {
     next.push({ title: tr('Herramientas que faltan', 'Missing tools'), text: missingClis.map(n => `<code>${n}</code>: ${EXTERNAL_CLIS.find(c => c.name === n)?.docs ?? ''}`).join('<br>') });
   }
@@ -3067,6 +3136,7 @@ async function main(): Promise<void> {
   }
 
   // ── pre ────────────────────────────────────────────────────────────────
+  applyTracker();
   const pre = await runSetupPreflight({ cwd: REPO_ROOT, lang: LANG });
   if (await ui.preflight(pre, async () => runSetupPreflight({ cwd: REPO_ROOT, lang: LANG })) === 'abort') {
     ui.phaseEnd('pre', 'failed');
@@ -3085,6 +3155,7 @@ async function main(): Promise<void> {
     step.end(reseed === 'reseeded' ? 'ok' : 'failed', reseed === 'reseeded'
       ? tr(`desde ${SCHEMA_FILE}: cada campo vacío, la estrategia de git heredada`, `from ${SCHEMA_FILE}: every field empty, the git strategy inherited`)
       : tr(`${SCHEMA_FILE} falta o está dañado; restáuralo desde upstream`, `${SCHEMA_FILE} is missing or damaged; restore it from upstream`));
+    applyTracker();
   }
   ui.phaseEnd('pre', pre.verdict === 'warn' ? 'warn' : 'done', pre.verdict === 'warn' ? tr(`${pre.checks.filter(c => c.state === 'warn').length} aviso(s)`, `${pre.checks.filter(c => c.state === 'warn').length} warning(s)`) : undefined);
 
@@ -3155,19 +3226,26 @@ async function main(): Promise<void> {
   // ── project ────────────────────────────────────────────────────────────
   ui.phase('project', tr('Los datos que las skills usan para no preguntarte cada vez: cómo se llama el proyecto, dónde corre y en qué entorno se trabaja. Quedan en <code>.agents/project.yaml</code> y los cambias cuando quieras.', 'The data the skills use so they do not ask you every time: what the project is called, where it runs and which environment you work in. It lives in <code>.agents/project.yaml</code> and you can change it whenever you like.'));
   await projectPhase(state);
+  applyTracker();
   ui.phaseEnd('project');
 
   // ── creds ──────────────────────────────────────────────────────────────
-  ui.phase('creds', tr('Las skills necesitan entrar a Jira en tu nombre. Te pedimos solo lo que se usa hoy; el resto lo cargas cuando lo necesites.', 'The skills need to sign in to Jira on your behalf. We ask only for what is used today; the rest you add when you need it.'));
+  ui.phase('creds', TRACKER === 'jira'
+    ? tr('Las skills necesitan entrar a Jira en tu nombre. Te pedimos solo lo que se usa hoy; el resto lo cargas cuando lo necesites.', 'The skills need to sign in to Jira on your behalf. We ask only for what is used today; the rest you add when you need it.')
+    : tr('Te pedimos solo las claves que se usan hoy; el resto lo cargas cuando lo necesites. Este proyecto no usa Jira: nada de Atlassian.', 'We ask only for the keys used today; the rest you add when you need it. This project does not use Jira: nothing from Atlassian.'));
   await secretsProviderStep(state);
   await configureMcps(agents, state);
   await configureDayZeroCredentials(state);
   ui.phaseEnd('creds');
 
   // ── jira ───────────────────────────────────────────────────────────────
-  ui.phase('jira', tr('Iniciamos sesión con la herramienta de Atlassian y traemos los campos y flujos de tu proyecto, para que las skills hablen el mismo idioma que tu Jira. [[jira|Para qué?]]', 'We sign in with the Atlassian tool and bring your project\'s fields and workflows, so the skills speak the same language as your Jira. [[jira|What for?]]'));
+  ui.phase('jira', TRACKER === 'github'
+    ? tr('Este proyecto usa GitHub como tracker: comprobamos que gh pueda mover el tablero de GitHub Projects.', 'This project uses GitHub as its tracker: we check that gh can move the GitHub Projects board.')
+    : TRACKER === 'none'
+      ? tr('Este proyecto no usa tracker: no hay nada de Jira que conectar.', 'This project uses no tracker: there is no Jira to connect.')
+      : tr('Iniciamos sesión con la herramienta de Atlassian y traemos los campos y flujos de tu proyecto, para que las skills hablen el mismo idioma que tu Jira. [[jira|Para qué?]]', 'We sign in with the Atlassian tool and bring your project\'s fields and workflows, so the skills speak the same language as your Jira. [[jira|What for?]]'));
   await jiraPhase(state);
-  ui.phaseEnd('jira', SKIP_JIRA || NON_INTERACTIVE ? 'skipped' : state.postInstall.jiraSyncFields === 'completed' ? 'done' : 'warn');
+  ui.phaseEnd('jira', !SKIP_JIRA_ENV && TRACKER === 'github' ? (GH_PROJECT_SCOPE_OK ? 'done' : 'warn') : SKIP_JIRA || NON_INTERACTIVE ? 'skipped' : state.postInstall.jiraSyncFields === 'completed' ? 'done' : 'warn');
 
   // ── github (needs the whole tree: the pre-push hooks lint what the lane wrote) ──
   ui.phase('github', tr('Opcional. Crea el repositorio remoto y sube este primer commit, para que el equipo y CI lo vean.', 'Optional. Creates the remote repository and pushes this first commit, so the team and CI see it.'));

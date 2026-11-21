@@ -461,6 +461,12 @@
       "hint": "name, environments, URLs",
       "steps": [
         {
+          "step": "Issue tracker",
+          "what": "A project whose .agents/project.yaml has no tracker yet picks one: jira (default), github (issues and a GitHub Project) or none. With github or none no Atlassian credential is asked and the Jira phase is skipped.",
+          "interactive": true,
+          "prompts": ["project-tracker"]
+        },
+        {
           "step": "Project identity",
           "what": "Project name, key, web domain, local and staging URLs and the default environment, written to .agents/project.yaml by agents-setup --non-interactive (bun run agents:setup changes them later).",
           "interactive": true,
@@ -513,6 +519,11 @@
         {
           "step": "Jira check",
           "what": "bun run jira:check validates the Jira setup manifest against the synced catalogs.",
+          "interactive": false
+        },
+        {
+          "step": "GitHub Projects access",
+          "what": "Only when issue_tracker is github, in place of the Jira steps: checks gh is signed in and its active account holds the project scope; when it does not, prints gh auth refresh -h github.com -s project for the account owner.",
           "interactive": false
         }
       ]
@@ -583,6 +594,7 @@
     "gh-account",
     "gh-visibility",
     "gh-name",
+    "project-tracker",
     "project-identity",
     "project-envs",
     "project-default-env",

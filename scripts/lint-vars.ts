@@ -190,6 +190,9 @@ function loadDeclaredVariables(yamlPath: string): DeclaredVars {
     // not a {{VAR}} leaf.
     if (sectionName === 'harnesses') { continue; }
     if (sectionName === CHECKS_KEY) { continue; }
+    // `trail` and `issue_tracker.github` are read BY PATH (`trail.dir`,
+    // `issue_tracker.github.statuses.<status>`), never as a bare {{VAR}}.
+    if (sectionName === 'trail') { continue; }
     // `stack` is read BY PATH ({{stack.scripts.lint}}), so its leaves are
     // collected as dotted paths, never as bare flat names.
     if (sectionName === 'stack') {
@@ -227,6 +230,7 @@ function loadDeclaredVariables(yamlPath: string): DeclaredVars {
     // Flat section: each child is a flat leaf.
     if (sectionVal && typeof sectionVal === 'object' && !Array.isArray(sectionVal)) {
       for (const leafKey of Object.keys(sectionVal)) {
+        if (sectionName === 'issue_tracker' && leafKey === 'github') { continue; }
         flat.add(leafKey.toUpperCase());
       }
     }

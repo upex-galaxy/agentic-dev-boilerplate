@@ -46,9 +46,10 @@
  * sibling QA repo targets GitHub Actions secrets and has its own flow.
  */
 
+import type { IssueTracker } from './issue-tracker.ts';
 import type { VarScope, VarSpec } from './variables-manifest.ts';
 import { spawnSync } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { copyFile, mkdir, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
@@ -64,6 +65,7 @@ import {
   resolveAtlassianInstance,
   writeAtlassianUrlToYaml,
 } from './atlassian-instance.ts';
+import { issueTrackerOf } from './issue-tracker.ts';
 import * as tui from './tui.ts';
 import {
   criticalVars,
@@ -374,7 +376,10 @@ async function promptVarsInto(
  */
 async function setCriticalVars(opts: VariablesFlowOptions): Promise<void> {
   tui.section('CRITICAL — tool credentials (Atlassian, Resend)');
-  await promptVarsInto(criticalVars(), opts);
+  let tracker: IssueTracker = 'jira';
+  try { tracker = issueTrackerOf(readFileSync(join(REPO_ROOT, '.agents', 'project.yaml'), 'utf8')).tracker; }
+  catch { tracker = 'jira'; }
+  await promptVarsInto(criticalVars(tracker), opts);
 }
 
 // ----------------------------------------------------------------------------

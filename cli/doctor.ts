@@ -36,6 +36,7 @@ import type { AtlassianUrlSource } from './lib/atlassian-instance.ts';
 import type { CheckFinding as HarnessEnvFinding } from './lib/harness-env.ts';
 import type { HarnessLevelVerdict } from './lib/harness-level-mcps.ts';
 import type { Harness } from './lib/harness-selection.ts';
+import type { IssueTracker } from './lib/issue-tracker.ts';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { existsSync, readFileSync, realpathSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
@@ -64,7 +65,8 @@ import { CORE_SCHEMA_FILE, deprecatedEnvKeysIn, neutralizeDeprecatedKeys, PROJEC
 import { harnessLevelMcpReport } from './lib/harness-level-mcps.ts';
 import { declaredHarnesses, HARNESS_LABEL } from './lib/harness-selection.ts';
 import { detectHookManager } from './lib/hook-manager.ts';
-import { DEPRECATED_VARS, varsFor } from './lib/variables-manifest.ts';
+import { GH_PROJECT_SCOPE_FIX, ISSUE_TRACKERS, issueTrackerOf, parseGhAuthStatus } from './lib/issue-tracker.ts';
+import { appliesToTracker, DEPRECATED_VARS, VAR_MANIFEST, varsFor } from './lib/variables-manifest.ts';
 import { checkoutRoots } from './lib/worktree.ts';
 
 // `tui` pulls third-party deps (boxen/cli-table3/figures/picocolors). It is
@@ -325,7 +327,7 @@ export interface AgentCompatibilityDiagnostic {
  * env fallback, which is worth nudging off of.
  */
 interface AtlassianHostState {
-  status: 'set' | 'missing'
+  status: 'set' | 'missing' | 'not-used'
   value?: string
   source?: AtlassianUrlSource
 }
@@ -343,6 +345,7 @@ interface DoctorReport {
    * apart from `env_vars` because it is NOT an env var — see `DAY_ZERO_VARS`.
    */
   atlassian_host: AtlassianHostState
+  issue_tracker: IssueTrackerDiagnostic
   legacy_jira_cred_keys: string[]
   /** Retired tooling names an adopted app declares as its own variables: kept, never a removal. */
   app_owned_retired_keys: string[]
@@ -779,6 +782,76 @@ export function piTrustStatus(root: string, env: Record<string, string | undefin
   return 'ask';
 }
 
+export interface IssueTrackerDiagnostic {
+  value: string | null
+  tracker: IssueTracker
+  recognized: boolean
+  note: string | null
+  gh: { installed: boolean, authenticated: boolean, account: string | null, project_scope: boolean | null } | null
+}
+
+export interface GhProbe {
+  installed: boolean
+  ok: boolean
+  output: string
+}
+
+function probeGhAuth(): GhProbe {
+  const r = spawnSync('gh', ['auth', 'status'], { encoding: 'utf8', timeout: 5000, stdio: ['ignore', 'pipe', 'pipe'] });
+  const missing = (r.error as NodeJS.ErrnoException | undefined)?.code === 'ENOENT';
+  return { installed: !missing, ok: r.status === 0, output: `${r.stdout ?? ''}\n${r.stderr ?? ''}` };
+}
+
+export function issueTrackerDiagnostic(yamlText: string, gh: () => GhProbe = probeGhAuth): { report: IssueTrackerDiagnostic, actions: PendingAction[] } {
+  const reading = issueTrackerOf(yamlText);
+  // An unrecognized value keeps today's Jira behaviour, so it informs and never turns the doctor red.
+  const note = reading.recognized ? null : `\`${reading.raw}\` is not one of ${ISSUE_TRACKERS.join(' | ')}, so the Jira path stays on. ${/github/i.test(reading.raw ?? '') ? 'Did you mean github? ' : ''}Write jira to keep it, or github / none to switch.`;
+  const report: IssueTrackerDiagnostic = { value: reading.raw, tracker: reading.tracker, recognized: reading.recognized, note, gh: null };
+  const actions: PendingAction[] = [];
+  if (reading.tracker !== 'github') { return { report, actions }; }
+  const projectNumber = githubProjectNumber(yamlText);
+  if (projectNumber === null) {
+    actions.push({ type: 'shell_command', target: 'bun run github:project:bootstrap --apply', hint: 'issue_tracker is github and issue_tracker.github.project_number is null: no board is linked yet. The bootstrap creates or links the GitHub Project and writes the number.' });
+  }
+  const probe = gh();
+  const parsed = probe.installed ? parseGhAuthStatus(probe.output) : null;
+  // gh exits non-zero when ANY stored account is broken; the board only needs the active one.
+  const signedIn = probe.ok || (parsed?.account ?? null) !== null;
+  const scope = signedIn ? parsed : null;
+  report.gh = { installed: probe.installed, authenticated: signedIn, account: scope?.account ?? null, project_scope: scope?.hasProjectScope ?? null };
+  if (!probe.installed) {
+    actions.push({ type: 'system_install', target: 'gh', hint: 'issue_tracker is github: GitHub CLI drives the issues and the GitHub Project board.', where: 'https://cli.github.com' });
+  }
+  else if (!signedIn) {
+    actions.push({ type: 'shell_command', target: 'gh auth login', hint: 'issue_tracker is github and GitHub CLI has no session.' });
+  }
+  else if (scope?.hasProjectScope === false) {
+    actions.push({ type: 'shell_command', target: GH_PROJECT_SCOPE_FIX, hint: `issue_tracker is github: the active gh account (${scope.account ?? 'unknown'}) lacks the \`project\` scope the GitHub Projects board needs. The owner runs this once.` });
+  }
+  return { report, actions };
+}
+
+function githubProjectNumber(yamlText: string): string | null {
+  let top = '';
+  let sub = '';
+  for (const line of yamlText.split(/\r?\n/)) {
+    const t = /^([a-z_]+):/.exec(line);
+    if (t) { top = t[1]; sub = ''; continue; }
+    const s = /^ {2}([a-z_]+):/.exec(line);
+    if (s) { sub = s[1]; continue; }
+    const leaf = /^ {4}project_number:[ \t]*([^\s#]*)/.exec(line);
+    if (leaf && top === 'issue_tracker' && sub === 'github') {
+      return leaf[1] === '' || leaf[1] === 'null' || leaf[1] === '~' ? null : leaf[1];
+    }
+  }
+  return null;
+}
+
+export function envVarApplies(name: string, tracker: IssueTracker): boolean {
+  const spec = VAR_MANIFEST.find(s => s.name === name);
+  return spec === undefined || appliesToTracker(spec, tracker);
+}
+
 /** `skills add -g` writes ~/.agents/skills, but with `-a claude-code` it copies straight into ~/.claude/skills. */
 export function userSkillInstalled(name: string, home: string = homedir()): boolean {
   return ['.agents', '.claude'].some(dir => existsSync(join(home, dir, 'skills', name, 'SKILL.md')));
@@ -808,6 +881,7 @@ async function runDoctor(): Promise<DoctorReport> {
     env_file_exists: existsSync(ENV_PATH),
     env_vars: {},
     atlassian_host: { status: 'missing' },
+    issue_tracker: { value: null, tracker: 'jira', recognized: true, note: null, gh: null },
     legacy_jira_cred_keys: [],
     app_owned_retired_keys: [],
     mcp_json_exists: existsSync(MCP_PATH),
@@ -853,11 +927,17 @@ async function runDoctor(): Promise<DoctorReport> {
     });
   }
 
+  const projectYaml = join(REPO_ROOT, '.agents', 'project.yaml');
+  const tracker = issueTrackerDiagnostic(existsSync(projectYaml) ? readFileSync(projectYaml, 'utf8') : '');
+  report.issue_tracker = tracker.report;
+  report.pending_actions.push(...tracker.actions);
+  const onJira = tracker.report.tracker === 'jira';
+
   // env vars
   const envValues = report.env_file_exists
     ? parseEnvFile(await readFile(ENV_PATH, 'utf8'))
     : {};
-  for (const v of REQUIRED_VARS) {
+  for (const v of REQUIRED_VARS.filter(name => envVarApplies(name, tracker.report.tracker))) {
     const value = envValues[v];
     const isSet = value !== undefined && value.trim().length > 0;
     report.env_vars[v] = isSet ? 'set' : 'missing';
@@ -875,36 +955,41 @@ async function runDoctor(): Promise<DoctorReport> {
   // would be worse than useless: the variable's absence is the desired state,
   // and its PRESENCE is the bug (a stale copy inherited from the parent shell is
   // exactly what silently pointed `jira:sync-issues` at a dead site).
-  try {
-    const instance = resolveAtlassianInstance();
-    report.atlassian_host = { status: 'set', value: instance.baseUrl, source: instance.source };
-    const warning = formatInstanceMismatchWarning(instance);
-    if (warning !== null) {
-      report.pending_actions.push({
-        type: 'shell_command',
-        target: 'unset ATLASSIAN_URL',
-        hint: warning,
-      });
+  if (!onJira) {
+    report.atlassian_host = { status: 'not-used' };
+  }
+  else {
+    try {
+      const instance = resolveAtlassianInstance();
+      report.atlassian_host = { status: 'set', value: instance.baseUrl, source: instance.source };
+      const warning = formatInstanceMismatchWarning(instance);
+      if (warning !== null) {
+        report.pending_actions.push({
+          type: 'shell_command',
+          target: 'unset ATLASSIAN_URL',
+          hint: warning,
+        });
+      }
+      else if (instance.source === 'env') {
+        report.pending_actions.push({
+          type: 'shell_command',
+          target: 'bun run agents:setup',
+          hint: 'Atlassian host is coming from an ATLASSIAN_URL env var, not from '
+            + '.agents/project.yaml. That fallback exists for a repo that has not been set up '
+            + 'yet; write the host to the yaml so it is versioned and cannot go stale.',
+        });
+      }
     }
-    else if (instance.source === 'env') {
+    catch {
+      report.atlassian_host = { status: 'missing' };
       report.pending_actions.push({
         type: 'shell_command',
         target: 'bun run agents:setup',
-        hint: 'Atlassian host is coming from an ATLASSIAN_URL env var, not from '
-          + '.agents/project.yaml. That fallback exists for a repo that has not been set up '
-          + 'yet; write the host to the yaml so it is versioned and cannot go stale.',
+        hint: 'Atlassian host not set. Fill `issue_tracker.atlassian_url` in '
+          + '.agents/project.yaml — it is the source of truth for every jira:sync-* script '
+          + 'and for `acli --site`. Read it back with `bun run --silent jira:url`.',
       });
     }
-  }
-  catch {
-    report.atlassian_host = { status: 'missing' };
-    report.pending_actions.push({
-      type: 'shell_command',
-      target: 'bun run agents:setup',
-      hint: 'Atlassian host not set. Fill `issue_tracker.atlassian_url` in '
-        + '.agents/project.yaml — it is the source of truth for every jira:sync-* script '
-        + 'and for `acli --site`. Read it back with `bun run --silent jira:url`.',
-    });
   }
 
   // Legacy detection: ATLASSIAN_* is now the single credential family. Any
@@ -1196,6 +1281,7 @@ function printHuman(report: DoctorReport): void {
   // "configured" is exactly what let a dead instance go unnoticed.
   const hostRow = ((): string => {
     const host = report.atlassian_host;
+    if (host.status === 'not-used') { return `${tui.statusIcon('info')} not used (issue_tracker: ${report.issue_tracker.tracker})`; }
     if (host.status !== 'set') { return tui.statusIcon('fail'); }
     const fromYaml = host.source === 'project.yaml';
     const icon = tui.statusIcon(fromYaml ? 'ok' : 'warn');
@@ -1203,6 +1289,16 @@ function printHuman(report: DoctorReport): void {
     return `${icon} ${host.value}${note}`;
   })();
   checks.push(['Atlassian host (.agents/project.yaml)', hostRow]);
+  const trackerRow = ((): string => {
+    const t = report.issue_tracker;
+    const named = t.value === null ? 'jira (unset)' : t.tracker;
+    if (t.note !== null) { return `${tui.statusIcon('warn')} ${t.note}`; }
+    if (t.gh === null) { return `${tui.statusIcon('ok')} ${named}`; }
+    if (!t.gh.installed || !t.gh.authenticated) { return `${tui.statusIcon('fail')} github: gh ${t.gh.installed ? 'has no session' : 'not installed'}`; }
+    if (t.gh.project_scope === false) { return `${tui.statusIcon('warn')} github: ${t.gh.account ?? 'gh'} lacks the project scope (${GH_PROJECT_SCOPE_FIX})`; }
+    return `${tui.statusIcon(t.gh.project_scope ? 'ok' : 'info')} github: ${t.gh.account ?? 'gh'}${t.gh.project_scope ? ' · project scope' : ' · scope not readable'}`;
+  })();
+  checks.push(['Issue tracker (.agents/project.yaml)', trackerRow]);
   process.stdout.write(`${tui.table(['Check', 'Status'], checks)}\n`);
 
   // Env vars as a table

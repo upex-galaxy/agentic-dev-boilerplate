@@ -43,6 +43,7 @@ stack:
     icons: lucide
   hosting: vercel
   ci: github-actions
+  local_build: true
   test_runner: null
   conventions:
     import_alias: '@/'
@@ -53,6 +54,21 @@ issue_tracker:
   issue_tracker: null
   issue_tracker_cli: null
   atlassian_url: null
+  github:
+    project_owner: '@me'
+    project_number: null
+    status_field: Status
+    statuses:
+      backlog: Backlog
+      in_progress: In progress
+      in_review: In review
+      on_staging: Staging
+      released: Released
+    releases_dir: .context/releases
+
+trail:
+  enabled: null
+  dir: .context/trail
 
 testing:
   default_env: null

@@ -97,6 +97,7 @@ import { confirm, input, select } from '@inquirer/prompts';
 import { parse as parseYaml } from 'yaml';
 
 import { classifyProjectYaml, SCHEMA_FILE, seedFromSchema } from '../cli/lib/agents-schema.ts';
+import { validateIssueTrackerAnswer } from '../cli/lib/issue-tracker.ts';
 import { detectStack, readStack, STACK_FIELDS, validateStack, writeDerivedIdentity, writeStack } from '../cli/lib/stack-descriptor.ts';
 
 // ============================================================================
@@ -148,7 +149,7 @@ const log = {
 // FIELD CATALOG — flat fields, env-scoped leaf keys
 // ============================================================================
 
-type ValidatorKind = 'url' | 'project_key' | 'repo_path' | 'env_select' | 'non_empty';
+type ValidatorKind = 'url' | 'project_key' | 'repo_path' | 'env_select' | 'non_empty' | 'issue_tracker';
 
 interface FlatFieldSpec {
   section: string
@@ -192,7 +193,7 @@ const FLAT_FIELDS: FlatFieldSpec[] = [
 
   { section: 'database', key: 'db_type', envVar: 'DB_TYPE', validator: 'non_empty' },
 
-  { section: 'issue_tracker', key: 'issue_tracker', envVar: 'ISSUE_TRACKER', validator: 'non_empty' },
+  { section: 'issue_tracker', key: 'issue_tracker', envVar: 'ISSUE_TRACKER', validator: 'issue_tracker' },
   { section: 'issue_tracker', key: 'issue_tracker_cli', envVar: 'ISSUE_TRACKER_CLI', validator: 'non_empty' },
   // envVar: null — see FlatFieldSpec.envVar. This field is the source of truth
   // for the Atlassian host; seeding it from the environment would let a stale
@@ -608,6 +609,7 @@ function validateField(validator: ValidatorKind, raw: string, knownEnvs: string[
     case 'repo_path': return validateRepoPath(raw);
     case 'env_select': return validateDefaultEnv(raw, knownEnvs);
     case 'non_empty': return validateNonEmpty(raw);
+    case 'issue_tracker': return validateIssueTrackerAnswer(raw);
   }
 }
 

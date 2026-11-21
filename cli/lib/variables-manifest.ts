@@ -30,7 +30,11 @@
  * on a malformed entry so a misconfigured manifest fails fast at startup.
  */
 
+import type { IssueTracker } from './issue-tracker.ts';
+
 import { existsSync, readFileSync } from 'node:fs';
+
+import { ISSUE_TRACKERS } from './issue-tracker.ts';
 
 // ----------------------------------------------------------------------------
 // Types
@@ -144,6 +148,8 @@ export interface VarSpec {
   note: string
   /** Schema-only hints for `.env.core.schema`. See `VarSchemaHints`. */
   schema?: VarSchemaHints
+  /** Omitted = every project; set = only a project whose resolved tracker matches. */
+  tracker?: IssueTracker
 }
 
 export interface DeprecatedVar {
@@ -182,6 +188,7 @@ export const VAR_MANIFEST: VarSpec[] = [
   // single origin for both the local tooling and the remote scope.
   {
     name: 'ATLASSIAN_URL',
+    tracker: 'jira',
     destinations: ['vercel'],
     scopes: ALL_SCOPES,
     valueSource: 'atlassian-instance',
@@ -192,6 +199,7 @@ export const VAR_MANIFEST: VarSpec[] = [
   },
   {
     name: 'ATLASSIAN_EMAIL',
+    tracker: 'jira',
     destinations: ['local'],
     secret: false,
     required: true,
@@ -201,6 +209,7 @@ export const VAR_MANIFEST: VarSpec[] = [
   },
   {
     name: 'ATLASSIAN_API_TOKEN',
+    tracker: 'jira',
     destinations: ['local'],
     secret: true,
     required: true,
@@ -495,8 +504,12 @@ export function envFileVars(): VarSpec[] {
  * during the normal installer (ATLASSIAN_URL/EMAIL/API_TOKEN, RESEND_API_KEY).
  * Drives `install.ts`'s day-0 prompt set.
  */
-export function criticalVars(): VarSpec[] {
-  return VAR_MANIFEST.filter(spec => spec.critical);
+export function criticalVars(tracker: IssueTracker = 'jira'): VarSpec[] {
+  return VAR_MANIFEST.filter(spec => spec.critical && appliesToTracker(spec, tracker));
+}
+
+export function appliesToTracker(spec: VarSpec, tracker: IssueTracker): boolean {
+  return spec.tracker === undefined || spec.tracker === tracker;
 }
 
 /**
@@ -628,6 +641,7 @@ const NAME_RE = /^[A-Z_][A-Z0-9_]*$/;
  *  - `local` destination iff the value is sourced from `.env` (`valueSource`)
  *  - `scopes` present + valid iff `vercel` is a destination
  *  - conditional `required` references a non-empty gate name
+ *  - `tracker`, when set, is one of the resolver's trackers
  *  - critical vars carry no `obtainHint` / `pulledFromInfra` (prompted at install);
  *    non-critical vars declare a non-empty `obtainHint`
  *  - no name appears in BOTH the active manifest and `DEPRECATED_VARS`
@@ -689,6 +703,10 @@ export function validateVarManifest(): void {
       throw new VarManifestError(
         `Var '${spec.name}' declares scopes but has no 'vercel' destination.`,
       );
+    }
+
+    if (spec.tracker !== undefined && !ISSUE_TRACKERS.includes(spec.tracker)) {
+      throw new VarManifestError(`Var '${spec.name}' has unknown tracker '${spec.tracker}'.`);
     }
 
     if (typeof spec.required !== 'boolean') {
