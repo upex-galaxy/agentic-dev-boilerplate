@@ -98,8 +98,8 @@ export const STATUS_KEYS = ['backlog', 'in_progress', 'in_review', 'on_staging',
 export const DEFAULT_STATUS_NAMES: Record<string, string> = { backlog: 'Backlog', in_progress: 'In progress', in_review: 'In review', on_staging: 'Staging', released: 'Released' };
 
 export function readGithubConfig(yamlText: string): GithubConfig {
-  const doc = (parseYaml(yamlText) ?? {}) as Record<string, any>;
-  const gh = (doc.issue_tracker?.github ?? {}) as Record<string, any>;
+  const doc = (parseYaml(yamlText) ?? {}) as { issue_tracker?: { github?: Record<string, unknown> }, project?: { project_name?: unknown } };
+  const gh = doc.issue_tracker?.github ?? {};
   const raw = (gh.statuses ?? {}) as Record<string, unknown>;
   const statuses = STATUS_KEYS.map((key) => {
     const value = raw[key] ?? DEFAULT_STATUS_NAMES[key];

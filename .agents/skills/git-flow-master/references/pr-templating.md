@@ -130,7 +130,7 @@ Suggest labels based on the dominant commit type:
 
 Combine the type label with `ready-for-review`, or propose `--draft` when the user wants a draft PR.
 
-Repos differ, so run `gh label list` when unsure before applying a label, and treat the table as suggestions the repo may not have configured. When a label is missing, ask whether to create it or skip it.
+Repos differ, so run `gh label list` when unsure before applying a label, and treat the table as suggestions the repo may not have configured. When a label is missing, ask whether to create it or skip it. This label step belongs to `/git-flow-master`: on `jira` and `none` it never loads `/github-projects` (`agent-tool-resolution.md` §6.5).
 
 
 ## Reviewers

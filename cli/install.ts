@@ -99,6 +99,7 @@ import {
   readSecretsConfig,
   SECRET_PROVIDERS,
 } from './lib/secret-providers.ts';
+import { missingClisFor, skipJiraPhase } from './lib/tracker-gating.ts';
 import * as tui from './lib/tui.ts';
 import { startInstallerUi } from './lib/ui/installer-run.ts';
 import { pickLang } from './lib/ui/strings.ts';
@@ -500,7 +501,7 @@ let GH_PROJECT_SCOPE_OK = false;
 function applyTracker(): IssueTracker {
   try { TRACKER = issueTrackerOf(readFileSync(PROJECT_YAML_FILE, 'utf8')).tracker; }
   catch { TRACKER = 'jira'; }
-  SKIP_JIRA = SKIP_JIRA_ENV || TRACKER !== 'jira';
+  SKIP_JIRA = skipJiraPhase(TRACKER, SKIP_JIRA_ENV);
   return TRACKER;
 }
 // INSTALL_SKIP_COMMUNITY=1: no `bunx skills add` (offline runs, the e2e fixtures).
@@ -2897,7 +2898,7 @@ function buildReport(state: InstallState, ui: InstallerUi): { title: string, ton
   if (logins.length > 0) {
     next.push({ title: tr('Inicia sesión en tus CLIs', 'Sign in to your CLIs'), text: tr(`Cada una abre su propio login, en otra terminal: ${logins.map(([, c]) => `<code>${c}</code>`).join(', ')}.`, `Each opens its own login, in another terminal: ${logins.map(([, c]) => `<code>${c}</code>`).join(', ')}.`) });
   }
-  const missingClis = Object.entries(state.externalClis).filter(([n, s]) => s === 'missing' && (TRACKER === 'jira' || n !== 'acli')).map(([n]) => n);
+  const missingClis = missingClisFor(TRACKER, state.externalClis);
   if (missingClis.length > 0) {
     next.push({ title: tr('Herramientas que faltan', 'Missing tools'), text: missingClis.map(n => `<code>${n}</code>: ${EXTERNAL_CLIS.find(c => c.name === n)?.docs ?? ''}`).join('<br>') });
   }

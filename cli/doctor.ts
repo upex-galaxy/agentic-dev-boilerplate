@@ -37,6 +37,7 @@ import type { CheckFinding as HarnessEnvFinding } from './lib/harness-env.ts';
 import type { HarnessLevelVerdict } from './lib/harness-level-mcps.ts';
 import type { Harness } from './lib/harness-selection.ts';
 import type { IssueTracker } from './lib/issue-tracker.ts';
+import type { TrailDiagnostic } from './lib/trail.ts';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { existsSync, readFileSync, realpathSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
@@ -66,6 +67,7 @@ import { harnessLevelMcpReport } from './lib/harness-level-mcps.ts';
 import { declaredHarnesses, HARNESS_LABEL } from './lib/harness-selection.ts';
 import { detectHookManager } from './lib/hook-manager.ts';
 import { GH_PROJECT_SCOPE_FIX, ISSUE_TRACKERS, issueTrackerOf, parseGhAuthStatus } from './lib/issue-tracker.ts';
+import { trailDiagnostic } from './lib/trail.ts';
 import { appliesToTracker, DEPRECATED_VARS, VAR_MANIFEST, varsFor } from './lib/variables-manifest.ts';
 import { checkoutRoots } from './lib/worktree.ts';
 
@@ -346,6 +348,7 @@ interface DoctorReport {
    */
   atlassian_host: AtlassianHostState
   issue_tracker: IssueTrackerDiagnostic
+  trail: TrailDiagnostic
   legacy_jira_cred_keys: string[]
   /** Retired tooling names an adopted app declares as its own variables: kept, never a removal. */
   app_owned_retired_keys: string[]
@@ -882,6 +885,7 @@ async function runDoctor(): Promise<DoctorReport> {
     env_vars: {},
     atlassian_host: { status: 'missing' },
     issue_tracker: { value: null, tracker: 'jira', recognized: true, note: null, gh: null },
+    trail: { enabled: false, dir: '.context/trail', ignored: [] },
     legacy_jira_cred_keys: [],
     app_owned_retired_keys: [],
     mcp_json_exists: existsSync(MCP_PATH),
@@ -931,6 +935,21 @@ async function runDoctor(): Promise<DoctorReport> {
   const tracker = issueTrackerDiagnostic(existsSync(projectYaml) ? readFileSync(projectYaml, 'utf8') : '');
   report.issue_tracker = tracker.report;
   report.pending_actions.push(...tracker.actions);
+  report.trail = trailDiagnostic(
+    existsSync(projectYaml) ? readFileSync(projectYaml, 'utf8') : '',
+    tracker.report.tracker,
+    (path) => {
+      const r = spawnSync('git', ['check-ignore', '-v', '--no-index', path], { cwd: REPO_ROOT, encoding: 'utf8', timeout: 5000 });
+      return { status: r.status, stdout: r.stdout ?? '' };
+    },
+  );
+  if (report.trail.ignored.length > 0) {
+    report.pending_actions.push({
+      type: 'shell_command',
+      target: `git check-ignore -v ${report.trail.ignored[0].file}`,
+      hint: `The trail is on and ${report.trail.ignored.length} of its kept files are git-ignored under \`${report.trail.dir}\` (${report.trail.ignored[0].rule}). Add the ladder for this directory to .gitignore (see the Trail block there for the shape).`,
+    });
+  }
   const onJira = tracker.report.tracker === 'jira';
 
   // env vars
@@ -1299,6 +1318,9 @@ function printHuman(report: DoctorReport): void {
     return `${tui.statusIcon(t.gh.project_scope ? 'ok' : 'info')} github: ${t.gh.account ?? 'gh'}${t.gh.project_scope ? ' · project scope' : ' · scope not readable'}`;
   })();
   checks.push(['Issue tracker (.agents/project.yaml)', trackerRow]);
+  checks.push(['Trail (.agents/project.yaml)', report.trail.enabled
+    ? (report.trail.ignored.length === 0 ? `${tui.statusIcon('ok')} on · ${report.trail.dir}` : `${tui.statusIcon('warn')} on · ${report.trail.ignored.length} kept file(s) ignored under ${report.trail.dir}`)
+    : `${tui.statusIcon('info')} off`]);
   process.stdout.write(`${tui.table(['Check', 'Status'], checks)}\n`);
 
   // Env vars as a table

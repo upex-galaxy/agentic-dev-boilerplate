@@ -1,13 +1,4 @@
 #!/usr/bin/env bun
-/**
- * github-project-bootstrap.ts: create, update and check the GitHub Project (v2) behind
- * `issue_tracker: github`. Dry run by default; `--apply` writes; `--check` is read-only and
- * exits 1 on drift. The skill is `.agents/skills/github-projects` (references/bootstrap.md).
- *
- * Status options are matched by NAME. `updateProjectV2Field` replaces the whole option list, so
- * the script always reads the existing ids and resends them; a rename needs `--rename Old=New`
- * (keeps the id) and a drop that holds items needs `--force`.
- */
 
 import type { GhRunner, GithubConfig } from './lib/gh.ts';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
@@ -60,7 +51,7 @@ export function planOptions(
   desired: string[],
   renames: Record<string, string>,
   counts: Record<string, number>,
-  force: boolean,
+  force: string[],
 ): OptionPlan {
   const errors: string[] = [];
   const warnings: string[] = [];
@@ -111,20 +102,20 @@ export function planOptions(
     if (consumed.has(option.name)) { continue; }
     const count = counts[option.name] ?? 0;
     const entry: OptionDiff = { kind: 'drop', name: option.name, id: option.id, count };
-    if (!force && count > 0) {
+    if (!force.includes(option.name) && count > 0) {
       entry.refused = true;
       refused.push(entry);
     }
-    else if (!force && PROTECTED_DEFAULTS.has(option.name)) {
+    else if (!force.includes(option.name) && PROTECTED_DEFAULTS.has(option.name)) {
       entry.refused = true;
       refused.push(entry);
-      warnings.push(`"${option.name}" is a default option the built-in workflows point at; dropping it breaks them. Rename it (--rename "${option.name}=${DEFAULT_RENAMES[option.name]}") or pass --force.`);
+      warnings.push(`"${option.name}" is a default option the built-in workflows point at; dropping it breaks them. Rename it (--rename "${option.name}=${DEFAULT_RENAMES[option.name]}") or pass --force "${option.name}".`);
     }
     diff.push(entry);
   }
   for (const entry of refused) {
-    if (entry.count > 0) { errors.push(`refusing to drop "${entry.name}": it holds ${entry.count} item(s). Use --rename ${entry.name}=<New> to keep them, or --force.`); }
-    else { errors.push(`refusing to drop default option "${entry.name}" without --force`); }
+    if (entry.count > 0) { errors.push(`refusing to drop "${entry.name}": it holds ${entry.count} item(s). Use --rename ${entry.name}=<New> to keep them, or --force "${entry.name}".`); }
+    else { errors.push(`refusing to drop default option "${entry.name}" without --force "${entry.name}"`); }
   }
 
   const keptOrder = next.filter(o => o.id).map(o => o.id);
@@ -184,7 +175,7 @@ export interface Deps {
 export interface Options {
   apply: boolean
   check: boolean
-  force: boolean
+  force: string[]
   renames: Record<string, string>
   renameDefaults: boolean
 }
@@ -192,6 +183,7 @@ export interface Options {
 const Q_FIELD = 'query($id:ID!){node(id:$id){... on ProjectV2SingleSelectField{id databaseId options{id name color description}}}}';
 const Q_PROJECT = 'query($id:ID!){node(id:$id){... on ProjectV2{id number title repositories(first:50){nodes{nameWithOwner}} views(first:50){nodes{id name layout}} workflows(first:50){nodes{name enabled}}}}}';
 const Q_ITEMS = 'query($id:ID!,$f:String!,$after:String){node(id:$id){... on ProjectV2{items(first:100,after:$after,archivedStates:[ARCHIVED,NOT_ARCHIVED]){totalCount pageInfo{hasNextPage endCursor} nodes{isArchived content{__typename ... on Issue{url} ... on PullRequest{url}} fieldValueByName(name:$f){... on ProjectV2ItemFieldSingleSelectValue{optionId}}}}}}}';
+// updateProjectV2Field replaces the whole option list, so existing ids must be resent or cards lose their Status.
 const M_FIELD = 'mutation($f:ID!,$o:[ProjectV2SingleSelectFieldOptionInput!]!){updateProjectV2Field(input:{fieldId:$f,singleSelectOptions:$o}){projectV2Field{... on ProjectV2SingleSelectField{options{id name color description}}}}}';
 const Q_TYPES = 'query($o:String!,$n:String!){repository(owner:$o,name:$n){issueTypes(first:20){nodes{name}}}}';
 
@@ -395,7 +387,8 @@ export async function bootstrap(deps: Deps, opts: Options): Promise<number> {
     await sleep(1000);
   }
   if (!state.linked) {
-    await ghText(run, ['project', 'link', String(project.number), '--owner', cfg.owner, '--repo', repo]);
+    if (parseRepo(repo).owner.toLowerCase() !== owner.login.toLowerCase()) { throw new Error(`cannot link ${repo}: gh project link resolves a bare repo name under the project owner (${owner.login}). Create the project under ${parseRepo(repo).owner} or link it by hand.`); }
+    await ghText(run, ['project', 'link', String(project.number), '--owner', cfg.owner, '--repo', parseRepo(repo).name]);
     log(`linked ${repo}`);
     await sleep(1000);
   }
@@ -455,11 +448,20 @@ function parseRenames(argv: string[]): Record<string, string> {
   return out;
 }
 
+function parseForce(argv: string[]): string[] {
+  const names = flagValues(argv, '--force');
+  if (argv.includes('--force') && names.length === 0) { throw new Error('--force needs the option name it may drop, for example --force "Staging"'); }
+  for (const name of names) {
+    if (name.startsWith('--')) { throw new Error(`--force needs an option name, got "${name}"`); }
+  }
+  return names;
+}
+
 export function parseArgs(argv: string[]): Options {
   return {
     apply: argv.includes('--apply'),
     check: argv.includes('--check'),
-    force: argv.includes('--force'),
+    force: parseForce(argv),
     renames: parseRenames(argv),
     renameDefaults: argv.includes('--rename-defaults'),
   };

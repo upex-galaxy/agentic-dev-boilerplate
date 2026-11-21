@@ -10,18 +10,18 @@ bun run github:project:bootstrap --rename-defaults     # dry run for a fresh pro
 bun run github:project:bootstrap --apply --rename-defaults
 bun run github:project:bootstrap --check               # read-only; exit 1 on drift
 bun run github:project:bootstrap --apply --rename "Staging=On staging"
-bun run github:project:bootstrap --apply --force       # allows dropping an option that holds items
+bun run github:project:bootstrap --apply --force "Old name"   # names the one option it may drop, repeatable; a bare --force is refused
 ```
 
 ## What it does
 
 1. Reads `issue_tracker.github` (owner, `project_number`, `status_field`, `statuses`) and the repo from `gh repo view`.
-2. Finds the project by `project_number`, else by the title `<repo> Kanban` (closed projects included); creates it on `--apply` only when `project_number` is null: a numbered project that cannot be found stops the run instead of creating a second one.
+2. Finds the project by `project_number`, else by the title `<project_name> Kanban` (the repo name when `project_name` is null; closed projects included); creates it on `--apply` only when `project_number` is null: a numbered project that cannot be found stops the run instead of creating a second one.
 3. Matches Status options by NAME, in the board order of `statuses`:
    - kept option: name present on both sides, resent with its id and color;
    - rename: only through `--rename Old=New`, which keeps the id (a name-based merge would see a drop plus an add and wipe the column);
    - add: a desired name that exists nowhere: a new option;
-   - drop: an existing option not desired and not renamed. Refused while it holds items without `--force`. Dropping `Todo`, `In Progress` or `Done` is refused without `--force` even when empty, because the built-in workflows point at those option ids. A fresh project whose options are exactly those three is renamed automatically (ids kept), and a difference of case only (`In Progress` against `In progress`) is matched by name and keeps the id;
+   - drop: an existing option not desired and not renamed. Refused while it holds items unless `--force "<name>"` names it. Dropping `Todo`, `In Progress` or `Done` is refused unless `--force "<name>"` names it, even when empty, because the built-in workflows point at those option ids. A fresh project whose options are exactly those three is renamed automatically (ids kept), and a difference of case only (`In Progress` against `In progress`) is matched by name and keeps the id;
    - the dry run prints this diff with per-option item counts.
    Counts are read with paginated GraphQL, archived cards included. `updateProjectV2Field` replaces the whole list, so every apply reads the existing ids and resends them, then reads the options back and checks names and ids.
 4. Links the repo to the project (only when it is not linked).

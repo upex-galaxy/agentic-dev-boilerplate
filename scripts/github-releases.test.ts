@@ -47,7 +47,7 @@ function harness(world: FakeWorld, files: Record<string, string>, gitLog = '', s
     today: () => '2026-11-21',
     sleep: async () => {},
   };
-  const options = (o: Partial<Parameters<typeof releases>[1]> = {}) => ({ apply: false, check: false, closeOut: null, range: null, allowEmpty: false, adopt: null, ...o });
+  const options = (o: Partial<Parameters<typeof releases>[1]> = {}) => ({ apply: false, check: false, closeOut: null, range: null, allowEmpty: false, adopt: null, reopen: [], ...o });
   return { state, deps, options };
 }
 
@@ -233,6 +233,34 @@ describe('close-out', () => {
     await releases(h.deps, h.options({ apply: true }));
     expect(world.milestones[0].state).toBe('open');
     expect(h.state.lines.join('\n')).toContain('only --close-out closes');
+  });
+
+  test('a closed milestone is never reopened by the sync unless --reopen names the release', async () => {
+    const world = newWorld({ milestones: [{ number: 1, title: 'v0.2.0', description: 'CSV export and reports', state: 'closed', due_on: '2026-12-15T07:00:00Z' }] });
+    board(world);
+    const text = withBlock(setFrontmatterKey(setFrontmatterKey(FILE, 'milestone_number', 1), 'state', 'open'), renderBlock([], null, '2026-01-01'));
+    const h = harness(world, { 'v0-2-0.md': text });
+    expect(await releases(h.deps, h.options({ check: true }))).toBe(1);
+    expect(h.state.lines.join('\n')).toContain('refusing to reopen');
+    expect(await releases(h.deps, h.options({ apply: true }))).toBe(0);
+    expect(world.milestones[0].state).toBe('closed');
+    expect(world.writes).toEqual([]);
+    expect(await releases(h.deps, h.options({ apply: true, reopen: ['v0-2-0'] }))).toBe(0);
+    expect(world.milestones[0].state).toBe('open');
+    expect(parseArgs(['--apply', '--reopen', 'v0-2-0']).reopen).toEqual(['v0-2-0']);
+  });
+
+  test('an empty default range after the release merge falls back to the recorded sha range, then to the milestone', async () => {
+    const world = newWorld();
+    shipped(world, 'Released');
+    const prev = '---\ntitle: v0.1.0\ngoal: first\ndue: null\nstate: released\nreleased_at: 2026-10-01\nrelease_sha: cafe01\nmilestone_number: 9\n---\n';
+    const recorded = setFrontmatterKey(file(), 'release_sha', 'beef02');
+    const h = harness(world, { 'v0-1-0.md': prev, 'v0-2-0.md': recorded }, '');
+    expect(await releases(h.deps, h.options({ closeOut: 'v0-2-0' }))).toBe(0);
+    expect(h.state.git.filter(a => a[0] === 'log').map(a => a[a.length - 1])).toEqual(['cafe01..origin/main', 'cafe01..beef02']);
+    const first = harness(world, { 'v0-2-0.md': file() }, '');
+    expect(await releases(first.deps, first.options({ closeOut: 'v0-2-0' }))).toBe(0);
+    expect(first.state.lines.join('\n')).toContain('checking the milestone membership only');
   });
 
   test('no earlier release and no origin/staging asks for --range', async () => {

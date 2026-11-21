@@ -143,6 +143,12 @@
       "prompt": "issue_tracker is none. Add a dark-mode toggle to the settings page.",
       "expected_behavior": "Uses a three-digit key for the trail folder, puts the acceptance criteria in the trail plan.md, makes no tracker call and still runs the five stages.",
       "category": "positive"
+    },
+    {
+      "name": "tracker-null-keeps-the-jira-path-without-a-trail",
+      "prompt": "Implement UPEX-5. issue_tracker in .agents/project.yaml is null and there is no trail block.",
+      "expected_behavior": "Resolves the tracker to jira and runs every Jira step exactly as written: the epic precheck, the start_working transition, the plan push to the Jira field, the PR path and the Ready For QA hand-off. Writes no trail folder, no trail file and no Trail: or Closes trailer, and states the resolved tracker in the Stage 1 plan.",
+      "category": "positive"
     }
   ]
 }

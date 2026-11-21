@@ -1,12 +1,4 @@
 #!/usr/bin/env bun
-/**
- * github-releases.ts: releases as GitHub milestones with a committed record
- * (`issue_tracker.github.releases_dir`, one `<slug>.md` per release). Definition (title, goal,
- * due, open/closed) goes repo to GitHub; membership goes GitHub to a generated block in the file.
- * Dry run by default; `--apply` writes; `--check` is read-only and exits 1 on drift;
- * `--close-out <slug>` verifies every shipped issue is closed and Released before closing the
- * milestone. The skill is `.agents/skills/github-projects` (references/releases.md).
- */
 
 import type { GhRunner } from './lib/gh.ts';
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
@@ -68,6 +60,7 @@ export interface Options {
   range: string | null
   allowEmpty: boolean
   adopt: number | null
+  reopen: string[]
 }
 
 const FRONTMATTER = /^---\n([\s\S]*?)\n---\n?/;
@@ -135,18 +128,24 @@ export function withBlock(text: string, block: string): string {
   return `${text.replace(/\n*$/, '\n')}\n${block}\n`;
 }
 
-export function definitionDiffs(file: ReleaseFile, m: Milestone): string[] {
+export const REOPEN_REFUSED = 'refusing to reopen';
+
+export function definitionDiffs(file: ReleaseFile, m: Milestone, allowReopen = false): string[] {
   const out: string[] = [];
   if (m.title !== file.title) { out.push(`title: file "${file.title}" vs GitHub "${m.title}"`); }
   if ((m.description ?? '') !== file.goal) { out.push('goal differs from the milestone description'); }
   if ((m.due_on?.slice(0, 10) ?? null) !== file.due) { out.push(`due: file ${file.due ?? 'none'} vs GitHub ${m.due_on?.slice(0, 10) ?? 'none'}`); }
   const want = file.state === 'released' ? 'closed' : 'open';
-  if (m.state !== want) { out.push(`state: file ${file.state} wants ${want}, GitHub is ${m.state}${want === 'closed' ? ' (only --close-out closes a milestone)' : ''}`); }
+  if (m.state !== want) {
+    const hint = want === 'closed' ? ' (only --close-out closes a milestone)' : (allowReopen ? '' : ` (${REOPEN_REFUSED}: pass --reopen ${file.slug})`);
+    out.push(`state: file ${file.state} wants ${want}, GitHub is ${m.state}${hint}`);
+  }
   return out;
 }
 
-function milestoneBody(file: ReleaseFile, current: Milestone | null): Record<string, unknown> {
-  const state = file.state === 'released' ? (current?.state ?? 'open') : 'open';
+function milestoneBody(file: ReleaseFile, current: Milestone | null, allowReopen: boolean): Record<string, unknown> {
+  const keepClosed = file.state === 'released' || (current?.state === 'closed' && !allowReopen);
+  const state = keepClosed ? (current?.state ?? 'open') : 'open';
   return { title: file.title, description: file.goal, state, due_on: file.due ? `${file.due}T12:00:00Z` : null };
 }
 
@@ -218,7 +217,7 @@ export async function releases(deps: Deps, opts: Options): Promise<number> {
   const plans: { file: ReleaseFile, milestone: Milestone | null, diffs: string[], blockDrift: boolean, text: string }[] = [];
   for (const f of files) {
     const m = matched.get(f.slug) ?? null;
-    const diffs = m ? definitionDiffs(f, m) : ['milestone missing on GitHub'];
+    const diffs = m ? definitionDiffs(f, m, opts.reopen.includes(f.slug)) : ['milestone missing on GitHub'];
     let blockDrift = false;
     if (m) {
       const fresh = renderBlock(await members(run, repo, m.number), statuses, deps.today());
@@ -251,18 +250,19 @@ export async function releases(deps: Deps, opts: Options): Promise<number> {
     let { text } = p;
     let milestone = p.milestone;
     if (!milestone) {
-      const created = await ghJson<Milestone>(run, ['api', '-X', 'POST', `repos/${repo}/milestones`, '--input', '-'], JSON.stringify(milestoneBody(p.file, null)));
+      const created = await ghJson<Milestone>(run, ['api', '-X', 'POST', `repos/${repo}/milestones`, '--input', '-'], JSON.stringify(milestoneBody(p.file, null, false)));
       milestone = created;
       text = setFrontmatterKey(text, 'milestone_number', created.number);
       text = withBlock(text, renderBlock(await members(run, repo, created.number), statuses, deps.today()));
       log(`created milestone #${created.number} "${created.title}" for ${p.file.slug}`);
       await sleep(1000);
     }
-    else if (p.diffs.length > 0) {
-      await ghJson<Milestone>(run, ['api', '-X', 'PATCH', `repos/${repo}/milestones/${milestone.number}`, '--input', '-'], JSON.stringify(milestoneBody(p.file, milestone)));
+    else if (p.diffs.some(d => !d.includes(REOPEN_REFUSED))) {
+      await ghJson<Milestone>(run, ['api', '-X', 'PATCH', `repos/${repo}/milestones/${milestone.number}`, '--input', '-'], JSON.stringify(milestoneBody(p.file, milestone, opts.reopen.includes(p.file.slug))));
       log(`patched milestone #${milestone.number} for ${p.file.slug}: ${p.diffs.join('; ')}`);
       await sleep(1000);
     }
+    else if (p.diffs.length > 0) { log(`NOTE ${p.file.slug}: milestone #${milestone.number} is closed on GitHub and the file is ${p.file.state}; left closed (pass --reopen ${p.file.slug} to reopen)`); }
     if (p.file.milestoneNumber === null && milestone) { text = setFrontmatterKey(text, 'milestone_number', milestone.number); }
     if (text !== p.file.text) { deps.writeFile(p.file.name, text); log(`wrote ${cfg.releasesDir}/${p.file.name}`); }
   }
@@ -298,7 +298,15 @@ async function closeOut(deps: Deps, opts: Options, ctx: CloseCtx): Promise<numbe
     if (!hasStaging) { log('ERROR no earlier release and no origin/staging: pass --range REV..REV'); return 1; }
     range = 'origin/main..origin/staging';
   }
-  const gitLog = await deps.git(['log', '--format=%B', range]);
+  let gitLog = await deps.git(['log', '--format=%B', range]);
+  if (gitLog.trim() === '' && opts.range === null) {
+    if (file.releaseSha && previous?.releaseSha) {
+      range = `${previous.releaseSha}..${file.releaseSha}`;
+      gitLog = await deps.git(['log', '--format=%B', range]);
+      log(`NOTE the default range was empty after the release merge; using the recorded release_sha range ${range}`);
+    }
+    else { log('NOTE the default range is empty after the release merge; checking the milestone membership only. Pass --range REV..REV to also read closing references from the log.'); }
+  }
   const fromLog = closingIssues(gitLog, repo);
   const fromMilestone = (await members(run, repo, milestone.number)).map(m => m.number);
   const set = [...new Set([...fromLog, ...fromMilestone])].sort((a, b) => a - b);
@@ -353,6 +361,7 @@ export function parseArgs(argv: string[]): Options {
     range: flagValues(argv, '--range')[0] ?? null,
     allowEmpty: argv.includes('--allow-empty'),
     adopt: adopt === undefined ? null : Number(adopt),
+    reopen: flagValues(argv, '--reopen'),
   };
 }
 

@@ -76,7 +76,7 @@ export function fakeGh(world: FakeWorld): GhRunner {
     return p;
   };
 
-  const graphqlHandler = (body: { query: string, variables: Record<string, any> }): GhResult => {
+  const graphqlHandler = (body: { query: string, variables: { f: string, o: unknown, id: string, after?: string } }): GhResult => {
     const { query, variables: v } = body;
     const byNode = (id: string): FakeProject => world.projects.find(p => p.id === id || `F_${p.number}` === id)!;
     if (query.includes('updateProjectV2Field')) {
@@ -131,7 +131,11 @@ export function fakeGh(world: FakeWorld): GhRunner {
       if (sub === 'edit') { return ok(''); }
       if (sub === 'field-list') { return ok({ fields: [{ id: `F_${args[2]}`, name: 'Status' }, { id: 'F_title', name: 'Title' }] }); }
       const p = project(Number(args[2]));
-      if (sub === 'link') { p.linked.push(flag(args, '--repo')!); return ok(''); }
+      if (sub === 'link') {
+        const repo = flag(args, '--repo')!;
+        p.linked.push(repo.includes('/') ? repo : `${world.repo.split('/')[0]}/${repo}`);
+        return ok('');
+      }
       if (sub === 'item-add') {
         const url = flag(args, '--url')!;
         if (!p.items.some(i => i.url === url)) { p.items.push({ id: `PVTI_${++world.seq}`, url, type: url.includes('/pull/') ? 'PullRequest' : 'Issue', archived: false, optionId: null }); }

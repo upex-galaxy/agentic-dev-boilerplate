@@ -39,7 +39,7 @@ function harness(world: FakeWorld, yaml = YAML) {
     log: (l: string) => { state.lines.push(l); },
     sleep: async () => {},
   };
-  const options = (o: Partial<Parameters<typeof bootstrap>[1]> = {}) => ({ apply: false, check: false, force: false, renames: {}, renameDefaults: false, ...o });
+  const options = (o: Partial<Parameters<typeof bootstrap>[1]> = {}) => ({ apply: false, check: false, force: [], renames: {}, renameDefaults: false, ...o });
   return { state, deps, options };
 }
 
@@ -55,14 +55,14 @@ function provisioned(world: FakeWorld, names: string[], extra: Partial<ReturnTyp
 
 describe('planOptions', () => {
   test('keep: matching names keep their ids and order', () => {
-    const plan = planOptions(DESIRED.map((n, i) => opt(`o${i}`, n)), DESIRED, {}, {}, false);
+    const plan = planOptions(DESIRED.map((n, i) => opt(`o${i}`, n)), DESIRED, {}, {}, []);
     expect(plan.changed).toBe(false);
     expect(plan.next.map(o => o.id)).toEqual(['o0', 'o1', 'o2', 'o3', 'o4']);
   });
 
   test('rename keeps the id and the card count', () => {
     const existing = ['Backlog', 'In progress', 'In review', 'On staging', 'Released'].map((n, i) => opt(`o${i}`, n));
-    const plan = planOptions(existing, DESIRED, { 'On staging': 'Staging' }, { 'On staging': 4 }, false);
+    const plan = planOptions(existing, DESIRED, { 'On staging': 'Staging' }, { 'On staging': 4 }, []);
     expect(plan.errors).toEqual([]);
     expect(plan.next[3]).toMatchObject({ id: 'o3', name: 'Staging' });
     expect(plan.diff.find(d => d.kind === 'rename')).toMatchObject({ from: 'On staging', name: 'Staging', count: 4 });
@@ -70,7 +70,7 @@ describe('planOptions', () => {
 
   test('without --rename a changed name is a drop plus an add, and a held column is refused', () => {
     const existing = ['Backlog', 'In progress', 'In review', 'On staging', 'Released'].map((n, i) => opt(`o${i}`, n));
-    const plan = planOptions(existing, DESIRED, {}, { 'On staging': 4 }, false);
+    const plan = planOptions(existing, DESIRED, {}, { 'On staging': 4 }, []);
     expect(plan.refused.map(r => r.name)).toEqual(['On staging']);
     expect(plan.errors[0]).toContain('holds 4 item(s)');
     expect(plan.next[3].id).toBeUndefined();
@@ -78,44 +78,44 @@ describe('planOptions', () => {
 
   test('--force allows the drop', () => {
     const existing = ['Backlog', 'In progress', 'In review', 'On staging', 'Released'].map((n, i) => opt(`o${i}`, n));
-    const plan = planOptions(existing, DESIRED, {}, { 'On staging': 4 }, true);
+    const plan = planOptions(existing, DESIRED, {}, { 'On staging': 4 }, ['On staging']);
     expect(plan.errors).toEqual([]);
   });
 
   test('add: a new name becomes a new option with no id', () => {
     const existing = ['Backlog', 'In progress', 'In review', 'Released'].map((n, i) => opt(`o${i}`, n));
-    const plan = planOptions(existing, DESIRED, {}, {}, false);
+    const plan = planOptions(existing, DESIRED, {}, {}, []);
     expect(plan.diff.find(d => d.kind === 'add')?.name).toBe('Staging');
     expect(plan.next.map(o => o.id).filter(Boolean)).toHaveLength(4);
   });
 
   test('reorder: the same ids in a new order are flagged and resent with their ids', () => {
     const existing = [opt('a', 'In review'), opt('b', 'Backlog'), opt('c', 'In progress'), opt('d', 'Staging'), opt('e', 'Released')];
-    const plan = planOptions(existing, DESIRED, {}, {}, false);
+    const plan = planOptions(existing, DESIRED, {}, {}, []);
     expect(plan.reordered).toBe(true);
     expect(plan.next.map(o => o.id)).toEqual(['b', 'c', 'a', 'd', 'e']);
     expect(formatDiff(plan).join('\n')).toContain('order');
   });
 
   test('case differences are matched by name and keep the id', () => {
-    const plan = planOptions([opt('p', 'In Progress')], ['In progress'], {}, { 'In Progress': 2 }, false);
+    const plan = planOptions([opt('p', 'In Progress')], ['In progress'], {}, { 'In Progress': 2 }, []);
     expect(plan.next[0]).toMatchObject({ id: 'p', name: 'In progress' });
     expect(plan.errors).toEqual([]);
   });
 
   test('a default option is protected even when empty', () => {
-    const plan = planOptions(defaultOptions(), DESIRED, {}, {}, false);
+    const plan = planOptions(defaultOptions(), DESIRED, {}, {}, []);
     expect(plan.errors.join('\n')).toContain('refusing to drop default option');
     expect(plan.warnings.join('\n')).toContain('built-in workflows');
   });
 
   test('bad renames are rejected', () => {
     const existing = DESIRED.map((n, i) => opt(`o${i}`, n));
-    expect(planOptions(existing, DESIRED, { Ghost: 'Backlog' }, {}, false).errors[0]).toContain('no option named');
-    expect(planOptions(existing, DESIRED, { Backlog: 'Nope' }, {}, false).errors[0]).toContain('not in issue_tracker.github.statuses');
-    expect(planOptions(existing, DESIRED, { Backlog: 'Staging' }, {}, false).errors[0]).toContain('itself a desired status');
+    expect(planOptions(existing, DESIRED, { Ghost: 'Backlog' }, {}, []).errors[0]).toContain('no option named');
+    expect(planOptions(existing, DESIRED, { Backlog: 'Nope' }, {}, []).errors[0]).toContain('not in issue_tracker.github.statuses');
+    expect(planOptions(existing, DESIRED, { Backlog: 'Staging' }, {}, []).errors[0]).toContain('itself a desired status');
     const withOld = [...existing, opt('x', 'Old')];
-    expect(planOptions(withOld, DESIRED, { Old: 'Staging' }, {}, false).errors[0]).toContain('already exists');
+    expect(planOptions(withOld, DESIRED, { Old: 'Staging' }, {}, []).errors[0]).toContain('already exists');
   });
 });
 
@@ -134,6 +134,22 @@ describe('config and yaml', () => {
 
   test('setProjectNumber keeps the inline comment', () => {
     expect(setProjectNumber(YAML, 3)).toContain('project_number: 3 # written by the bootstrap');
+  });
+
+  test('--force names the option it may drop and a bare --force is refused', () => {
+    expect(parseArgs(['--apply', '--force', 'Staging', '--force=Todo']).force).toEqual(['Staging', 'Todo']);
+    expect(() => parseArgs(['--apply', '--force'])).toThrow('needs the option name');
+    expect(() => parseArgs(['--force', '--apply'])).toThrow('needs an option name');
+    const existing = ['Backlog', 'In progress', 'In review', 'On staging', 'Old', 'Released'].map((n, i) => opt(`o${i}`, n));
+    const plan = planOptions(existing, DESIRED, {}, { 'On staging': 4, 'Old': 2 }, ['On staging']);
+    expect(plan.refused.map(r => r.name)).toEqual(['Old']);
+  });
+
+  test('an org-owned repo is not linked to a user-owned project', async () => {
+    const world = newWorld({ login: 'someone-else' });
+    const h = harness(world);
+    const failure = await bootstrap(h.deps, h.options({ apply: true })).catch((error: Error) => error);
+    expect(String(failure)).toContain('cannot link');
   });
 
   test('parseArgs rejects a doubled rename', () => {
@@ -160,6 +176,7 @@ describe('bootstrap with a fake gh', () => {
     expect(p.options.find(o => o.name === 'Backlog')?.id).toBe('od-todo');
     expect(p.options.find(o => o.name === 'Released')?.id).toBe('od-done');
     expect(p.linked).toEqual([world.repo]);
+    expect(world.calls.find(c => c[0] === 'project' && c[1] === 'link')).toEqual(['project', 'link', '1', '--owner', '@me', '--repo', 'repo']);
     expect(p.views.map(v => v.layout).sort()).toEqual(['BOARD_LAYOUT', 'TABLE_LAYOUT']);
     expect(world.labels).toContain('blocked');
     expect(h.state.yaml).toContain('project_number: 1 # written by the bootstrap');
@@ -203,7 +220,7 @@ describe('bootstrap with a fake gh', () => {
     const p = provisioned(world, ['Backlog', 'In progress', 'In review', 'On staging', 'Released']);
     p.items.push({ id: 'i1', url: issueUrl(world, 5), type: 'Issue', archived: false, optionId: 'o3' });
     const h = harness(world, YAML.replace('project_number: null', 'project_number: 1'));
-    expect(await bootstrap(h.deps, h.options({ apply: true, force: true }))).toBe(0);
+    expect(await bootstrap(h.deps, h.options({ apply: true, force: ['On staging'] }))).toBe(0);
     expect(p.items[0].optionId).toBeNull();
   });
 

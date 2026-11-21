@@ -6,6 +6,7 @@ import { join } from 'node:path';
 import { describe, expect, test } from 'bun:test';
 
 import { envVarApplies, issueTrackerDiagnostic, legacyCredentialKeys, piTrustStatus, repoCheckRunsAppWideLegs, userSkillInstalled, worktreeSetupAction } from './doctor.ts';
+import { VAR_MANIFEST } from './lib/variables-manifest.ts';
 
 describe('worktreeSetupAction', () => {
   test('a provisioned worktree needs nothing', () => {
@@ -156,5 +157,19 @@ describe('issueTrackerDiagnostic', () => {
     expect(issueTrackerDiagnostic(yaml('github'), () => ({ installed: true, ok: true, output: status('\'project\', \'repo\'') })).actions).toEqual([]);
     expect(issueTrackerDiagnostic(yaml('github'), () => ({ installed: false, ok: false, output: '' })).actions[0]).toMatchObject({ type: 'system_install', target: 'gh' });
     expect(issueTrackerDiagnostic(yaml('github'), () => ({ installed: true, ok: false, output: '' })).actions[0]).toMatchObject({ target: 'gh auth login' });
+  });
+});
+
+describe('doctor env wiring', () => {
+  test('on jira every manifest variable applies, so the Jira path checks what it always checked', () => {
+    for (const spec of VAR_MANIFEST) { expect(envVarApplies(spec.name, 'jira')).toBe(true); }
+  });
+
+  test('on github and none only the Atlassian variables drop out', () => {
+    for (const tracker of ['github', 'none'] as const) {
+      const dropped = VAR_MANIFEST.filter(spec => !envVarApplies(spec.name, tracker)).map(spec => spec.name);
+      expect(dropped.length).toBeGreaterThan(0);
+      for (const name of dropped) { expect(name).toMatch(/^ATLASSIAN_/); }
+    }
   });
 });

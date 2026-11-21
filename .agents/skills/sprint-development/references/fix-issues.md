@@ -155,3 +155,11 @@ Symptom: the build fails.
 - Read the whole message.
 - Check the configuration (next.config.js, tsconfig.json).
 - Check Context7 MCP for the specific framework.
+
+## Gotchas that waste a cycle
+
+- **Stop the dev server and every browser session before trusting a red test.** A stale server, a held port or a half-open browser fails a test for reasons the code does not have. Restart clean, then reread the failure.
+- **A file that fails to appear in a diff or a commit may be ignored.** Run `git check-ignore -v <path>` on it before touching the code: the rule and its line name the cause.
+- **Sweep many widths, and measure again after each fix.** A layout fix at one width often breaks another. Check the narrow, the middle and the wide widths, and re-measure after every change instead of trusting the first reading.
+- **New copy cites its source.** Any user-facing text the change adds comes from the acceptance criteria, the design file or the owner, and the plan or the PR names which. Never invent wording.
+- **In a shared worktree, one owner per file.** When subagents work in the same worktree, the brief names the files each one may edit; two writers on a file lose edits silently.

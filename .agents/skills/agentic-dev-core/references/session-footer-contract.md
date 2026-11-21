@@ -82,7 +82,7 @@ Light stage verifier: <Stage name>
 [ ] Assignee: read back after every transition fired or verified (artifact-lifecycle.md §2), or stated N/A (N/A on github and none)
 [ ] DTU: a `DTU cycle N: +x K (total y K) source=<...>` comment and the cumulative `{{jira.development_token_usage}}` when the story reached `ready_for_qa`, or a stated N/A with the reason (no measured figure, or the item never reaches Ready For QA; N/A on github and none). Empty is valid, never a `NO`
 [ ] Tracker writes: every field or comment this stage owns actually landed (re-read the body, not the "created OK")
-[ ] PR: exists, base branch matches the git strategy, `gh pr checks` state named (green / red / pending), or N/A without a feature PR (name the pushed SHA)
+[ ] PR: exists, base branch matches the git strategy, `gh pr checks` state named (green / red / pending), or N/A only on the no-feature-PR path (the change has a trail and `git_strategy` allows it; sprint-development `#### Without a feature PR`), naming the pushed SHA
 [ ] Migration: the schema or migration ledger re-read shows the change (db capability), or stated N/A
 [ ] Deploy: the deployment for the pushed commit SHA reads READY (staging / production), or stated N/A
 [ ] progress.md checkpoint appended (.session/<skill-slug>/<scope>/progress.md, session-management.md §7)

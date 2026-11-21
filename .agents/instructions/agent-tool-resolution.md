@@ -43,8 +43,8 @@ A Bash call that names one of these binaries loads the matching skill first, thr
 | CLI | Skills to auto-load | Why |
 |---|---|---|
 | `bun` | none: Bun's own docs come from `[DOCS_TOOL]` (Context7) | Runtime and package manager. No skill wraps it; scripts are read from `package.json` (Critical Rule #10). |
-| `gh` (`project`, `issue`, `label`, and `api` on projectV2, milestones or issues) | `/github-projects` | GitHub Issues and Projects v2 on the `github` tracker: issues, the board, labels, milestones. Owns the Status option names, the move-then-read-back rule and the two bootstrap scripts. |
-| `gh` (everything else: `pr`, `repo`, `run`, `auth`, `api` on rulesets) | `/git-flow-master` | GitHub CLI and git workflow. The skill covers repo ops, PRs and `gh api` patterns. |
+| `gh` (`project`, `issue`, `label`, and `api` on projectV2, milestones or issues), only when `issue_tracker` resolves to `github` | `/github-projects` | GitHub Issues and Projects v2 on the `github` tracker: issues, the board, labels, milestones. Owns the Status option names, the move-then-read-back rule and the two bootstrap scripts. |
+| `gh` (everything else: `pr`, `repo`, `run`, `auth`, `api` on rulesets; and every `gh` call, labels on a PR included, when `issue_tracker` resolves to `jira` or `none`) | `/git-flow-master` | GitHub CLI and git workflow. The skill covers repo ops, PRs and `gh api` patterns. |
 | `supabase` | `/supabase`, `/supabase-postgres-best-practices`, `/project-bootstrap` | DB CLI, Postgres patterns and the DB scaffold flow. |
 | `vercel` | `/vercel-cli`, `/deploy-to-vercel`, `/sprint-development` | Vercel CLI cookbook (verification, env, debug, rollback), the community deploy workflow and the sprint deploy stages. |
 | `resend` | `/resend-cli` | Transactional email CLI: send, templates, domains. |
