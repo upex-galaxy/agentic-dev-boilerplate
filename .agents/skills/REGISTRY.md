@@ -1,6 +1,6 @@
 # Skill Registry (auto-generated)
 
-> Generated: `2026-11-18T07:52:10.238Z`
+> Generated: `2026-11-21T20:35:00.230Z`
 > Generator: `bun scripts/build-skill-registry.ts`
 > Protocol: `.agents/skills/agentic-dev-core/references/skill-resolver.md`
 
@@ -8,7 +8,7 @@ This file is the per-session compact-rules cache for the Skill Resolver protocol
 The orchestrator copies one or more `## Skill: <slug>` blocks below into every subagent briefing under `## Project Standards (auto-resolved)`.
 Subagents trust those compact rules and only read the full SKILL.md when explicitly instructed.
 
-Skills indexed: 22
+Skills indexed: 23
 
 ---
 ## Skill: acli
@@ -230,6 +230,29 @@ Skills indexed: 22
 **Read full SKILL.md when**: running Strategy Setup, resolving a specific conflict type, planning a chain, picking a base branch or prefix for an unfamiliar strategy, setting up a worktree, or when the compact rules do not settle the operation.
 
 > Source: `.agents/skills/git-flow-master/SKILL.md` · phase: `implementation` · kind: `workflow` · source: frontmatter `compact_rules` (verbatim)
+
+---
+
+## Skill: github-projects
+
+**Purpose**: GitHub Issues and Projects v2 operator for projects whose `issue_tracker` is `github`.
+
+**Compact Rules**:
+- Resolve the tracker first: `issue_tracker.issue_tracker` in `.agents/project.yaml`, read in the same turn (`cli/lib/issue-tracker.ts`). Act only when it is `github`; for `jira` hand off to `/acli`, for `none` make no tracker call.
+- Read-modify-read: every card move is `gh project item-edit --field Status --value "<option name>"`, followed by `gh project item-list` to read the new Status back (Critical Rule 16). A zero exit says the call was well formed, never that the card moved. No id catalog: options are addressed by name.
+- Status names come from `issue_tracker.github.statuses` (abstract backlog, in_progress, in_review, on_staging, released). Never hardcode the five names, never invent a sixth column. `blocked` is a label, not a status.
+- Every issue creation and every Stage-1 idea asks which milestone it goes into: the open releases, "new release" (writes the release file and syncs it) or an explicit "unplanned" from the owner. An issue never lands without that answer.
+- An issue body carries an acceptance-criteria checklist (`- [ ]`) before it leaves Backlog, and an issue type (Bug, Feature or Task) set with `--type`. English.
+- Add each issue to the Project (`gh project item-add`) right after creating it: auto-add is UI-only, so nothing does it for you. Never add PRs to the Project: the built-in "PR merged" workflow would then fire on a merge into the integration branch and set Released too early.
+- Never edit Status options by hand-built GraphQL. `bun run github:project:bootstrap` is the only writer: `updateProjectV2Field` replaces the whole option list, so a name-based edit wipes every card in a renamed column. A rename is `--rename Old=New` (keeps the id), a drop that holds items needs `--force`, and the dry run is the default.
+- Never run a `gh` call that creates, edits or deletes on GitHub without the user's request or the owning workflow's step. Reads are free; a project, milestone or label write follows the dry-run, then `--apply`.
+- `gh project` needs the `project` token scope. When it is missing, stop and give the owner the command (`gh auth refresh -h github.com -s project`); a missing scope is the human's to grant, never worked around.
+- Releases are milestones with a local record: `<issue_tracker.github.releases_dir>/<slug>.md`. The definition goes repo to GitHub, the membership goes GitHub to the generated block. Close a release with `bun run github:releases:sync --close-out <slug>`, which reads back that every issue is closed and Released.
+- Built-in workflows, auto-add, auto-archive and column limits are UI-only. State the gap and move the card explicitly instead of promising automation; `references/automation-gaps.md` lists the four.
+
+**Read full SKILL.md when**: the compact rules do not settle the operation, or a reference below is named for it.
+
+> Source: `.agents/skills/github-projects/SKILL.md` · phase: `planning` · kind: `workflow` · source: frontmatter `compact_rules` (verbatim)
 
 ---
 

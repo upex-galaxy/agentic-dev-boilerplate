@@ -1,0 +1,68 @@
+{
+  "skill_name": "github-projects",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Create an issue for adding CSV export to the reports page. The project tracker is github.",
+      "expected_output": "Skill reads issue_tracker in .agents/project.yaml, confirms github, asks which milestone the issue goes into (open releases, new release or unplanned) before creating it, writes an English body with an acceptance-criteria checklist, sets an issue type with --type, adds the issue to the Project with gh project item-add, sets Status to the backlog option name from issue_tracker.github.statuses and reads it back with gh project item-list.",
+      "should_trigger": true,
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "Move issue #42 to In review.",
+      "expected_output": "Skill resolves the option name from issue_tracker.github.statuses, runs gh project item-edit --field Status --value with that name, then reads the Status back with gh project item-list and reports the proof. It does not use option ids and does not add the PR to the Project.",
+      "should_trigger": true,
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "Rename the Staging column to On staging in the GitHub Project.",
+      "expected_output": "Skill refuses a hand-built option edit, explains that updateProjectV2Field replaces the whole list and a name change wipes the cards, updates issue_tracker.github.statuses.on_staging in .agents/project.yaml, runs bun run github:project:bootstrap as a dry run with --rename Staging='On staging', shows the option diff with per-option item counts and only then offers --apply.",
+      "should_trigger": true,
+      "files": []
+    },
+    {
+      "id": 4,
+      "prompt": "gh project list fails with 'missing required scopes [read:project]'.",
+      "expected_output": "Skill identifies the missing project token scope, stops, and gives the owner the command gh auth refresh -h github.com -s project to run in a terminal. It does not try a workaround through another token or the MCP.",
+      "should_trigger": true,
+      "files": []
+    },
+    {
+      "id": 5,
+      "prompt": "Close release v0.2.0: the milestone, the record and check everything shipped.",
+      "expected_output": "Skill runs bun run github:releases:sync --close-out for the slug after the release merge, as a dry run first, then --apply on the owner's go. The range defaults to the previous release's release_sha..origin/main (or origin/main..origin/staging with no earlier release); it reads back that every issue from the log and the milestone is closed and in the Released column, and only then closes the milestone, writes released_at and release_sha and regenerates the members block. Any issue not closed or not Released is reported and the command exits non-zero without closing.",
+      "should_trigger": true,
+      "files": []
+    },
+    {
+      "id": 6,
+      "prompt": "Check that the GitHub board is in sync with the repo before we release.",
+      "expected_output": "Skill runs bun run github:project:bootstrap --check and bun run github:releases:sync --check, reports each drift (open issues missing from the board, Status options, milestone definition or membership), offers --apply for the missing issues, and never edits options by hand.",
+      "should_trigger": true,
+      "files": []
+    },
+    {
+      "id": 7,
+      "prompt": "I have a new idea: dark mode for the dashboard. Add it to the backlog.",
+      "expected_output": "Skill asks which milestone the idea goes into (open releases, new release or unplanned) before creating the issue. For a new release it writes the release file under releases_dir with state planned and runs bun run github:releases:sync --apply, then creates the issue with that milestone, adds it to the Project in the backlog option and reads the Status back.",
+      "should_trigger": true,
+      "files": []
+    },
+    {
+      "id": 8,
+      "prompt": "Transition PROJ-123 to In Review in Jira and add the QA comment.",
+      "expected_output": "Skill does not trigger: the tracker is Jira and the owning skill is /acli.",
+      "should_trigger": false,
+      "files": []
+    },
+    {
+      "id": 9,
+      "prompt": "Open a PR from feat/csv-export against staging and push the branch.",
+      "expected_output": "Skill does not trigger: branches, pushes and PRs belong to /git-flow-master.",
+      "should_trigger": false,
+      "files": []
+    }
+  ]
+}

@@ -16,7 +16,7 @@ Skills write `[TAG_TOOL]` pseudocode and this table resolves it. CLI tools come 
 
 | Tag | Domain | Primary | Fallback |
 |---|---|---|---|
-| `[ISSUE_TRACKER_TOOL]` | Jira Cloud (story, bug, epic) | `/acli` | MCP Atlassian (opt-in: see docs/mcp/) |
+| `[ISSUE_TRACKER_TOOL]` | The tracker `issue_tracker.issue_tracker` names: Jira Cloud (story, bug, epic) or GitHub Issues + Projects | `jira`: `/acli`; `github`: `/github-projects` | `jira`: MCP Atlassian (opt-in: see docs/mcp/); `github`: none |
 | `[KNOWLEDGE_BASE_TOOL]` | Confluence (knowledge base, docs) | `/acli` (Confluence subcommands) | MCP Atlassian (opt-in: see docs/mcp/) |
 | `[AUTOMATION_TOOL]` | Browser automation | `/playwright-cli` | none: the only browser path |
 | `[DB_TOOL]` | Database | capability `db`, resolved from `stack.database` (`agent-skills-and-mcps.md` §5; Supabase MCP: `execute_sql`, `list_tables`) | the database's own CLI (Supabase CLI, `psql`), only when the user chooses it after the stop |
@@ -43,7 +43,8 @@ A Bash call that names one of these binaries loads the matching skill first, thr
 | CLI | Skills to auto-load | Why |
 |---|---|---|
 | `bun` | none: Bun's own docs come from `[DOCS_TOOL]` (Context7) | Runtime and package manager. No skill wraps it; scripts are read from `package.json` (Critical Rule #10). |
-| `gh` | `/git-flow-master` | GitHub CLI and git workflow. The skill covers repo ops, PRs and `gh api` patterns. |
+| `gh` (`project`, `issue`, `label`, and `api` on projectV2, milestones or issues) | `/github-projects` | GitHub Issues and Projects v2 on the `github` tracker: issues, the board, labels, milestones. Owns the Status option names, the move-then-read-back rule and the two bootstrap scripts. |
+| `gh` (everything else: `pr`, `repo`, `run`, `auth`, `api` on rulesets) | `/git-flow-master` | GitHub CLI and git workflow. The skill covers repo ops, PRs and `gh api` patterns. |
 | `supabase` | `/supabase`, `/supabase-postgres-best-practices`, `/project-bootstrap` | DB CLI, Postgres patterns and the DB scaffold flow. |
 | `vercel` | `/vercel-cli`, `/deploy-to-vercel`, `/sprint-development` | Vercel CLI cookbook (verification, env, debug, rollback), the community deploy workflow and the sprint deploy stages. |
 | `resend` | `/resend-cli` | Transactional email CLI: send, templates, domains. |

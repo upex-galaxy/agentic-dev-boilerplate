@@ -182,6 +182,7 @@ These files have stable names and locations. Any skill, command, or doc can refe
 | `/project-context`     | Business maps + master plan + dev roadmap, one mode per run (`data` · `features` · `api` · `master-plan` · `dev-roadmap`): `/project-context data`                                                           |
 | `/jira-administration` | Jira admin, one mode per run: `components` or `instance-migration`; sealed behind explicit approval                                                                                                           |
 | `/acli`                | Atlassian CLI cookbook for Jira Cloud + Confluence Cloud                                                                                                                                                      |
+| `/github-projects`     | GitHub Issues and Projects v2 operator for the `github` tracker: issues, board moves with read-back, bootstrap, release milestones |
 | `/vercel-cli`          | Vercel CLI cookbook: deployment verification (poll commit SHA + `inspect --wait`), env sync, debug, rollback. Auto-loads on `vercel` Bash calls                                                               |
 | `/agentic-dev-onboard` | Walk a new user through the repo's dev flow, MCPs, env vars, skills                                                                                                                                           |
 

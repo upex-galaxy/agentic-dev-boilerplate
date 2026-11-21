@@ -33,6 +33,7 @@ When the request is a goal and not yet a skill name, pick by intent. The skill's
 | Refresh the business maps, the master plan or the dev roadmap | `/project-context` |
 | Fan work out to several sessions | `/agent-orchestration` |
 | Branch, commit, push or open a PR | `/git-flow-master` |
+| Create an issue, move a card, set up the GitHub Project or a release milestone (tracker `github`) | `/github-projects` |
 | Review someone's PR | `/pr-review-lead` |
 | Reconcile Jira Components, or repoint the Jira host | `/jira-administration` |
 | Continue in a fresh session | `/session-handoff` |
@@ -60,6 +61,7 @@ When the request is a goal and not yet a skill name, pick by intent. The skill's
 | Git or PR work | any git intent | `/git-flow-master` (loads by meaning) | `git status`, `git log` | `git` + `gh` |
 | Browser action | "screenshot", "trace", "record" | `/playwright-cli` | - | Playwright CLI |
 | Jira operation | "Jira issue", "transition the story" | `/acli` | `.agents/jira-required.yaml`, `.agents/jira-fields.json` | CLI |
+| GitHub issue or board operation | "create an issue", "move the card", "bootstrap the project", "define a release", "which milestone" | `/github-projects` | `issue_tracker.github` in `.agents/project.yaml`, `.context/releases/` | `gh` + `bun run github:project:bootstrap`, `bun run github:releases:sync` |
 | Jira admin (components, instance move) | "sync jira components", "the Jira URL changed", "repoint jira" | `/jira-administration` (one mode per run) | `.agents/project.yaml`, `.agents/jira-required.yaml`, `.agents/jira-*.json` | `scripts/sync-jira-components.ts` + `jira:sync-*` |
 
 ### Key paths
