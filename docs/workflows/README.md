@@ -28,4 +28,4 @@ El testing manual y la automatización de QA viven en el repo hermano [agentic-q
 **Ver También:**
 
 - Skill `/git-flow-master`: el operador de branches, commits, PRs y conflictos (`.agents/skills/git-flow-master/SKILL.md`)
-- Skill `/sprint-development`: el ciclo por historia, de plan a deploy (`.agents/skills/sprint-development/SKILL.md`)
+- Skill `/sprint-development`: el ciclo por historia (Jira, GitHub Issues o sin tracker), de plan a deploy (`.agents/skills/sprint-development/SKILL.md`)

@@ -1,6 +1,6 @@
 # Bug and defect fixing
 
-> Read a bug from Jira, reproduce it, triage it, fix it with the smallest change, verify, open the PR and document the fix in Jira.
+> Read a bug from the tracker (Jira below, GitHub and none in `## Tracker branch`), reproduce it, triage it, fix it with the smallest change, verify, open the PR and document the fix in Jira.
 
 ---
 
@@ -19,8 +19,7 @@ This workflow takes a bug reported during testing or in production and carries i
 
 Prerequisites:
 
-- The bug exists in Jira.
-- `[ISSUE_TRACKER_TOOL]` resolves (for example the Atlassian/Jira MCP).
+- On `jira`, the bug exists in Jira and `[ISSUE_TRACKER_TOOL]` resolves (for example the Atlassian/Jira MCP). On `github`, the bug is an issue and `gh auth status` is clean; on `none`, the report is in the trail (`## Tracker branch`).
 - The GitHub CLI (`gh`) is installed and authenticated.
 - Optional: `/playwright-cli` for browser reproduction (session rules in `live-ui-validation.md` §3), an API client such as Postman MCP, and Context7 MCP for library docs.
 
@@ -41,6 +40,15 @@ Phase 8 never waits: it runs only when the user asks for it.
 
 ---
 
+## Tracker branch
+
+The sections below that read or write Jira (Jira tools and access, Custom fields, transitions, the Jira documentation comments, the slug table) apply when `issue_tracker` resolves to `jira`, exactly as written. Otherwise the same phases run with these swaps (`SKILL.md` `## Tracker modes`):
+
+- `github`: the bug is an issue of type Bug, read with `gh issue view <n> --comments` and created or retyped through `/github-projects`. Severity is a label `severity:<critical|major|moderate|minor|trivial>` when the report or triage gives one (create it once with `gh label create`, then read the issue back). Reproduction, root cause and fix go to the trail `results.md`, plus one issue comment that links the trail and names the root cause and the fix. Card moves are the abstract statuses of `agentic-dev-core/references/artifact-lifecycle.md` §6, not Jira slugs. WAD, duplicate or enhancement is closed or retyped through `/github-projects` with a comment.
+- `none`: the trail `plan.md` holds the report and reproduction, `results.md` the root cause, fix and verification; no tracker write.
+
+Access check: Jira only on `jira`; `gh auth status` on `github`; nothing on `none`.
+
 ## Tools and access
 
 Check these before starting.
@@ -53,7 +61,7 @@ The two directions use different tools.
 - `[ISSUE_TRACKER_TOOL]` `view` returns `null` for `customfield_*`, so it is never the way to read a bug custom field.
 - Writes (status transitions, documentation comments, custom fields) go through `[ISSUE_TRACKER_TOOL]`: `/acli` first, the Atlassian MCP as fallback, per `.agents/instructions/agent-tool-resolution.md` §6.
 
-Both must work before you start: the sync succeeds (when it fails on auth, log in through `[ISSUE_TRACKER_TOOL]` and re-run it) and `[ISSUE_TRACKER_TOOL]` resolves for transitions and comments. When either fails, tell the user what is missing:
+On `jira`, both must work before you start: the sync succeeds (when it fails on auth, log in through `[ISSUE_TRACKER_TOOL]` and re-run it) and `[ISSUE_TRACKER_TOOL]` resolves for transitions and comments. When either fails, tell the user what is missing:
 
 ```
 Jira access required

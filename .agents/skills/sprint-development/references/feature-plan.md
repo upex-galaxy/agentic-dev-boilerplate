@@ -1,5 +1,7 @@
 # Feature implementation plan
 
+> **Tracker note.** Written for the `jira` tracker and applied as written when `issue_tracker` resolves to `jira`. On `github` or `none`, its Jira steps (fields, `jira:sync-issues`, the PBI tree, the ATP, transitions, comments) are replaced by `SKILL.md` `## Tracker modes` and `## The trail`.
+
 The macro plan for an Epic that spans several stories (three or more). It records the technical decisions, shared types, UI strategy, dependencies and implementation order that the per-story plans (`story-plan.md`) then build on. You write it in the session, push it to the Epic's Jira field, sync it back and read the materialized file. Only the block between the `plan-body` markers is published, so everything outside it is guidance for the author.
 
 ## Jira fields and tools

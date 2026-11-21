@@ -1,5 +1,7 @@
 # Story implementation plan
 
+> **Tracker note.** Written for the `jira` tracker and applied as written when `issue_tracker` resolves to `jira`. On `github` or `none`, its Jira steps (fields, `jira:sync-issues`, the PBI tree, the ATP, transitions, comments) are replaced by `SKILL.md` `## Tracker modes` and `## The trail`.
+
 Stage 1 turns one Story and its Acceptance Test Plan into the plan a developer follows in Stage 2. You write the plan in the session, push it to the Story's Jira field, sync it back and read the materialized file. Only the block between the `plan-body` markers is published, so everything outside it is guidance for the author.
 
 ## Jira fields and tools

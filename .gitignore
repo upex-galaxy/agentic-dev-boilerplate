@@ -206,3 +206,15 @@ dbhub.local.toml
 .context/PBI/*
 !.context/PBI/README.md
 !.context/PBI/templates/
+
+# ===== Trail: the committed per-change record (/sprint-development) =====
+# Only the four file names below are committed; anything else in a trail folder
+# (screenshots, scratch, session material) stays local. Folders are re-included
+# first because git cannot re-include a file under an excluded directory.
+# A project with another `trail.dir` writes its own ladder.
+.context/trail/**
+!.context/trail/*/
+!.context/trail/*/metadata.yml
+!.context/trail/*/plan.md
+!.context/trail/*/results.md
+!.context/trail/*/decisions.json

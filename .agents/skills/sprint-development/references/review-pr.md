@@ -1,5 +1,7 @@
 # Story code review (Stage 3 reviewer)
 
+> **Tracker note.** Written for the `jira` tracker and applied as written when `issue_tracker` resolves to `jira`. On `github` or `none`, its Jira steps (fields, `jira:sync-issues`, the PBI tree, the ATP, transitions, comments) are replaced by `SKILL.md` `## Tracker modes` and `## The trail`. Read the diff without the trail folder (`':(exclude)<trail.dir>'`); without a feature PR you get a diff command instead of a PR, reviewed the same way.
+
 This file is the Stage 3 reviewer of one story inside `/sprint-development`. The reviewer proposes findings, the orchestrator adjudicates them, and nothing is posted. Reviewing a teammate's PR or an external repo's PR for a human, with a strictness lens, a score and a posted comment, is `/pr-review-lead`. It walks the checklist below by reference and shares the severity scale in "Adjudication contract". Change the checklist here, never in a copy.
 
 The task: a complete static code review of the code implemented for `STORY-{PROJECT_KEY}-{ISSUE_NUM}-{slug}`.

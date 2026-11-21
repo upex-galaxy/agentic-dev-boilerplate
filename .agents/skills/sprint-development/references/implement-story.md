@@ -1,5 +1,7 @@
 # Implement a story
 
+> **Tracker note.** Written for the `jira` tracker and applied as written when `issue_tracker` resolves to `jira`. On `github` or `none`, its Jira steps (fields, `jira:sync-issues`, the PBI tree, the ATP, transitions, comments) are replaced by `SKILL.md` `## Tracker modes` and `## The trail`.
+
 Stage 2 for a new story: implement **STORY-{PROJECT_KEY}-{ISSUE_NUM}-{name}** one step at a time from its implementation plan, validate it by hand, and hand off to unit tests and code review. The plan is the contract, so read it before touching code. This phase delivers functionality plus unit tests. Integration and E2E tests belong to the QA workflow (Test Automation), outside this skill.
 
 ## Jira fields and tools

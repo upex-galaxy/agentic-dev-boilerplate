@@ -12,6 +12,8 @@ paths: [".context/PBI/"]
 
 ## 9. LOCAL CONTEXT (PBI)
 
+> Applies when `issue_tracker` resolves to `jira`. On `github` the issue and its card are the source (`/github-projects`); on `github` and `none` the committed trail under `trail.dir` holds the plan and results (`/sprint-development` `## The trail`), and there is no PBI cache.
+
 `.context/PBI/` is a gitignored cache of Jira, owned by `scripts/sync-jira-issues.ts`. Jira is the source of truth, and a module is an Epic (1:1) for the epics this pipeline creates (an adopted tracker keeps the epic shape it already has). Local `.md` files are a read-only copy. A hand-written Jira-mirrored file is overwritten on the next sync, so author the plan or content, push it to the Jira field (or the fallback below), then run the sync.
 
 `bun run context:hydrate` rebuilds the whole tree. On a large or adopted project, pull only what the work touches (`pull --epic <KEY>`, `--story <KEY>`, `jql`, below). The adoption itself never hydrates (`/project-adoption`).

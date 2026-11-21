@@ -119,6 +119,30 @@
       "prompt": "Run the regression test suite on staging and tell me if we can release.",
       "expected_behavior": "Does NOT activate sprint-development. Regression testing is out of scope for this repo (QA workflow). sprint-development's Stage 4 deploys to staging but does not run formal regression.",
       "category": "negative"
+    },
+    {
+      "name": "github-story-uses-trail-and-board",
+      "prompt": "Implement GH-41. The project's issue_tracker is github; the issue has an AC checklist and no milestone.",
+      "expected_behavior": "Runs no Jira step at all (no jira:sync-issues, ATP, AI Effort, DTU or QA assignee). Stage 1 asks which milestone the change goes into, writes the plan to the trail folder under trail.dir as GH-41-<slug>/plan.md, posts one issue comment linking it and moves the card to In progress through /github-projects with a read-back. The PR body carries the <<TRAIL>> link and the compliance matrix, and the commit trailers put Trail: above Worktree: and Session:.",
+      "category": "positive"
+    },
+    {
+      "name": "github-issue-without-ac-hands-off",
+      "prompt": "Implement GH-58. The tracker is github and the issue body has no acceptance criteria.",
+      "expected_behavior": "Fast-fails the story prerequisite and hands off to /github-projects to refine the issue, not to /product-management. Writes no code.",
+      "category": "positive"
+    },
+    {
+      "name": "no-feature-pr-path-local-build-off",
+      "prompt": "Implement GH-60. git_strategy has integration branch staging, direct_push_to_protected allowed, require_pr_reviews 0 and a description that pushes feature work straight to staging; stack.local_build is false.",
+      "expected_behavior": "Reviews the local diff before the push, giving the two reviewers the diff command with the trail excluded. The Spec Compliance Matrix lives in the trail results.md. Skips the local build and says so, reading the staging deploy check instead. The final commit carries Closes #60 above the Trail:, Worktree: and Session: trailers.",
+      "category": "positive"
+    },
+    {
+      "name": "none-tracker-numbers-the-trail",
+      "prompt": "issue_tracker is none. Add a dark-mode toggle to the settings page.",
+      "expected_behavior": "Uses a three-digit key for the trail folder, puts the acceptance criteria in the trail plan.md, makes no tracker call and still runs the five stages.",
+      "category": "positive"
     }
   ]
 }

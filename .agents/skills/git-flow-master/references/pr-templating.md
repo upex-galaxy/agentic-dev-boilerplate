@@ -45,6 +45,10 @@ Render this as written, substituting the placeholders:
 - Worktree: `<<WORKTREE>>`
 - Session: `<<SESSION_LABEL>>`
 
+## Trail
+
+<<TRAIL>>
+
 ## Evidence
 
 <<EVIDENCE>>
@@ -62,7 +66,8 @@ Render this as written, substituting the placeholders:
 | `<<CHANGES>>` | Bulleted list, one bullet per commit, format `- {type}({ISSUE-KEY}): {description}`. |
 | `<<TEST_PLAN>>` | Bulleted steps to verify: test commands run, manual checks done, environments hit. Mark each `[x]` once verified locally. |
 | `<<ISSUE_KEY>>` | Key extracted in the branch step. Without one, drop the whole `- Issue:` line so no link dangles. |
-| `<<ISSUE_URL>>` | `{{ATLASSIAN_URL}}/browse/<<ISSUE_KEY>>` when both are available. Otherwise drop. |
+| `<<ISSUE_URL>>` | `{{ATLASSIAN_URL}}/browse/<<ISSUE_KEY>>` when both are available. Otherwise drop. On the `github` tracker, the issue's own URL. |
+| `<<TRAIL>>` | When the change has a trail (`/sprint-development` `## The trail`): a link to its folder at the PR head commit (`https://github.com/<owner>/<repo>/tree/<head-sha>/<trail-dir>/<KEY>-<slug>`), then the Spec Compliance Matrix copied from `results.md`, nothing else from the trail. Without a trail, drop the `## Trail` section. On the `github` tracker with no integration branch, also add `Closes #<n>` to the body. |
 | `{branch}` | Current branch name (computed by the skill). |
 | `{base}` | PR base branch (resolved from the strategy, see the table below). |
 | `{strategy}` | Active strategy slug (`solo-main`, `main-integration`, etc.). Helps reviewers understand the merge target. |

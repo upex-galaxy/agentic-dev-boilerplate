@@ -76,12 +76,13 @@ Every stage a stage owner runs closes with this checklist. "Light" means the age
 
 ```
 Light stage verifier: <Stage name>
-[ ] Tracker status: the issue re-read (bun run jira:sync-issues get <KEY>) shows the status this stage meant to reach
-    (artifact-lifecycle.md §1: name the slug fired or verified, or the stated reason it was not)
-[ ] Assignee: read back after every transition fired or verified (artifact-lifecycle.md §2), or stated N/A
-[ ] DTU: a `DTU cycle N: +x K (total y K) source=<...>` comment and the cumulative `{{jira.development_token_usage}}` when the story reached `ready_for_qa`, or a stated N/A with the reason (no measured figure, or the item never reaches Ready For QA). Empty is valid, never a `NO`
+[ ] Tracker status: the issue re-read shows the status this stage meant to reach. jira: bun run jira:sync-issues get <KEY>
+    (artifact-lifecycle.md §1: name the slug fired or verified, or the stated reason it was not). github: the card's Status
+    read back after the item edit (artifact-lifecycle.md §6). none: N/A, no tracker
+[ ] Assignee: read back after every transition fired or verified (artifact-lifecycle.md §2), or stated N/A (N/A on github and none)
+[ ] DTU: a `DTU cycle N: +x K (total y K) source=<...>` comment and the cumulative `{{jira.development_token_usage}}` when the story reached `ready_for_qa`, or a stated N/A with the reason (no measured figure, or the item never reaches Ready For QA; N/A on github and none). Empty is valid, never a `NO`
 [ ] Tracker writes: every field or comment this stage owns actually landed (re-read the body, not the "created OK")
-[ ] PR: exists, base branch matches the git strategy, `gh pr checks` state named (green / red / pending)
+[ ] PR: exists, base branch matches the git strategy, `gh pr checks` state named (green / red / pending), or N/A without a feature PR (name the pushed SHA)
 [ ] Migration: the schema or migration ledger re-read shows the change (db capability), or stated N/A
 [ ] Deploy: the deployment for the pushed commit SHA reads READY (staging / production), or stated N/A
 [ ] progress.md checkpoint appended (.session/<skill-slug>/<scope>/progress.md, session-management.md §7)

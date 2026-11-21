@@ -6,7 +6,7 @@
     <title>Sprint development: from ticket to deploy</title>
     <meta
       name="description"
-      content="How /sprint-development takes a Jira story to deployed code: a plan published in Jira, a verified implementation, validation against the running app, an adversarial review, then staging and production behind a gate."
+      content="How /sprint-development takes a tracker story (Jira or a GitHub issue) to deployed code: a plan published in Jira or kept in the committed trail, a verified implementation, validation against the running app, an adversarial review, then staging and production behind a gate."
     />
     <style>
       /* ============================================================
@@ -1577,7 +1577,7 @@
         <div class="kicker eyebrow"><span class="num">00</span> · from ticket to deploy</div>
         <h1>One story, five stages, <span class="sig">no gate skipped</span>.</h1>
         <p class="lede">
-          <span class="mono">/sprint-development</span> takes a Jira story all the way to deployed
+          <span class="mono">/sprint-development</span> takes a tracker story (Jira or GitHub) all the way to deployed
           code. It plans before writing a line, checks what it builds against the
           <b>running app</b>, sends the diff to a reviewer who did not write it, and only then moves
           it to staging. Production is a separate event, with <b>your</b> approval.
@@ -1592,7 +1592,7 @@
             ><span class="dot"></span> one story or a whole sprint, <b>in order</b></span
           >
           <span class="chip agent"
-            ><span class="dot"></span> the plan lives in <b>Jira</b>, not in a local file</span
+            ><span class="dot"></span> the plan lives in <b>Jira</b>, or in the committed trail on GitHub</span
           >
         </div>
 
@@ -1600,7 +1600,7 @@
           <div class="node">
             <div class="n">Stage 1</div>
             <h3>Planning</h3>
-            <p>Plan published in Jira and read back.</p>
+            <p>Plan published in Jira (or the trail on GitHub) and read back.</p>
             <div class="arw">→</div>
           </div>
           <div class="node">
@@ -1731,7 +1731,7 @@
               ><span class="lt agent">0b</span
               ><span
                 ><b>Roadmap + live status</b
-                ><span>Roadmap dependencies, status queried from Jira.</span></span
+                ><span>Roadmap dependencies, status queried from the tracker.</span></span
               ></a
             >
             <a class="wf" href="#arranque"

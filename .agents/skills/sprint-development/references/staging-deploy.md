@@ -1,5 +1,7 @@
 # Staging deploy (Stage 4)
 
+> **Tracker note.** Written for the `jira` tracker and applied as written when `issue_tracker` resolves to `jira`. On `github` or `none`, its Jira steps (fields, `jira:sync-issues`, the PBI tree, the ATP, transitions, comments) are replaced by `SKILL.md` `## Tracker modes` and `## The trail`.
+
 Gets a reviewed feature onto the staging environment so QA can pick it up: automatically through CI/CD, or by hand when CI is not set up. Run it after `ci-cd-setup.md` (GitHub Actions configured), `environment-config.md` (variables set) and Stage 3 (code review).
 
 > **Integration branch**: its real name is `git_strategy.branches.integration` in `.agents/project.yaml`. This document says `staging` for the conventional name. Read the value before running any git command below, and never write the literal `staging` or `develop` in a command. When it is `null` (`solo-main`, `github-flow`, `trunk-based`) there is no integration branch: there is no merge to staging, Stage 4 verifies the Vercel Preview deployment of the PR branch, and the merge to `git_strategy.branches.production` is Stage 5.

@@ -211,7 +211,7 @@ The shape of `<scope>` is decided per skill, not per invocation. Each retrofitte
 
 | Skill | Scope shape | Identifier source |
 |---|---|---|
-| `sprint-development` | `<JIRA-KEY>` (e.g. `UPEX-123`) | Jira ticket from invocation trigger |
+| `sprint-development` | `<KEY>`: `UPEX-123`, `GH-12`, or `012` with no tracker | ticket from invocation trigger |
 | `project-foundation` | (none, project scope) | n/a |
 | `project-bootstrap` | (none, project scope) | n/a |
 | `design-system` | (none, project scope) | n/a |

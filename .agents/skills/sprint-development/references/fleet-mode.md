@@ -1,5 +1,7 @@
 # Fleet mode: batch-sprint development with N executors
 
+> **Release batch.** A sprint here is the release batch; on `github` it is the milestone and `sprint-<N>` in a session path reads `batch-<milestone-slug>`. File names keep the word `sprint`. The Jira statuses below apply on `jira`; `SKILL.md` `## Tracker modes` gives the `github` moves.
+
 Read this only when batch-sprint mode runs with more than one executor. `SKILL.md` ("Executors: one session or a fleet") defines the scope and executors axis, and it keeps the sprint roadmap checkpoint, the per-ticket stages and their gates. This file covers what N>1 adds and nothing else.
 
 > **N=1 is untouched.** Every rule here is additive. A batch-sprint run with one executor behaves exactly as it did before this file existed: same ticket loop, same stages, same sprint-report writes. A rule below that would change N=1 behaviour is a wrong rule.

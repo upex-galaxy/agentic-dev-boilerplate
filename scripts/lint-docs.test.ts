@@ -130,6 +130,7 @@ describe('lint-docs agent-facing markdown links', () => {
       '```',
     ].join('\n'));
     write('.context/PBI/epics/EPIC-1-x/story.md', '[attachment](./missing.png)');
+    write('.context/trail/GH-1-x/plan.md', '[gone](./missing.md)');
     expect(lintDocs(root).findings).toEqual([]);
   });
 

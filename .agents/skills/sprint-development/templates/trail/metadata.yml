@@ -1,0 +1,14 @@
+task: <one-line task title>
+key: <GH-n | NNN>
+tracker: <github | none | jira>
+issue: <issue url, or null>
+milestone: <release slug, or unplanned>
+mode: <orchestrated | solo>
+session: <label from the AGENT IDENTITY line>
+worktree: <worktree folder name | primary>
+branch: <branch>
+opened: <YYYY-MM-DD>
+closed: null
+sha: null
+pr: null
+deploy: null

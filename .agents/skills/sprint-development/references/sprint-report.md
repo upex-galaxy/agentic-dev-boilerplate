@@ -1,5 +1,7 @@
 # Sprint Report: Batch-Sprint Mode
 
+> **Release batch.** A sprint here is the release batch; on `github` it is the milestone and `sprint-<N>` in a session path reads `batch-<milestone-slug>`. File names keep the word `sprint`. The Jira statuses below apply on `jira`; `SKILL.md` `## Tracker modes` gives the `github` moves.
+
 This reference covers how batch-sprint mode keeps `SPRINT-{N}-DEVELOPMENT.md`: generating the file, updating it at each stage, its status state machine, stale handling, the trigger phrases that select the mode, the single-ticket boundary, and how it relates to `/product-management`.
 
 `SKILL.md` delegates here when:

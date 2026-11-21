@@ -265,7 +265,7 @@ const SESSION_RETROFITTED_SKILLS: Record<string, RegExp | null> = {
   'product-management': /^[a-z0-9][a-z0-9-]*$/,
   'design-system': null,
   'testability-guide': null,
-  'sprint-development': /^[A-Z]+-\d+$/,
+  'sprint-development': /^(?:[A-Z]+-\d+|\d{3,}|(?:sprint|batch)-[a-z0-9][a-z0-9-]*)$/,
 };
 
 /**

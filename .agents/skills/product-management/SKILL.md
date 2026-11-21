@@ -49,6 +49,8 @@ model_preferences:
 
 # Product Management
 
+> **Tracker note.** This skill manages a Jira backlog and runs when `issue_tracker` resolves to `jira`. On `github`, issues, the board and releases belong to `/github-projects`.
+
 This skill carries the product management lifecycle: a fresh PRD becomes the initial Jira backlog, new features arrive one at a time, epics get a structure, and each story is refined until it is ready for development. Unlike `/project-foundation`, which runs once, this is ongoing work, so invoke it again whenever backlog work comes up.
 
 ## Tool abstraction

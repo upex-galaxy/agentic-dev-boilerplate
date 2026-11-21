@@ -48,6 +48,8 @@ model_preferences:
 
 # Autonomous delivery: scheduled runs with nobody watching
 
+> **Tracker note.** Work selection reads the Jira backlog and runs when `issue_tracker` resolves to `jira`. A `github` or `none` project has no unattended pickup: run `/sprint-development` with a named issue.
+
 This is the layer between a scheduler and `/sprint-development`. A pipeline skill assumes a person picked the ticket, confirmed the state, and is there when something goes sideways. Unattended, all three assumptions are false, and each one fails in its own way.
 
 The skill implements nothing. It establishes what is true, picks work that is unblocked, hands it to the skill that owns it, and leaves a record the next run can start from. Point to the stages of `/sprint-development` instead of restating them.

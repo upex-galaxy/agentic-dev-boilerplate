@@ -16,6 +16,10 @@ describe('commitTrailerWarnings', () => {
     expect(commitTrailerWarnings('fix: x\n\nWorktree: unknown\nSession: unknown')).toEqual([]);
   });
 
+  test('accepts a Closes footer and Trail above Worktree then Session', () => {
+    expect(commitTrailerWarnings('feat: x\n\nCloses #12\nTrail: .context/trail/GH-12-add-x/\nWorktree: a\nSession: b\n')).toEqual([]);
+  });
+
   test('ignores comment lines and everything below the verbose scissors line', () => {
     const raw = `${GOOD}# Please enter the commit message\n# ------------------------ >8 ------------------------\ndiff --git a/x b/x\n`;
     expect(committedLines(raw).at(-1)).toBe('Session: dev-u6-identity');

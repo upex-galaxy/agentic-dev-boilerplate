@@ -269,10 +269,13 @@ export const AGENT_LINK_ROOTS = ['.agents', '.context', '.claude'] as const;
 /** The Jira cache under `.context/`: synced content, never authored here. */
 const PBI_CACHE = join('.context', 'PBI');
 
+/** The default per-change trail of `/sprint-development`: dated records whose links are never kept current. */
+const TRAIL_DIR = join('.context', 'trail');
+
 /**
  * The agent-facing markdown files, absolute paths, sorted. Directory symlinks
  * are not followed (`.claude/skills` is an alias of `.agents/skills`), the PBI
- * cache and the third-party skills (community installs and the generated
+ * cache, the default trail dir and the third-party skills (community installs and the generated
  * `REGISTRY.md` that copies their text) are skipped, and `lintDocs` drops the
  * git-ignored ones.
  */
@@ -286,7 +289,10 @@ export function collectAgentLinkFiles(root: string): string[] {
   for (const base of AGENT_LINK_ROOTS) {
     const found: string[] = [];
     walk(join(root, base), ['.md'], found);
-    files.push(...found.filter(file => !relative(root, file).startsWith(`${PBI_CACHE}/`) && !thirdParty(relative(root, file))));
+    files.push(...found.filter((file) => {
+      const rel = relative(root, file);
+      return !rel.startsWith(`${PBI_CACHE}/`) && !rel.startsWith(`${TRAIL_DIR}/`) && !thirdParty(rel);
+    }));
   }
   return files.sort();
 }

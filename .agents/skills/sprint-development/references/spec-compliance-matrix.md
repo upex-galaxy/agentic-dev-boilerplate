@@ -1,5 +1,7 @@
 # Spec compliance matrix: the Stage 3 gate from acceptance criteria to evidence
 
+> **Tracker note.** Written for the `jira` tracker and applied as written when `issue_tracker` resolves to `jira`. On `github` or `none`, its Jira steps (fields, `jira:sync-issues`, the PBI tree, the ATP, transitions, comments) are replaced by `SKILL.md` `## Tracker modes` and `## The trail`.
+
 Reference for sprint-development Stage 3 (code review). `SKILL.md` cites it at the end of Stage 3, before the merge to the integration branch.
 
 ## Purpose

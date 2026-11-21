@@ -43,7 +43,7 @@ ONE-TIME FOUNDATION    →    CONTINUOUS MANAGEMENT    →    PER-STORY IMPLEMEN
 | **Foundation** (one-time per product)                  | `project-foundation` → `design-system` → `project-bootstrap`        | `.context/business/`, `.context/PRD/`, `.context/SRS/`, `DESIGN.md`, scaffolded backend + frontend                                                        |
 | **Testability bridge** (one-time + idempotent re-runs) | `testability-guide`                                                 | In-app `/qa` page ("Software Testability Guide for QA") + tool-agnostic credentials artifact (Jira Epic / Confluence / Notion / MCP / CLI / manual paste) |
 | **Management** (continuous)                            | `product-management`                                                | Jira backlog (epics + stories), refined ACs in Gherkin, edge-case enumeration, sprint snapshots                                                           |
-| **Implementation** (per story)                         | `sprint-development` (+ optional `unit-testing`, `git-flow-master`) | `implementation-plan.md`, code on a feature branch, PR, code review, merged and deployed to staging                                                       |
+| **Implementation** (per story)                         | `sprint-development` (+ optional `unit-testing`, `git-flow-master`) | `implementation-plan.md` (Jira) or the trail `plan.md`/`results.md` (GitHub, no tracker), code on a feature branch, PR, code review, merged and deployed to staging                                                       |
 | **Autonomous delivery** (scheduled / unattended runs)  | `autonomous-delivery` (wraps the pipeline skills)                   | Audit of real state (git is truth, the tracker is a hint), selection of genuinely unblocked work, dispatch to the owning pipeline skill, run report       |
 
 Every phase is powered by an AI skill, every skill operates with at least one human-in-the-loop checkpoint, and every artefact produced is traceable from the original Jira ticket back to the source PRD requirement that motivated it.
@@ -72,7 +72,7 @@ The goal of this boilerplate is therefore not to "add some AI to a project," but
 - A structured context layer (`.context/`) the AI reads before it acts.
 - A spec-first artefact chain (Constitution → PRD → SRS → story AC → implementation plan) that every change walks before code is written.
 - A backlog seeded from the PRD with INVEST-validated stories and Gherkin acceptance criteria.
-- A per-story dev loop that drives Jira state transitions, plans before it codes, reviews before it merges, and never deploys to production without a human gate.
+- A per-story dev loop that drives the tracker's state (Jira transitions or GitHub Project cards), plans before it codes, reviews before it merges, and never deploys to production without a human gate.
 - Persistent memory (`engram`) that survives sessions and compactions, plus a gitignored `.context/PBI/` cache — hydrated from Jira on demand (`bun run context:hydrate`) — for anything `engram` should not have to hold in full.
 
 The rest of this document describes the engineering reasoning behind those choices and the hooks for extending them.

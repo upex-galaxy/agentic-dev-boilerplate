@@ -46,6 +46,8 @@ A trace that restates the conclusion ("chose feature-branch-chain because the ch
 
 ## Estimation algorithm
 
+Leave the trail folder (`trail.dir`) out of the count.
+
 Estimate each file, sum the estimates, then pad for tests and docs.
 
 ### Per-file multipliers

@@ -1,5 +1,7 @@
 # Continue an implementation
 
+> **Tracker note.** Written for the `jira` tracker and applied as written when `issue_tracker` resolves to `jira`. On `github` or `none`, its Jira steps (fields, `jira:sync-issues`, the PBI tree, the ATP, transitions, comments) are replaced by `SKILL.md` `## Tracker modes` and `## The trail`.
+
 Resume **STORY-{PROJECT_KEY}-{ISSUE_NUM}-{name}** after it was paused. The goal is to find out what is really done before writing anything new: compare the plan with the code, report the state, then carry on from the first pending step under the same rules as `implement-story.md`.
 
 ## Tool check

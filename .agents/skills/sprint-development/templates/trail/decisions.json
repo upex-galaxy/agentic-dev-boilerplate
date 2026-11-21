@@ -1,0 +1,8 @@
+{
+  "answered": "<YYYY-MM-DD>",
+  "by": "owner",
+  "via": "<question tool, decision deck or chat>",
+  "decisions": [
+    { "question": "<what was asked>", "answer": "<what the owner chose>" }
+  ]
+}

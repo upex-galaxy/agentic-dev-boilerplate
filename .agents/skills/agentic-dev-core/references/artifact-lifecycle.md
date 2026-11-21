@@ -124,3 +124,24 @@ The verifier lives in `session-footer-contract.md` Part 3 and is not redefined h
 - Token usage: `{{jira.development_token_usage}}` is cumulative and optional. When the story is verified at `ready_for_qa` (and again after each fix loop), read the current value, add this cycle's measured delta (K = input plus output tokens, cache reads apart), never overwrite it, and post one `DTU cycle N: +x K (total y K) source=<harness or human>` comment. When no figure is available, the line is a stated N/A with the reason and never a `NO`; the same holds for an item that never reaches `ready_for_qa`. Tokens are measured and never estimated.
 
 A stage owner lists only its stage-specific lines inline (which issue, which slug) and cites Part 3 for the rest.
+
+---
+
+## 6. GitHub mapping (tracker `github`)
+
+§1 to §5 are the `jira` doctrine and stay as written. On `github` the loop speaks five abstract statuses and `/github-projects` turns each into a card move by option name; on `none` no stage makes a tracker call and the trail is the record.
+
+| Abstract status | Option name | Set by | When |
+|---|---|---|---|
+| `backlog` | `issue_tracker.github.statuses.backlog` | `/github-projects` | the issue is added to the Project |
+| `in_progress` | `issue_tracker.github.statuses.in_progress` | Stage 1 | the trail `plan.md` is committed and linked |
+| `in_review` | `issue_tracker.github.statuses.in_review` | Stage 3 | the PR opens, or the local review starts without a feature PR |
+| `on_staging` | `issue_tracker.github.statuses.on_staging` | Stage 4 | the staging deploy for the SHA reads READY |
+| `released` | `issue_tracker.github.statuses.released` | built-in "item closed" workflow | the issue closes on the production branch |
+
+- A move is `gh project item-edit` with `--field <status_field> --value "<option name>"`, then a read-back of the Status (`/github-projects` `references/projects-v2.md`). The read-back is the verifier's line; a zero exit is not.
+- `blocked` is a label, not a status.
+- PRs are not on the Project, so nothing moves `in_review` or `on_staging` for you; only `released` is automatic, and the close-out reads it back.
+- Closing: with an integration branch the change's final commit carries `Closes #N` as a footer; with none, the PR body into the production branch carries it. The footer sits above `Trail:`, `Worktree:` and `Session:`. A `Closes` keyword closes the issue only when it lands on the repository's default branch, so check `gh repo view --json defaultBranchRef` equals `git_strategy.branches.production`; when the default is the integration branch, put the keyword on the release PR instead, or the issue closes at the staging push.
+- Release close-out: `bun run github:releases:sync --close-out <slug>` (dry run, then `--apply`) after the release merge reads back that each issue is closed and Released, closes the milestone and writes the record. It is the `github` counterpart of the Stage 5 tracker step.
+- An option name missing from the board is the `github` form of §4: list the options (`gh project field-list`), ask one question through `decision-protocol.md` §5.2, recommend `bun run github:project:bootstrap --check`; never add an option by hand.
