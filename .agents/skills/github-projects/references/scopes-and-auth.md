@@ -30,4 +30,4 @@ Stop. Report the exact failure line, give the owner the command above, and wait.
 
 ## User-owned versus org-owned projects
 
-`project_owner: '@me'` resolves to the authenticated user. User projects: REST fields and items take the login, REST view creation takes the numeric user id (`gh api user --jq .id`). Org projects use `/orgs/<org>/...`. Keep the project private (`gh project edit <N> --visibility PRIVATE`): project visibility is separate from repo visibility.
+`project_owner: '@me'` resolves to the authenticated user. User projects: REST fields and items take the login, REST view creation takes the login too (`users/<login>/projectsV2/<n>/views`; the numeric user id returns 404). Org projects use `/orgs/<org>/...`. Keep the project private (`gh project edit <N> --visibility PRIVATE`): project visibility is separate from repo visibility.

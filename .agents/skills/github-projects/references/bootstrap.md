@@ -25,7 +25,7 @@ bun run github:project:bootstrap --apply --force "Old name"   # names the one op
    - the dry run prints this diff with per-option item counts.
    Counts are read with paginated GraphQL, archived cards included. `updateProjectV2Field` replaces the whole list, so every apply reads the existing ids and resends them, then reads the options back and checks names and ids.
 4. Links the repo to the project (only when it is not linked).
-5. Creates a Board view grouped by Status and a Table view through the REST views endpoint (numeric user id). The default view is never deleted, and counts as the table.
+5. Creates a Board view grouped by Status and a Table view through the REST views endpoint (`users/<login>`). The default view is never deleted, and counts as the table.
 6. Creates the `blocked` label (`gh label create`, never `--force`: an existing label keeps the owner's color). Issue types are native (`Bug`, `Feature`, `Task`); the script only reports them.
 7. Writes `project_number` into `.agents/project.yaml` (a one-line edit that keeps comments).
 8. Lists open repo issues missing from the board; `--apply` adds each and sets the backlog option. This fills the auto-add gap.

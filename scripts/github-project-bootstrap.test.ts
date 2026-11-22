@@ -176,7 +176,7 @@ describe('bootstrap with a fake gh', () => {
     expect(p.options.find(o => o.name === 'Backlog')?.id).toBe('od-todo');
     expect(p.options.find(o => o.name === 'Released')?.id).toBe('od-done');
     expect(p.linked).toEqual([world.repo]);
-    expect(world.calls.find(c => c[0] === 'project' && c[1] === 'link')).toEqual(['project', 'link', '1', '--owner', '@me', '--repo', 'repo']);
+    expect(world.calls.find(c => c[0] === 'project' && c[1] === 'link')).toEqual(['project', 'link', '1', '--owner', 'owner', '--repo', 'repo']);
     expect(p.views.map(v => v.layout).sort()).toEqual(['BOARD_LAYOUT', 'TABLE_LAYOUT']);
     expect(world.labels).toContain('blocked');
     expect(h.state.yaml).toContain('project_number: 1 # written by the bootstrap');

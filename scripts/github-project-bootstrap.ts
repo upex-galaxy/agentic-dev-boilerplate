@@ -388,11 +388,11 @@ export async function bootstrap(deps: Deps, opts: Options): Promise<number> {
   }
   if (!state.linked) {
     if (parseRepo(repo).owner.toLowerCase() !== owner.login.toLowerCase()) { throw new Error(`cannot link ${repo}: gh project link resolves a bare repo name under the project owner (${owner.login}). Create the project under ${parseRepo(repo).owner} or link it by hand.`); }
-    await ghText(run, ['project', 'link', String(project.number), '--owner', cfg.owner, '--repo', parseRepo(repo).name]);
+    await ghText(run, ['project', 'link', String(project.number), '--owner', owner.login, '--repo', parseRepo(repo).name]);
     log(`linked ${repo}`);
     await sleep(1000);
   }
-  const viewsPath = `users/${owner.id}/projectsV2/${project.number}/views`;
+  const viewsPath = `users/${owner.login}/projectsV2/${project.number}/views`;
   const apiVersion = ['-H', 'X-GitHub-Api-Version: 2026-03-10'];
   if (!hasBoard) {
     await ghText(run, ['api', '-X', 'POST', viewsPath, ...apiVersion, '--input', '-'], JSON.stringify({ name: 'Board', layout: 'board', vertical_group_by: [Number(state.fieldDbId)] }));

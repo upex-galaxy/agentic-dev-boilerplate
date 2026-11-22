@@ -160,7 +160,7 @@ export function fakeGh(world: FakeWorld): GhRunner {
       const path = args.find((a, i) => i > 0 && !a.startsWith('-') && !['GET', 'POST', 'PATCH'].includes(a) && !String(args[i - 1]).startsWith('-H') && args[i - 1] !== '-H')!;
       const method = (flag(args, '-X') ?? 'GET').toUpperCase();
       const body = input ? JSON.parse(input) : {};
-      const viewsMatch = /^users\/\d+\/projectsV2\/(\d+)\/views$/.exec(path);
+      const viewsMatch = /^users\/[^/]+\/projectsV2\/(\d+)\/views$/.exec(path);
       if (viewsMatch && method === 'POST') {
         const p = project(Number(viewsMatch[1]));
         p.views.push({ id: `V${++world.seq}`, name: body.name, layout: body.layout === 'board' ? 'BOARD_LAYOUT' : 'TABLE_LAYOUT' });
