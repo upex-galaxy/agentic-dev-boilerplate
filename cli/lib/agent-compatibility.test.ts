@@ -1,7 +1,7 @@
 /* eslint-disable no-template-curly-in-string -- the fixtures below mirror .mcp.json verbatim, `${VAR}` included */
 import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readlinkSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { dirname, join, resolve } from 'node:path';
+import { basename, dirname, join, resolve } from 'node:path';
 
 import { afterEach, describe, expect, test } from 'bun:test';
 
@@ -373,11 +373,26 @@ describe('shared personality hook', () => {
     hooks.context(event);
 
     expect(opencodePlugin.id).toBe('agentic-dev.personality-reinject');
-    expect(Object.keys(hooks)).toEqual(['context']);
+    expect(Object.keys(hooks)).toEqual(['prompt', 'compaction', 'context']);
     expect(event.system).toBe(originalArray);
     expect(event.system.length).toBe(afterFirst);
     expect(event.system[1]).toEqual({ type: 'text', text: PERSONALITY_CONTRACT });
     expect(event.system[2].text).toEndWith('session=test harness=opencode');
+  });
+
+  // The OpenCode service's working directory is wherever it started, so the
+  // identity once named an unrelated checkout.
+  test.skipIf(!HAS_OPENCODE)('OpenCode 2 names the worktree of ctx.location, not the server\'s working directory', async () => {
+    const checkout = temporaryRoot('agent compatibility opencode location ');
+    write(checkout, '.git', 'gitdir: /elsewhere/.git/worktrees/feat-opencode\n');
+    const hooks: Record<string, (event: { sessionID: string, system: Array<{ type: string, text: string }> }) => void> = {};
+    await opencodePlugin.setup({
+      location: { directory: join(checkout, 'nested'), project: { id: 'test', directory: checkout, canonical: '/elsewhere' } },
+      session: { hook: async (name: string, callback: (typeof hooks)[string]) => { hooks[name] = callback; } },
+    });
+    const event = { sessionID: 'test', system: [] as Array<{ type: string, text: string }> };
+    hooks.context(event);
+    expect(event.system.find(part => part.text.startsWith(IDENTITY_PREFIX))?.text).toBe(`${IDENTITY_PREFIX} worktree=${basename(checkout)} session=test harness=opencode`);
   });
 });
 
@@ -596,15 +611,17 @@ describe.skipIf(!HAS_OPENCODE)('instruction router hooks', () => {
     ]);
   });
 
-  test('rejects an OpenCode adapter that stopped classifying the prompt or declaring OpenCode 2', () => {
+  test('rejects an OpenCode adapter that stopped classifying the prompt or re-arming on either generation', () => {
     const root = routerFixture();
     const plugin = readFileSync(join(REPO_ROOT, '.opencode/plugins/personality-reinject.js'), 'utf8')
       .replace('\'chat.message\'', '\'chat.params\'')
-      .replaceAll('ROUTER-ONLY', 'router only');
+      .replace('ctx.session.hook(\'prompt\'', 'ctx.session.hook(\'title\'')
+      .replace('ctx.session.hook(\'compaction\'', 'ctx.session.hook(\'generate\'');
     write(root, '.opencode/plugins/personality-reinject.js', plugin);
     expect(validateInstructionRouterHooks(root)).toEqual([
       'OpenCode personality adapter must classify the prompt in chat.message with the shared routeLines (OpenCode 1).',
-      'OpenCode personality adapter must declare the OpenCode 2 degradation (ROUTER-ONLY: no hook carries the prompt).',
+      'OpenCode personality adapter must classify the prompt in ctx.session.hook(\'prompt\') with the shared routeLines (OpenCode 2).',
+      'OpenCode personality adapter must re-arm the routes in ctx.session.hook(\'compaction\') (OpenCode 2).',
     ]);
   });
 
@@ -671,6 +688,59 @@ describe.skipIf(!HAS_OPENCODE)('instruction router hooks', () => {
       else { process.env.ORCA_APP_VERSION = previous; }
       rmSync(routeStatePath(REPO_ROOT, sessionID), { force: true });
       rmSync(routeStatePath(REPO_ROOT, independentID), { force: true });
+    }
+  });
+  test('OpenCode 2 classifies in the prompt hook, routes through the context hook once, re-arms on compaction', async () => {
+    const sessionID = `compat-route-v2-${process.pid}-${Date.now()}`;
+    const hooks: Record<string, (event: Record<string, unknown>) => void> = {};
+    await opencodePlugin.setup({
+      location: { directory: REPO_ROOT, project: { id: 'test', directory: REPO_ROOT, canonical: REPO_ROOT } },
+      session: { hook: async (name: string, callback: (event: Record<string, unknown>) => void) => { hooks[name] = callback; } },
+    });
+    const turn = (text: string) => {
+      hooks.prompt({ sessionID, messageID: 'msg', prompt: { text, files: [] }, delivery: 'steer' });
+      const event = { sessionID, system: [] as Array<{ type: string, text: string }> };
+      hooks.context(event);
+      hooks.context(event);
+      return event.system.map(part => part.text).filter(text => text.startsWith(ROUTE_PREFIX));
+    };
+    try {
+      const gitRoute = expect.stringMatching(/^ROUTE: read \.agents\/instructions\/agent-git\.md \(git, \d+ lines\) before acting on this prompt$/);
+      expect(turn('commit and push')).toEqual([gitRoute]);
+      expect(turn('push again')).toEqual([]);
+      hooks.compaction({ sessionID });
+      expect(turn('push again')).toEqual([gitRoute]);
+    }
+    finally {
+      rmSync(routeStatePath(REPO_ROOT, sessionID), { force: true });
+    }
+  });
+
+  test('OpenCode 2 records the fleet token in the prompt hook and pushes the launched ORCA line, also after compaction', async () => {
+    const sessionID = `compat-role-v2-${process.pid}-${Date.now()}`;
+    const previous = process.env.ORCA_APP_VERSION;
+    process.env.ORCA_APP_VERSION = 'test';
+    const hooks: Record<string, (event: Record<string, unknown>) => void> = {};
+    await opencodePlugin.setup({
+      location: { directory: REPO_ROOT, project: { id: 'test', directory: REPO_ROOT, canonical: REPO_ROOT } },
+      session: { hook: async (name: string, callback: (event: Record<string, unknown>) => void) => { hooks[name] = callback; } },
+    });
+    const orcaFor = (text: string) => {
+      hooks.prompt({ sessionID, messageID: 'msg', prompt: { text, files: [] }, delivery: 'steer' });
+      const event = { sessionID, system: [] as Array<{ type: string, text: string }> };
+      hooks.context(event);
+      return event.system.map(part => part.text).filter(text => text.startsWith(HOOK_ORCA_MARKER));
+    };
+    try {
+      expect(orcaFor('/sprint-development TK-123 fleet worker. Read the brief.')).toEqual([ORCA_LAUNCHED_LINE]);
+      expect(orcaFor('continue with stage 2')).toEqual([ORCA_LAUNCHED_LINE]);
+      hooks.compaction({ sessionID });
+      expect(orcaFor('continue')).toEqual([ORCA_LAUNCHED_LINE]);
+    }
+    finally {
+      if (previous === undefined) { delete process.env.ORCA_APP_VERSION; }
+      else { process.env.ORCA_APP_VERSION = previous; }
+      rmSync(routeStatePath(REPO_ROOT, sessionID), { force: true });
     }
   });
 });

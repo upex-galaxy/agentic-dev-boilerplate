@@ -384,10 +384,10 @@ describe('compatibility repair lifecycle', () => {
 });
 
 describe('doctor diagnosis', () => {
-  test.skipIf(!HAS_ALL_HARNESSES)('reports a compliant fixture as file-correct, with trust as unverifiable runtime state', () => {
+  test.skipIf(!HAS_ALL_HARNESSES)('reports a compliant fixture as file-correct, with trust as runtime state apart from it', () => {
     const root = compatibilityFixture();
     repairRepositoryCompatibility(root, 'linux');
-    const diagnostic = diagnoseAgentCompatibility(root, { platform: 'linux', codexCliDetected: false });
+    const diagnostic = diagnoseAgentCompatibility(root, { platform: 'linux', codexCliDetected: false, codexTrustStatus: 'hooks-untrusted' });
 
     expect(diagnostic.file_correct).toBe(true);
     expect(diagnostic.errors).toEqual([]);
@@ -408,7 +408,7 @@ describe('doctor diagnosis', () => {
       repository_configured: true,
       desktop_uses_repository_config: true,
       trust_required: true,
-      trust_status: 'required-not-verifiable',
+      trust_status: 'hooks-untrusted',
     });
   });
 

@@ -12,8 +12,8 @@
  * `.agents/skills` store + its Claude alias, the commands that would shadow a
  * skill, the hook adapters and MCP parity across `.mcp.json` / `opencode.jsonc`
  * / `.codex/config.toml`, each only for a harness the project uses (ADR-0013).
- * Codex repository TRUST is runtime state no file check can verify, so it is
- * always a WARN row, never a FAIL.
+ * Codex and Pi TRUST are runtime state, read from each harness's own config
+ * (`codexTrustStatus`, `piTrustStatus`) and reported as a WARN row, never a FAIL.
  *
  * Usage:
  *   bun run setup:doctor              # human-readable summary
@@ -318,8 +318,7 @@ export interface AgentCompatibilityDiagnostic {
     repository_configured: boolean
     desktop_uses_repository_config: true
     trust_required: true
-    /** Trust is granted inside Codex at runtime; no file on disk records it. */
-    trust_status: 'required-not-verifiable'
+    trust_status: CodexTrustStatus
   }
 }
 
@@ -688,7 +687,7 @@ export function repoCheckRunsAppWideLegs(script: unknown): boolean {
  */
 export function diagnoseAgentCompatibility(
   root: string,
-  options: { platform?: NodeJS.Platform, codexCliDetected?: boolean } = {},
+  options: { platform?: NodeJS.Platform, codexCliDetected?: boolean, codexTrustStatus?: CodexTrustStatus } = {},
 ): AgentCompatibilityDiagnostic {
   const platform = options.platform ?? process.platform;
   const compatibility = checkAgentCompatibility(root, platform);
@@ -749,7 +748,7 @@ export function diagnoseAgentCompatibility(
       repository_configured: codexConfigExists && codexHooksExist,
       desktop_uses_repository_config: true,
       trust_required: true,
-      trust_status: 'required-not-verifiable',
+      trust_status: uses('codex') ? (options.codexTrustStatus ?? codexTrustStatus(root)) : 'unknown',
     },
   };
 }
@@ -783,6 +782,50 @@ export function piTrustStatus(root: string, env: Record<string, string | undefin
   if (settings.defaultProjectTrust === 'always') { return 'trusted'; }
   if (settings.defaultProjectTrust === 'never') { return 'declined'; }
   return 'ask';
+}
+
+export type CodexTrustStatus = 'trusted' | 'project-untrusted' | 'hooks-untrusted' | 'unknown';
+
+interface CodexTrustConfig {
+  projects?: Record<string, { trust_level?: string }>
+  hooks?: { state?: Record<string, { enabled?: boolean, trusted_hash?: string }> }
+}
+
+/**
+ * Whether Codex would run this checkout's hooks, from Codex's own
+ * `config.toml` (`$CODEX_HOME`, else `~/.codex`), read only. The project must
+ * be trusted (`[projects."<path>"] trust_level = "trusted"`) and every hook
+ * reviewed (`[hooks.state."<hooks.json path>:<event>:<group>:<hook>"]` with a
+ * `trusted_hash`); `codex exec` skips an untrusted hook without a word. A
+ * linked worktree runs the primary checkout's `.codex/hooks.json` (measured on
+ * Codex 0.171), so both are looked up there. A hook edited after it was
+ * trusted still reads as trusted here: Codex compares a hash this check does
+ * not compute, and asks again in the interactive review.
+ */
+export function codexTrustStatus(root: string, env: Record<string, string | undefined> = process.env, home: string = homedir(), primaryRoot: string | null = checkoutRoots(root)?.primaryRoot ?? null): CodexTrustStatus {
+  const codexHome = env.CODEX_HOME && env.CODEX_HOME.trim() !== '' ? env.CODEX_HOME : join(home, '.codex');
+  let config: CodexTrustConfig;
+  try { config = Bun.TOML.parse(readFileSync(join(codexHome, 'config.toml'), 'utf8')) as CodexTrustConfig; }
+  catch { return 'unknown'; }
+  let project = primaryRoot ?? resolve(root);
+  try { project = realpathSync(project); }
+  catch { /* keep the resolved path */ }
+  if (config.projects?.[project]?.trust_level !== 'trusted') { return 'project-untrusted'; }
+  const hooksPath = join(project, '.codex', 'hooks.json');
+  let hooks: Record<string, unknown>;
+  try { hooks = (JSON.parse(readFileSync(hooksPath, 'utf8')) as { hooks?: Record<string, unknown> }).hooks ?? {}; }
+  catch { return 'unknown'; }
+  const state = config.hooks?.state ?? {};
+  for (const [event, groups] of Object.entries(hooks)) {
+    const snake = event.replace(/(?<=[a-z])(?=[A-Z])/g, '_').toLowerCase();
+    for (const [group, entry] of (Array.isArray(groups) ? groups : []).entries()) {
+      for (const index of ((entry as { hooks?: unknown[] })?.hooks ?? []).keys()) {
+        const record = state[`${hooksPath}:${snake}:${group}:${index}`];
+        if (!record?.trusted_hash || record.enabled === false) { return 'hooks-untrusted'; }
+      }
+    }
+  }
+  return 'trusted';
 }
 
 export interface IssueTrackerDiagnostic {
@@ -858,6 +901,16 @@ export function envVarApplies(name: string, tracker: IssueTracker): boolean {
 /** `skills add -g` writes ~/.agents/skills, but with `-a claude-code` it copies straight into ~/.claude/skills. */
 export function userSkillInstalled(name: string, home: string = homedir()): boolean {
   return ['.agents', '.claude'].some(dir => existsSync(join(home, dir, 'skills', name, 'SKILL.md')));
+}
+
+function codexTrustRow(status: CodexTrustStatus): string {
+  if (status === 'trusted') { return tui.statusIcon('ok'); }
+  const why = {
+    'project-untrusted': 'project not trusted: Codex loads no project config or hooks; trust it when Codex asks on start',
+    'hooks-untrusted': 'hooks not reviewed: `codex exec` skips them silently; run `codex` here and pick "Trust all and continue"',
+    'unknown': 'Codex has no config on this machine yet',
+  }[status];
+  return `${tui.statusIcon('warn')} ${why}`;
 }
 
 function piTrustRow(status: PiTrustStatus): string {
@@ -1275,7 +1328,7 @@ function printHuman(report: DoctorReport): void {
     checks.push(
       ['Codex repository config (config.toml + hooks.json)', compat.codex.repository_configured ? tui.statusIcon('ok') : tui.statusIcon('fail')],
       ['Codex CLI executable', compat.codex.cli_detected ? tui.statusIcon('ok') : `${tui.statusIcon('warn')} not on PATH; Desktop still reads the repository config`],
-      ['Codex repository trust', `${tui.statusIcon('warn')} required; runtime state, not file-verifiable`],
+      ['Codex project and hook trust', codexTrustRow(compat.codex.trust_status)],
     );
   }
   else {

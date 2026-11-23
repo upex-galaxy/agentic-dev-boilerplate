@@ -1006,8 +1006,8 @@
             clasificadas con el router de <code>AGENTS.md</code> y los <code>triggers:</code> de
             cada sección. Un <code>SessionStart</code> con <code>compact</code> o
             <code>clear</code> las re-arma en Claude Code y Codex; Pi las re-arma con
-            <code>session_compact</code>; OpenCode 1 rutea desde <code>chat.message</code> y
-            OpenCode 2 se queda con el router.
+            <code>session_compact</code>; OpenCode rutea desde <code>chat.message</code> (OpenCode
+            1) o desde el hook de sesión <code>prompt</code> (OpenCode 2) y re-arma al compactar.
           </li>
         </ol>
         <pre
@@ -1046,7 +1046,10 @@
               <code>git rev-parse --show-toplevel</code> y corre el mismo emisor, con una variante
               <code>commandWindows</code> en PowerShell.
             </p>
-            <p>Solo carga en un repositorio que Codex marcó como confiable.</p>
+            <p>
+              Solo carga en un repositorio que Codex marcó como confiable, y solo corre con los
+              hooks confiados.
+            </p>
           </div>
           <div class="card">
             <span class="n h-pi">Pi</span>
@@ -1361,9 +1364,11 @@
         <h3 class="sub-h">Lo que conviene saber de cada host</h3>
         <ul class="tight">
           <li>
-            <strong>Confianza en Codex</strong>: la config y los hooks de <code>.codex/</code> solo
-            cargan en un repositorio confiable. Es estado de runtime y ningún archivo lo prueba, por
-            eso el doctor lo muestra como aviso.
+            <strong>Confianza en Codex</strong>: la config de <code>.codex/</code> solo carga en un
+            repositorio confiable, y cada hook del proyecto necesita su propia confianza:
+            <code>codex exec</code> saltea en silencio un hook sin confianza. El doctor lee las dos
+            de la config de Codex y avisa. En un worktree enlazado Codex usa el
+            <code>.codex/</code> y la confianza del checkout principal.
           </li>
           <li>
             <strong>Codex Desktop</strong> usa la misma config del repo que el CLI. No hay segunda

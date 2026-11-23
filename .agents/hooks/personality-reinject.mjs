@@ -47,13 +47,14 @@
  *     two SessionStart groups (matcher `compact`, matcher `clear`) run it
  *     again to re-arm the routes after a compaction or a `/clear`.
  *   - Codex: `.codex/hooks.json` does the same from the Git root, with the
- *     same two SessionStart groups (`compact`, `clear`; trusted project only:
- *     an untrusted one loads neither AGENTS.md nor hooks).
+ *     same two SessionStart groups (`compact`, `clear`; trusted project and
+ *     trusted hooks only: an untrusted project loads no project config, and
+ *     `codex exec` silently skips hooks nobody trusted).
  *   - OpenCode: `.opencode/plugins/personality-reinject.js` imports
  *     `agentContextLines` and pushes the same lines into the system prompt;
- *     OpenCode 1 also routes from `chat.message` and re-arms on
- *     `experimental.session.compacting` only (the adapter registers no `/clear` hook);
- *     OpenCode 2 is router-only, so it has nothing to re-arm.
+ *     it routes from the prompt hook (`chat.message` on OpenCode 1, the
+ *     session `prompt` hook on OpenCode 2) and re-arms on compaction only
+ *     (the adapter registers no `/clear` hook).
  *   - Pi: `.pi/extensions/agentic-dev.js` imports the same exports, injects
  *     the lines as a hidden message in `before_agent_start`, and re-arms on
  *     the `session_compact` event only; `/new` starts a new session id.
@@ -452,7 +453,7 @@ export function resolveAgentIdentity(options = {}) {
     sessionName,
     nameSource,
     label: sessionLabel({ sessionName, nameSource, sessionId }),
-    worktree: resolveWorktree(env, options.cwd ?? sessionDirectory(env, hookInput)),
+    worktree: resolveWorktree(env, options.cwd ?? options.repoRoot ?? sessionDirectory(env, hookInput)),
   };
 }
 
@@ -555,7 +556,7 @@ export function worktreeUnprovisioned(options = {}) {
  * One line per newly routed file. The per-session state (keyed by session id)
  * remembers what was routed, so a prompt that needs nothing new costs 0 bytes;
  * `SessionStart` with source `compact` or `clear` re-arms it (Claude Code and
- * Codex; OpenCode 1 on compaction only), because the routed files left the
+ * Codex; OpenCode and Pi on compaction only), because the routed files left the
  * context with the compacted or cleared messages.
  *
  * Adherence (ADR-0018). Measured on real transcripts, an agent reads about
@@ -1174,8 +1175,8 @@ export function rearmRoutes(options = {}) {
  * notification neither sets nor clears it: its result text may quote a brief
  * that carries the token. Without a session id only the current prompt decides.
  * Without `routeState` the record is resolved from `sessionId` (and `repoRoot`),
- * as `routeLines` does: the OpenCode 1 adapter records the role this way in
- * `chat.message`, and its system transform reads it back.
+ * as `routeLines` does: the OpenCode adapter records the role this way in its
+ * prompt hook, and its system hook reads it back.
  */
 export function sessionLaunched(options = {}) {
   const { prompt } = options;
@@ -1196,7 +1197,7 @@ export function identityLine(identity) {
 /**
  * The lines every harness injects, in order. OpenCode pushes them as-is. The
  * `ROUTE:` lines come last and only when a `prompt` is passed: the OpenCode
- * system transform has no prompt, so its adapter routes in `chat.message`.
+ * system hooks have no prompt, so its adapter routes in its prompt hook.
  * The session record is resolved once and shared: `sessionLaunched` (the
  * `ORCA:` variant) writes its flag before `routeLines` writes the routes.
  */

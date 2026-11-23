@@ -38,8 +38,13 @@ Codex no necesita ningún shim: consume las dos fuentes canónicas directamente.
 
 Codex carga `.codex/config.toml` y `.codex/hooks.json` **solo en un repositorio trusted**. Sin trust, Codex arranca igual pero sin los MCPs ni el hook de personalidad, y no avisa.
 
-- La confianza es estado de runtime de Codex, no un archivo del repo: no se puede verificar leyendo el disco. Por eso `bun run setup:doctor` la muestra como fila **WARN** (no FAIL) y te recuerda confirmarla.
+Los hooks tienen una segunda puerta: cada hook del proyecto tiene que estar trusted también.
+
+- Codex interactivo frena con "Hooks need review" cuando un hook es nuevo o cambió: revisalos, o elegí "Trust all and continue". "Continue without trusting" los deja apagados.
+- `codex exec` saltea en silencio cualquier hook sin trust: una corrida headless no recibe ni `AGENT IDENTITY:` ni `ROUTE:`. `--dangerously-bypass-hook-trust` los corre en esa invocación, solo para automatización que ya revisó los hooks.
+- La confianza vive en la configuración de usuario de Codex (`[projects."<ruta>"] trust_level` y `[hooks.state."<ruta>/.codex/hooks.json:<evento>:<grupo>:<hook>"]`). `bun run setup:doctor` la lee sin tocarla y muestra una fila **WARN** (no FAIL) que nombra la puerta que falta. Un hook editado después de confiar en él sigue figurando como trusted ahí: Codex compara un hash que el doctor no calcula.
 - La primera vez que abrís el repo, Codex pregunta si confiás en él. Aceptá. Si lo rechazaste, revisá la configuración de proyectos trusted de tu instalación de Codex y volvé a marcarlo.
+- En un worktree enlazado Codex usa el `.codex/` y la confianza del checkout principal: un cambio a `.codex/hooks.json` en el worktree no rige hasta que llega al checkout principal.
 - Codex Desktop comparte esa confianza con la CLI: es la misma configuración de usuario.
 
 ---
@@ -84,7 +89,7 @@ Dentro de la sesión, `/mcp` lista los servidores activos. Si `.codex/config.tom
 
 ## 🎭 Hook de personalidad
 
-`.codex/hooks.json` registra un hook `UserPromptSubmit` que corre el emisor desde la raíz de git, con una variante POSIX (`command`) y otra PowerShell (`commandWindows`).
+`.codex/hooks.json` registra un hook `UserPromptSubmit` que corre el emisor desde la raíz de git, con una variante POSIX (`command`) y otra PowerShell (`commandWindows`). Solo corre cuando el hook está trusted (ver arriba).
 
 El emisor es `.agents/hooks/personality-reinject.mjs`, el mismo que ejecuta Claude Code desde `.claude/settings.json` y que OpenCode importa desde `.opencode/plugins/personality-reinject.js`. Reinyecta en cada turno el contrato de salida de `AGENTS.md` §2 (PM Voice, Butler, Visual Mapping) para que no se diluya en sesiones largas, más la línea `AGENT IDENTITY: worktree=… session=… harness=…` de la que salen los trailers `Worktree:` / `Session:` de cada commit (`AGENTS.md` Critical Rule #3), una línea `ORCA:` cuando el binario `orca` está disponible, y como mucho un aviso de setup (falta `.env`, o un worktree que nunca corrió `bun run worktree:provision`). Codex resuelve la raíz con `git rev-parse` porque no expone una variable de directorio de proyecto como `$CLAUDE_PROJECT_DIR`. Requiere `node` y `git` en el `PATH`.
 
@@ -115,7 +120,7 @@ No es un MCP del proyecto. Conectá Exa (o Tavily) una vez por máquina en `~/.c
 
 ### El hook no imprime el contrato
 
-`node` o `git` no están en el `PATH` del proceso de Codex, o el repo no está trusted. Probá a mano desde la raíz: `node .agents/hooks/personality-reinject.mjs` tiene que imprimir una línea que empieza con `OUTPUT CONTRACT`.
+`node` o `git` no están en el `PATH` del proceso de Codex, o el repo o sus hooks no están trusted (`bun run setup:doctor` dice cuál). Probá a mano desde la raíz: `node .agents/hooks/personality-reinject.mjs` tiene que imprimir una línea que empieza con `OUTPUT CONTRACT`.
 
 ---
 
