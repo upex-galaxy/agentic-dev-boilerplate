@@ -1097,8 +1097,8 @@
               <tr>
                 <td>Codex</td>
                 <td>
-                  <code>.codex/hooks.json</code>: the same, only in a trusted project (an untrusted
-                  one loads neither <code>AGENTS.md</code> nor hooks).
+                  <code>.codex/hooks.json</code>: the same, only in a trusted project whose hooks
+                  are trusted too (<code>codex exec</code> skips an untrusted hook silently).
                 </td>
               </tr>
               <tr>
@@ -1112,8 +1112,8 @@
               <tr>
                 <td>OpenCode 2</td>
                 <td>
-                  Router only: no documented hook hands it the request text, so it ships the
-                  L0 router with the LOAD PROTOCOL. It is a declared degradation.
+                  The same plugin classifies in the session <code>prompt</code> hook, pushes the line
+                  through the <code>context</code> hook and re-arms in the <code>compaction</code> hook.
                 </td>
               </tr>
             </tbody>
