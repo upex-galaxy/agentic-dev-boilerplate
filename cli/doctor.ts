@@ -1345,7 +1345,7 @@ function printHuman(report: DoctorReport): void {
   }
   checks.push(
     ['node_modules', report.deps_installed ? tui.statusIcon('ok') : tui.statusIcon('fail')],
-    ['agent-orchestration (user level: ~/.agents/skills or ~/.claude/skills)', report.agent_orchestration_installed ? tui.statusIcon('ok') : `${tui.statusIcon('info')} not installed; run \`bun setup\` for fleets of worker sessions`],
+    ['agent-orchestration (user level: ~/.agents/skills or ~/.claude/skills)', report.agent_orchestration_installed ? tui.statusIcon('ok') : `${tui.statusIcon('info')} not installed; run \`bun setup --sync-skills\` for fleets of worker sessions`],
     ...(report.worktree_of !== null ? [['Linked worktree of', `${tui.statusIcon('info')} ${report.worktree_of}`]] : []),
   );
   // The host is shown by VALUE, not as a set/missing tick. Reading which site
