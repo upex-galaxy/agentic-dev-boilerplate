@@ -48,6 +48,7 @@
  *   INSTALL_FORCE_RTK=1               Force re-run of the RTK step (also clears a remembered decline)
  *   INSTALL_FORCE_COMMUNITY_SKILLS=1  Force re-run of community skills install
  *   INSTALL_FORCE_GITHUB_REMOTE=1     Force re-run of GitHub remote setup
+ *   INSTALL_FORCE_GIT_POLICY=1        Ask the git strategy questions again
  *   INSTALL_SKIP_COMMUNITY=1          Skip `bunx skills add`
  *   INSTALL_SKIP_JIRA=1               Skip the Jira phase
  */
@@ -103,6 +104,7 @@ import { missingClisFor, skipJiraPhase } from './lib/tracker-gating.ts';
 import * as tui from './lib/tui.ts';
 import { startInstallerUi } from './lib/ui/installer-run.ts';
 import { pickLang } from './lib/ui/strings.ts';
+import { devLinkedDestinations } from './lib/user-skills-update.ts';
 import { nextStepsVars, VAR_MANIFEST, varsFor } from './lib/variables-manifest.ts';
 import { runSetupPreflight } from './preflight.ts';
 
@@ -231,6 +233,19 @@ interface CommunitySkill {
  * generated `.claude/skills` alias, OpenCode and Codex read it natively.
  */
 export const PROJECT_SKILL_DESTINATION = '.agents/skills';
+
+export async function addCommunitySkill(
+  item: CommunitySkill,
+  level: 'project' | 'global',
+  agents: AgentId[],
+  run: (args: string[]) => Promise<StreamResult>,
+  base: string,
+  env: Record<string, string | undefined> = process.env,
+): Promise<{ devLinks: string[], result: StreamResult | null }> {
+  const devLinks = devLinkedDestinations(item.skill, level, base, env);
+  if (devLinks.length > 0) { return { devLinks, result: null }; }
+  return { devLinks, result: await run(buildCommunitySkillArgs(item, level, agents)) };
+}
 
 /**
  * Argument list for one `bunx skills add` call.
@@ -491,6 +506,7 @@ const SYNC_SKILLS = ARGV.includes('--sync-skills');
 const FORCE_RTK = process.env.INSTALL_FORCE_RTK === '1';
 const FORCE_COMMUNITY_SKILLS = process.env.INSTALL_FORCE_COMMUNITY_SKILLS === '1' || SYNC_SKILLS;
 const FORCE_GITHUB_REMOTE = process.env.INSTALL_FORCE_GITHUB_REMOTE === '1';
+const FORCE_GIT_POLICY = process.env.INSTALL_FORCE_GIT_POLICY === '1';
 // INSTALL_SKIP_JIRA=1: the Jira phase is skipped (a project that does not use Jira; also the e2e fixtures).
 const SKIP_JIRA_ENV = process.env.INSTALL_SKIP_JIRA === '1';
 let TRACKER: IssueTracker = 'jira';
@@ -1212,6 +1228,28 @@ async function askUserLevelSkills(state: InstallState, agents: AgentId[]): Promi
   return offered.filter(item => set.has(describeSkill(item)));
 }
 
+export function skipDevLinkedSkill(
+  state: { skills: Record<string, InstallStatus> },
+  stateKey: string,
+  slug: string,
+  devLinks: string[],
+  out: { warn: (message: string) => void },
+): void {
+  state.skills[stateKey] = 'skipped';
+  out.warn(tr(
+    `${slug}: omitida, es un enlace de desarrollo y \`skills add\` lo reemplazaría: ${devLinks.join(', ')}`,
+    `${slug}: skipped, it is a development link and \`skills add\` would replace it: ${devLinks.join(', ')}`,
+  ));
+}
+
+export function communityStepSummary(installed: number, linked: number, total: number, where: string): { status: 'ok' | 'warn', note: string } {
+  const kept = linked > 0 ? tr(` · ${linked} omitida(s) por enlace de desarrollo`, ` · ${linked} skipped, development link`) : '';
+  return {
+    status: installed + linked === total ? 'ok' : 'warn',
+    note: `${tr(`${installed} de ${total} en ${where}`, `${installed} of ${total} in ${where}`)}${kept}`,
+  };
+}
+
 async function runCommunityStep(
   agents: AgentId[],
   state: InstallState,
@@ -1253,16 +1291,22 @@ async function runCommunityStep(
   }
   const out = stepOut(step);
   let ok = 0;
+  let linked = 0;
   for (const item of toInstall) {
     const slug = describeSkill(item);
     const stateKey = `community:${level}:${slug}`;
     // Project level: body lands once in `.agents/skills/` (PROJECT_SKILL_DESTINATION);
     // Claude Code reads it through the `.claude/skills` alias the compatibility
     // step restores right after. User level: one `--agent` per selected harness.
-    const args = buildCommunitySkillArgs(item, level, agents);
-    out.dim(`bunx skills add ${slug}${level === 'global' ? ' -g' : ''}`);
-    const r = await runStreamed('bunx', args, { timeoutMs: 180_000 });
-    if (r.code === 0) {
+    const { devLinks, result: r } = await addCommunitySkill(item, level, agents, async (args) => {
+      out.dim(`bunx skills add ${slug}${level === 'global' ? ' -g' : ''}`);
+      return runStreamed('bunx', args, { timeoutMs: 180_000 });
+    }, level === 'project' ? REPO_ROOT : homedir());
+    if (r === null) {
+      linked += 1;
+      skipDevLinkedSkill(state, stateKey, slug, devLinks, out);
+    }
+    else if (r.code === 0) {
       ok += 1;
       state.skills[stateKey] = 'installed';
     }
@@ -1274,7 +1318,8 @@ async function runCommunityStep(
   }
   markStepDone(state, key);
   const where = level === 'project' ? '<code>.agents/skills/</code>' : tr('tu usuario', 'your user');
-  step.end(ok === toInstall.length ? 'ok' : 'warn', tr(`${ok} de ${toInstall.length} en ${where}`, `${ok} of ${toInstall.length} in ${where}`));
+  const summary = communityStepSummary(ok, linked, toInstall.length, where);
+  step.end(summary.status, summary.note);
 }
 
 // ============================================================================
@@ -1945,6 +1990,73 @@ async function setupGithubRemote(state: InstallState): Promise<void> {
     push.end('failed', tr(`El repositorio se creó pero la subida falló (casi siempre un hook pre-push). Arréglalo y corre <code>git push -u origin ${currentBranch}</code>, o vuelve a correr el instalador.`, `The repository was created but the push failed (almost always a pre-push hook). Fix it and run <code>git push -u origin ${currentBranch}</code>, or run the installer again.`));
   }
 }
+
+// LINT.IfChange(git-policy-setup)
+interface GitPolicyAnswers { strategy: string, push: string, merge: string }
+
+interface GitPolicyQuestion {
+  id: string
+  title: string
+  default: string
+  choices: { value: string, label: string, day: string, rec?: boolean }[]
+}
+
+export function parseGitPolicyQuestions(stdout: string): GitPolicyQuestion[] | null {
+  try {
+    const qs = JSON.parse(stdout) as unknown;
+    if (!Array.isArray(qs) || qs.length !== 3) { return null; }
+    const ok = qs.every((q: Partial<GitPolicyQuestion>) => typeof q?.id === 'string' && typeof q.title === 'string' && typeof q.default === 'string' && Array.isArray(q.choices) && q.choices.length > 0);
+    return ok ? qs as GitPolicyQuestion[] : null;
+  }
+  catch { return null; }
+}
+
+export function gitPolicySetupArgs(answers: GitPolicyAnswers | null): string[] {
+  const base = ['scripts/git-policy.ts', 'setup', '--plan-only'];
+  return answers === null ? base : [...base, '--strategy', answers.strategy, '--push', answers.push, '--merge', answers.merge, '--write-policy'];
+}
+
+async function gitPolicyStep(state: InstallState): Promise<void> {
+  const key = '14-git-policy';
+  const title = tr('Estrategia de git y configuración de GitHub', 'Git strategy and GitHub configuration');
+  if (state.steps?.[key] && !FORCE_GIT_POLICY) {
+    UI!.step({ phase: 'github', why: 'gh', title }).end('skipped', tr('ya hecho. Para cambiarlo: <code>bun run git:policy setup</code>', 'already done. To change it: <code>bun run git:policy setup</code>'));
+    return;
+  }
+  let answers: GitPolicyAnswers | null = null;
+  if (!NON_INTERACTIVE) {
+    const listed = spawnSync('bun', ['scripts/git-policy.ts', 'setup', '--questions-json'], { cwd: REPO_ROOT, encoding: 'utf8', timeout: 30_000 });
+    const questions = listed.status === 0 ? parseGitPolicyQuestions(listed.stdout) : null;
+    if (!questions) {
+      UI!.step({ phase: 'github', why: 'gh', title }).end('skipped', tr('no se pudieron leer las preguntas. Después: <code>bun run git:policy setup</code>', 'could not read the questions. Later: <code>bun run git:policy setup</code>'));
+      return;
+    }
+    const picked: string[] = [];
+    for (const q of questions) {
+      picked.push(await ask<string>({
+        id: `git-${q.id}`,
+        kind: 'select',
+        kicker: 'Git',
+        title: q.title,
+        spec: { options: q.choices.map(c => ({ value: c.value, label: c.label, desc: c.day, ...(c.rec ? { rec: true } : {}) })) },
+        default: q.default,
+      }));
+    }
+    answers = { strategy: picked[0]!, push: picked[1]!, merge: picked[2]! };
+  }
+  const step = UI!.step({ phase: 'github', why: 'gh', title, detail: tr('plan y comprobación de permisos: el instalador nunca escribe en GitHub', 'plan and permission check: the installer never writes to GitHub') });
+  const res = await runStreamed('bun', gitPolicySetupArgs(answers), { step, timeoutMs: 120_000 });
+  if (res.code !== 0) {
+    step.end('failed', tr('No se pudo preparar el plan. Corre <code>bun run git:policy setup</code> para ver el motivo.', 'The plan could not be prepared. Run <code>bun run git:policy setup</code> to see why.'));
+    return;
+  }
+  if (answers) { markStepDone(state, key); }
+  step.end(answers ? 'ok' : 'skipped', tr(
+    'Para aplicarlo en GitHub, o para el mensaje listo para quien administre el repositorio: <code>bun run git:policy setup</code> en una terminal.',
+    'To apply it on GitHub, or to get the ready message for whoever administers the repository: <code>bun run git:policy setup</code> in a terminal.',
+  ));
+}
+// LINT.ThenChange(INSTALLER.md, docs/onboarding.html)
 
 // ============================================================================
 // Verify: external CLIs (information only: a missing one never stops the run)
@@ -3269,6 +3381,7 @@ async function main(): Promise<void> {
     waiting?.end('ok');
   }
   await setupGithubRemote(state);
+  await gitPolicyStep(state);
   ui.phaseEnd('github');
 
   // ── verify ─────────────────────────────────────────────────────────────

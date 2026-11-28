@@ -22,7 +22,7 @@
 
 import type { Stats } from 'node:fs';
 import type { Harness, HarnessSelection } from './harness-selection.ts';
-import { existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, readlinkSync, rmSync, symlinkSync, unlinkSync, writeFileSync } from 'node:fs';
+import { existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, readlinkSync, rmSync, statSync, symlinkSync, unlinkSync, writeFileSync } from 'node:fs';
 import { isAbsolute, join, normalize, relative, resolve } from 'node:path';
 
 import { validateEslintBlockWiring, validateHookCompatibility, validateMcpParityFindings, validateOxlintWiring, validatePersonalityOverride } from './agent-compatibility-contracts.ts';
@@ -211,6 +211,23 @@ function resolvesToCanonical(
     ? resolve(actualTarget)
     : resolve(join(linkPath, '..'), actualTarget);
   return normalize(resolvedTarget) === normalize(resolve(canonicalTarget));
+}
+
+function holdsForeignFiles(linkPath: string, canonicalSkills: string): boolean {
+  if (!existsSync(linkPath)) { return false; }
+  const linked = statSync(linkPath);
+  const store = statSync(canonicalSkills);
+  if (!linked.isDirectory() || (linked.dev === store.dev && linked.ino === store.ino)) { return false; }
+  return readdirSync(linkPath).some(name => !OS_METADATA_FILES.has(name));
+}
+
+// The installer prints only the lines after the first one.
+function foreignAliasRefusal(target: string, platform: NodeJS.Platform): string {
+  const unlink = platform === 'win32' ? 'rmdir .claude\\skills' : 'rm .claude/skills';
+  return [
+    'Refusing to replace .claude/skills because it links to a folder that holds files.',
+    `.claude/skills was left linked to ${target}. To get the generated alias: put every skill you still need under .agents/skills (a folder, or a link to its checkout), remove only the link with \`${unlink}\`, then run \`bun run agents:compat\`.`,
+  ].join('\n');
 }
 
 function lstatIfPresent(path: string): Stats | null {
@@ -544,6 +561,9 @@ export function repairClaudeSkillsAlias(
       return { path: paths.claudeSkills, target, type, status: 'valid' };
     }
 
+    if (holdsForeignFiles(paths.claudeSkills, paths.canonicalSkills)) {
+      throw new Error(foreignAliasRefusal(actualTarget, platform));
+    }
     unlinkSync(paths.claudeSkills);
     status = 'repaired';
   }
