@@ -1,6 +1,6 @@
 # Skill Registry (auto-generated)
 
-> Generated: `2026-11-21T21:39:37.960Z`
+> Generated: `2026-11-28T08:12:53.995Z`
 > Generator: `bun scripts/build-skill-registry.ts`
 > Protocol: `.agents/skills/agentic-dev-core/references/skill-resolver.md`
 
@@ -8,7 +8,7 @@ This file is the per-session compact-rules cache for the Skill Resolver protocol
 The orchestrator copies one or more `## Skill: <slug>` blocks below into every subagent briefing under `## Project Standards (auto-resolved)`.
 Subagents trust those compact rules and only read the full SKILL.md when explicitly instructed.
 
-Skills indexed: 23
+Skills indexed: 24
 
 ---
 ## Skill: acli
@@ -197,6 +197,29 @@ Skills indexed: 23
 **Read full SKILL.md when**: the compact rules above are insufficient (e.g. novel scenario, debugging, or the briefing tells you to load the full skill).
 
 > Source: `.agents/skills/design-system/SKILL.md` · phase: `foundation` · kind: `workflow` · stage owner · source: frontmatter `compact_rules` (verbatim)
+
+---
+
+## Skill: edd
+
+**Purpose**: Evidence-Driven Delivery doctrine: the agent commits, pushes and merges on its own once the project's required evidence passes.
+
+**Compact Rules**:
+- Deliver on evidence: under `git_strategy.policy.direct_push_to_protected: evidence`, push without asking when the pre-push gate passes; under `merge_mode` `auto` or `human-approves`, enable auto-merge at PR open. The gate's verdict is the decision. A failed gate means no push and no question: fix forward and retry.
+- Only the gate writes the record (`bun run edd gate` before a push, `bun run edd verify --ci` in CI), and only `bun run edd attest` creates the evidence commit. Never write either by hand, never edit one after the fact.
+- Depth may be raised (`--depth`), never lowered, and no required check is skipped. A check that cannot run (environment down, tool missing) is reported and the delivery waits; lowering depth means editing the contract, which is a change like any other.
+- At depth `standard` or deeper, the agentic verdict comes from a session other than the author: a subagent with fresh context or another session, under a label that differs from the author's `Session:` trailer. The label is self-declared, so this guards against honest mistakes, not against a dishonest agent. The author reading its own evidence is not a review.
+- Before `gh pr merge --auto`, run `bun run git:policy verify --merge <base>`, because on a base that requires no check auto-merge merges at once, red or not. A protected base that fails it: stop and tell the person. A base with no ruleset at all (a stacked PR, an unprotected trunk): skip `--auto`, wait for `edd/evidence` to pass, then merge.
+- Merge with a merge commit unless the repo declares another method in `git_strategy.decisions.feature_merge`. A squash folds the evidence commit into a message body and loses its signature.
+- Watch your own PR from the moment it opens until it merges, with the bundled watcher (`references/waiting.md`). It ends itself on MERGED or CLOSED after one last event; then confirm the merge commit is an ancestor of the base.
+- A change to the gate itself (workflows, hooks, the evidence script, the contract, the policy) is delivered like any other change. It takes depth `standard` or deeper, the record flags it as `touches_gate` for the reader, and a repo on `human-approves` lists those paths in CODEOWNERS so a person reviews them there. Nothing else stops it.
+- People hear from you two ways: the PR announcement posts on its own from the announcement template, wherever `notify.provider` in `.agents/project.yaml` points (`none` posts nothing); every other message to a person is a Slack draft the owner reviews and sends.
+- Ask a person only for the closed list in `references/human-gates.md`. Everything outside it is the agent's call.
+- No policy relaxes the git invariants: no force push, no `--no-verify`, no rewrite of pushed history, no remote branch deletion without confirmation.
+
+**Read full SKILL.md when**: the compact rules above are insufficient (e.g. novel scenario, debugging, or the briefing tells you to load the full skill).
+
+> Source: `.agents/skills/edd/SKILL.md` · phase: `unknown` · kind: `core` · extraction strategy: A
 
 ---
 

@@ -1,0 +1,279 @@
+import type { Repo } from './fixture.ts';
+import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+
+import { join, resolve } from 'node:path';
+
+import { afterEach, describe, expect, test } from 'bun:test';
+
+import { makeRepo, projectYaml } from './fixture.ts';
+
+const EDD = resolve(import.meta.dir, '..', '..', 'edd.ts');
+const GATES = resolve(import.meta.dir, '..', '..', '..', '.husky', 'framework-gates.sh');
+
+const repos: Repo[] = [];
+afterEach(() => {
+  while (repos.length > 0) { repos.pop()?.cleanup(); }
+});
+
+function contract(cmd: string): string {
+  return `evidence:
+  static:
+    - { id: lint, cmd: '${cmd}', where: [pre-push, ci] }
+    - { id: never, cmd: 'exit 3', where: [ci] }
+  depth:
+    default: none
+`;
+}
+
+function fixture(policy: string): { r: Repo, base: string } {
+  const r = makeRepo();
+  repos.push(r);
+  const base = r.commit('chore: base', { '.agents/project.yaml': projectYaml(contract('test -f ok.txt'), policy) });
+  r.git('update-ref', 'refs/remotes/origin/main', base);
+  return { r, base };
+}
+
+function run(cwd: string, args: string[], stdin = ''): { code: number, out: string } {
+  const p = Bun.spawnSync(['bun', EDD, ...args], { cwd, stdin: Buffer.from(stdin), stdout: 'pipe', stderr: 'pipe' });
+  return { code: p.exitCode ?? 1, out: `${p.stdout.toString()}${p.stderr.toString()}` };
+}
+
+function records(dir: string): string[] {
+  const ev = join(dir, '.session', 'evidence');
+  return existsSync(ev) ? readdirSync(ev).filter(f => f.endsWith('.json')) : [];
+}
+
+describe('edd gate', () => {
+  test('policy evidence: a failing check refuses the push and writes a fail record', () => {
+    const { r, base } = fixture('evidence');
+    const head = r.commit('feat: x', { 'app/a.ts': '1\n' });
+    const res = run(r.dir, ['gate'], `refs/heads/main ${head} refs/heads/main ${base}\n`);
+    expect(res.code).toBe(1);
+    const rec = JSON.parse(readFileSync(join(r.dir, '.session', 'evidence', `${head}.json`), 'utf8'));
+    expect(rec).toMatchObject({ schema: 'edd-evidence/1', result: 'fail', push: { where: 'pre-push', flow: 'direct' }, contract: { read_from: base } });
+    expect(rec.static.map((s: { id: string, exit: number }) => [s.id, s.exit])).toEqual([['lint', 1]]);
+  });
+
+  test('policy evidence: a passing run writes a pass record', () => {
+    const { r, base } = fixture('evidence');
+    const head = r.commit('feat: x', { 'ok.txt': '1\n' });
+    const res = run(r.dir, ['gate'], `refs/heads/main ${head} refs/heads/main ${base}\n`);
+    expect(res.out).toContain('edd gate: PASS');
+    expect(res.code).toBe(0);
+    expect(JSON.parse(readFileSync(join(r.dir, '.session', 'evidence', `${head}.json`), 'utf8')).result).toBe('pass');
+  });
+
+  test('the checks come from the base contract: a push that weakens its own contract still runs the base one', () => {
+    const { r, base } = fixture('evidence');
+    const head = r.commit('chore: weaken', { '.agents/project.yaml': projectYaml(contract('true')) });
+    const res = run(r.dir, ['gate'], `refs/heads/main ${head} refs/heads/main ${base}\n`);
+    expect(res.code).toBe(1);
+    const rec = JSON.parse(readFileSync(join(r.dir, '.session', 'evidence', `${head}.json`), 'utf8'));
+    expect(rec.touches_gate).toEqual({ touched: true, paths: [], keys: ['evidence'] });
+  });
+
+  test('tags and other non-branch refs are not gated', () => {
+    const { r } = fixture('evidence');
+    const res = run(r.dir, ['gate'], `refs/tags/v1 ${'a'.repeat(40)} refs/tags/v1 ${'0'.repeat(40)}\n`);
+    expect(res.code).toBe(0);
+    expect(records(r.dir)).toEqual([]);
+  });
+
+  test('a GIT_DIR inherited from the hook does not reach the checks', () => {
+    const { r } = fixture('evidence');
+    r.commit('chore: probe', { '.agents/project.yaml': projectYaml(contract('test -z "$GIT_DIR"')) });
+    const probeBase = r.git('rev-parse', 'HEAD');
+    r.git('update-ref', 'refs/remotes/origin/main', probeBase);
+    const head = r.commit('feat: x', { 'app/a.ts': '1\n' });
+    const p = Bun.spawnSync(['bun', EDD, 'gate'], { cwd: r.dir, stdin: Buffer.from(`refs/heads/main ${head} refs/heads/main ${probeBase}\n`), stdout: 'pipe', stderr: 'pipe', env: { ...process.env, GIT_DIR: join(r.dir, '.git') } });
+    expect(p.exitCode).toBe(0);
+  });
+
+  test('a push of a commit that is not checked out fails closed', () => {
+    const { r, base } = fixture('evidence');
+    const head = r.commit('feat: x', { 'ok.txt': '1\n' });
+    r.git('checkout', '-q', base);
+    const res = run(r.dir, ['gate'], `refs/heads/main ${head} refs/heads/main ${base}\n`);
+    expect(res.code).toBe(1);
+    expect(res.out).toContain('check out the commit you push');
+  });
+
+  test('an uncommitted switch to allowed does not turn the gate off while the base says evidence', () => {
+    const { r, base } = fixture('evidence');
+    const head = r.commit('feat: x', { 'app/a.ts': '1\n' });
+    r.write('.agents/project.yaml', projectYaml(contract('true'), 'allowed'));
+    const res = run(r.dir, ['gate'], `refs/heads/main ${head} refs/heads/main ${base}\n`);
+    expect(res.code).toBe(1);
+    expect(records(r.dir)).toEqual([`${head}.json`]);
+  });
+
+  test('policy allowed: the gate does nothing and writes nothing', () => {
+    const { r, base } = fixture('allowed');
+    const head = r.commit('feat: x', { 'app/a.ts': '1\n' });
+    const res = run(r.dir, ['gate'], `refs/heads/main ${head} refs/heads/main ${base}\n`);
+    expect(res).toEqual({ code: 0, out: '' });
+    expect(records(r.dir)).toEqual([]);
+  });
+});
+
+describe('policy reading in the gate', () => {
+  test('a missing git_strategy block or a null key runs the gate; explicit forbidden, confirm, allowed do not', () => {
+    for (const [yaml, gated] of [
+      [`project:\n  project_name: x\n${contract('test -f ok.txt')}`, true],
+      [projectYaml(contract('test -f ok.txt'), 'null'), true],
+      [projectYaml(contract('test -f ok.txt'), 'forbidden'), false],
+      [projectYaml(contract('test -f ok.txt'), 'confirm'), false],
+      [projectYaml(contract('test -f ok.txt'), 'allowed'), false],
+    ] as const) {
+      const r = makeRepo();
+      repos.push(r);
+      const base = r.commit('chore: base', { '.agents/project.yaml': yaml });
+      r.git('update-ref', 'refs/remotes/origin/main', base);
+      const head = r.commit('feat: x', { 'app/a.ts': '1\n' });
+      const res = run(r.dir, ['gate'], `refs/heads/main ${head} refs/heads/main ${base}\n`);
+      expect(res.code).toBe(gated ? 1 : 0);
+      expect(records(r.dir)).toEqual(gated ? [`${head}.json`] : []);
+    }
+  });
+
+  test('with no evidence: block the shipped default runs and the failure says what to declare', () => {
+    const r = makeRepo();
+    repos.push(r);
+    const base = r.commit('chore: base', { '.agents/project.yaml': projectYaml(''), 'package.json': JSON.stringify({ scripts: { 'lint:check': 'exit 5' } }) });
+    r.git('update-ref', 'refs/remotes/origin/main', base);
+    const head = r.commit('feat: x', { 'app/a.ts': '1\n' });
+    const res = run(r.dir, ['gate'], `refs/heads/main ${head} refs/heads/main ${base}\n`);
+    expect(res.code).toBe(1);
+    expect(res.out).toContain('declares no evidence: block, so the gate ran the shipped default');
+    expect(res.out).toContain('Declare evidence.static');
+    const rec = JSON.parse(readFileSync(join(r.dir, '.session', 'evidence', `${head}.json`), 'utf8'));
+    expect(rec.static).toMatchObject([{ id: 'lint', cmd: 'bun run lint:check', exit: 5 }]);
+  });
+});
+
+describe('verify --ci output', () => {
+  test('PR-controlled strings never reach stdout as workflow commands', () => {
+    const r = makeRepo();
+    repos.push(r);
+    const base = r.commit('chore: base', { '.agents/project.yaml': projectYaml(`evidence:
+  agentic:
+    - { id: screens, kind: screenshots, envs: [local], min_depth: light }
+  depth:
+    default: light
+`) });
+    r.git('checkout', '-q', '-b', 'feat');
+    r.commit('feat: x', { 'app/a.ts': '1\n' });
+    const line = JSON.stringify({ schema: 'edd-agentic/1', subject: 'x', patch_id: 'y', depth: 'light', contract_digest: 'z', checks: [{ id: 'screens', verdict: 'fail', verdict_by: '##[error]boom', env: 'x\n::error title=Security::visit https://evil\r%0A::warning::w', artifacts: [] }] });
+    const msg = join(r.dir, '..', 'EVMSG');
+    writeFileSync(msg, `test(evidence): attest x light\n\n${line}\n\nEvidence-Subject: x\nEvidence-Patch-Id: y\nEvidence-Digest: sha256:0\n`);
+    r.git('commit', '-q', '--allow-empty', '-F', msg);
+    const head = r.git('rev-parse', 'HEAD');
+    const event = join(r.dir, '..', 'event.json');
+    writeFileSync(event, JSON.stringify({ pull_request: { number: 1, title: 'feat: x', body: '', assignees: [], base: { sha: base, ref: 'main' }, head: { sha: head, ref: 'feat' } } }));
+    const p = Bun.spawnSync(['bun', EDD, 'verify', '--ci'], { cwd: r.dir, stdout: 'pipe', stderr: 'pipe', env: { ...process.env, GITHUB_EVENT_NAME: 'pull_request_target', GITHUB_EVENT_PATH: event, GITHUB_SHA: base, GH_TOKEN: '', GITHUB_STEP_SUMMARY: '' } });
+    const out = `${p.stdout.toString()}${p.stderr.toString()}`;
+    expect(p.exitCode).toBe(1);
+    expect(out).toContain('FAIL');
+    for (const l of out.split(/\r?\n|\r/)) {
+      expect(l.trimStart().startsWith('::')).toBe(false);
+    }
+    expect(out).not.toContain('::error');
+    expect(out).not.toContain('##[');
+  });
+});
+
+describe('edd check, render, prune', () => {
+  test('check runs a ci check by id and skips an id the contract lacks', () => {
+    const { r } = fixture('allowed');
+    expect(run(r.dir, ['check', 'never']).code).toBe(3);
+    expect(run(r.dir, ['check', 'format'])).toMatchObject({ code: 0 });
+    r.commit('chore: drop block', { '.agents/project.yaml': projectYaml(''), 'package.json': JSON.stringify({ scripts: { 'lint:check': 'exit 4' } }) });
+    expect(run(r.dir, ['check', 'lint']).code).toBe(4);
+    expect(run(r.dir, ['check', 'never']).out).toContain('not a ci check');
+  });
+
+  test('render prints the record of a pushed commit', () => {
+    const { r, base } = fixture('evidence');
+    const head = r.commit('feat: x', { 'ok.txt': '1\n' });
+    run(r.dir, ['gate'], `refs/heads/main ${head} refs/heads/main ${base}\n`);
+    const res = run(r.dir, ['render', '--pr']);
+    expect(res.code).toBe(0);
+    expect(res.out).toContain('**Result: PASS**');
+    const fresh = run(r.dir, ['render', base]);
+    expect(fresh.code).toBe(0);
+    expect(fresh.out).toContain('rendered from a fresh verification');
+    expect(res.out).toContain('rendered from the record');
+  });
+
+  test('prune never deletes a record', () => {
+    const { r, base } = fixture('evidence');
+    const head = r.commit('feat: x', { 'ok.txt': '1\n' });
+    run(r.dir, ['gate'], `refs/heads/main ${head} refs/heads/main ${base}\n`);
+    expect(run(r.dir, ['prune', '--days', '0']).code).toBe(0);
+    expect(records(r.dir)).toEqual([`${head}.json`]);
+  });
+});
+
+describe('framework_gate_evidence (.husky/framework-gates.sh)', () => {
+  function hook(r: Repo, yaml: string): { code: number, called: string | null, after: string } {
+    r.write('.agents/project.yaml', yaml);
+    r.write('scripts/edd.ts', 'await Bun.write(\'called.txt\', await Bun.stdin.text());\n');
+    const script = join(r.dir, '..', 'hook.sh');
+    writeFileSync(script, `. '${GATES}'\nframework_gate_evidence || exit $?\ncat > after.txt\n`);
+    const p = Bun.spawnSync(['sh', script], { cwd: r.dir, stdin: Buffer.from('refs/heads/main a refs/heads/main b\n'), stdout: 'pipe', stderr: 'pipe' });
+    const called = join(r.dir, 'called.txt');
+    return { code: p.exitCode ?? 1, called: existsSync(called) ? readFileSync(called, 'utf8') : null, after: readFileSync(join(r.dir, 'after.txt'), 'utf8') };
+  }
+
+  test('inert under allowed, confirm, forbidden, a missing value and a commented-out evidence', () => {
+    const r = makeRepo();
+    repos.push(r);
+    for (const policy of ['allowed', 'confirm', 'forbidden', '\'allowed\'', 'allowed # was evidence']) {
+      const res = hook(r, projectYaml('', policy));
+      expect(res).toEqual({ code: 0, called: null, after: 'refs/heads/main a refs/heads/main b\n' });
+    }
+    const commented = hook(r, projectYaml('', 'allowed').replace('  policy:', '  policy:\n    # direct_push_to_protected: evidence'));
+    expect(commented.called).toBeNull();
+  });
+
+  test('a missing block, a missing key, a null value or an unknown value turn it on', () => {
+    const r = makeRepo();
+    repos.push(r);
+    const on = 'refs/heads/main a refs/heads/main b\n';
+    expect(hook(r, 'project:\n  project_name: x\n').called).toBe(on);
+    expect(hook(r, projectYaml('', 'null')).called).toBe(on);
+    expect(hook(r, projectYaml('', 'allowd')).called).toBe(on);
+    expect(hook(r, projectYaml('', 'allowed').replace('    direct_push_to_protected: allowed\n', '    merge_mode: auto\n')).called).toBe(on);
+  });
+
+  test('under evidence it hands the refs to the gate and back to the next gates, block or flow style', () => {
+    const r = makeRepo();
+    repos.push(r);
+    const block = hook(r, projectYaml('', 'evidence'));
+    expect(block).toEqual({ code: 0, called: 'refs/heads/main a refs/heads/main b\n', after: 'refs/heads/main a refs/heads/main b\n' });
+    const flow = hook(r, projectYaml('', 'evidence').replace('  policy:\n    direct_push_to_protected: evidence', '  policy: { direct_push_to_protected: \'evidence\' }'));
+    expect(flow.called).toBe('refs/heads/main a refs/heads/main b\n');
+  });
+
+  test('deleting scripts/edd.ts does not switch the gate off while the remote has it', () => {
+    const r = makeRepo();
+    repos.push(r);
+    const sha = r.commit('chore: base', { '.agents/project.yaml': projectYaml('', 'evidence'), 'scripts/edd.ts': 'x\n' });
+    r.git('update-ref', 'refs/remotes/origin/main', sha);
+    r.write('.agents/project.yaml', projectYaml('', 'evidence'));
+    const script = join(r.dir, '..', 'hook2.sh');
+    writeFileSync(script, `. '${GATES}'\nframework_gate_evidence\n`);
+    r.git('rm', '-q', 'scripts/edd.ts');
+    const p = Bun.spawnSync(['sh', script], { cwd: r.dir, stdin: Buffer.from('x\n'), stdout: 'pipe', stderr: 'pipe' });
+    expect(p.exitCode).toBe(1);
+    expect(p.stdout.toString()).toContain('cannot be skipped by deleting it');
+  });
+
+  test('the remote copy of the policy turns it on even when the working tree says allowed', () => {
+    const r = makeRepo();
+    repos.push(r);
+    const sha = r.commit('chore: base', { '.agents/project.yaml': projectYaml('', 'evidence') });
+    r.git('update-ref', 'refs/remotes/origin/main', sha);
+    expect(hook(r, projectYaml('', 'allowed')).called).toBe('refs/heads/main a refs/heads/main b\n');
+  });
+});
