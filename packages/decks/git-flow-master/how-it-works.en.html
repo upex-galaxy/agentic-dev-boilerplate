@@ -1598,7 +1598,7 @@
             <b>.agents/project.yaml</b></span
           >
           <span class="chip agent"
-            ><span class="dot"></span> it stops once the PR is open: the merge is <b>yours</b></span
+            ><span class="dot"></span> it merges on <b>evidence</b>: auto-merge once the checks pass</span
           >
         </div>
 
@@ -1729,7 +1729,7 @@
             <div class="lane-head">The operation · depends on the request</div>
             <a class="wf" href="#commits"
               ><span class="lt">B</span
-              ><span><b>Branch</b><span>Prefix + issue key, proposed before creating.</span></span></a
+              ><span><b>Branch</b><span>Prefix + issue key, picked and reported.</span></span></a
             >
             <a class="wf" href="#commits"
               ><span class="lt">C</span
@@ -1741,11 +1741,11 @@
             >
             <a class="wf" href="#pr"
               ><span class="lt">PR</span
-              ><span><b>Pull request</b><span>Base by strategy; it stops once it is created.</span></span></a
+              ><span><b>Pull request</b><span>Base by strategy; auto-merge on evidence, then it watches its PR.</span></span></a
             >
             <a class="wf" href="#conflictos"
               ><span class="lt sig">X</span
-              ><span><b>Conflict</b><span>Diagnosis first, options ranked by safety.</span></span></a
+              ><span><b>Conflict</b><span>Diagnosis first, then the safest fix; destructive options are asked.</span></span></a
             >
             <a class="wf" href="#setup"
               ><span class="lt sig">S</span
@@ -1925,7 +1925,7 @@
               <tr>
                 <th>Q4 · protected branches</th>
                 <td><b>all</b> strategies</td>
-                <td>direct push, admin bypass, minimum reviews</td>
+                <td>direct push, merge mode, admin bypass, minimum reviews</td>
                 <td><span class="mono">policy.*</span></td>
               </tr>
             </tbody>
@@ -1937,14 +1937,14 @@
             <span class="k">The AI does</span>
             <p>
               Resolves the strategy, skips the questions that do not apply or are already answered,
-              proposes each branch to create and syncs by fast-forward only.
+              creates the branches the answers imply and syncs by fast-forward only.
             </p>
           </div>
           <div class="hum">
             <span class="k">You decide</span>
             <p>
-              The strategy, each questionnaire answer, each proposed branch and the sync push to
-              a protected branch.
+              The strategy and each questionnaire answer. Once you answer, the branches are created
+              with no second OK and reported.
             </p>
           </div>
           <div class="out">
@@ -1965,9 +1965,7 @@
         </div>
 
         <div class="callout r">
-          <b>The sync push always asks.</b> Setup runs before you ratify the
-          new policy, so a freshly answered <span class="mono">allowed</span> does not
-          authorize its own push. At the end, Setup offers to carry the policy to the host with
+          <b>The sync push follows the push policy</b> like any other push. At the end, Setup offers to carry the policy to the host with
           <span class="mono">bun run git:policy</span>: read first, then a dry run, and the
           write only with your yes.
         </div>
@@ -2000,25 +1998,33 @@
               <tr>
                 <th><span class="mono">allowed</span></th>
                 <td>
-                  Pushes <b>without asking</b>. The stored value is the standing authorization;
+                  Pushes <b>without asking</b> and without a gate. The stored value is the standing authorization;
                   asking anyway would turn <span class="mono">allowed</span> into
                   <span class="mono">confirm</span>.
                 </td>
               </tr>
               <tr>
                 <th><span class="mono">confirm</span></th>
-                <td>Asks <b>before every push</b> and waits for an explicit yes.</td>
+                <td>Asks <b>before every push</b> and waits for a yes. A team chose this value on purpose, so the ask stays.</td>
               </tr>
               <tr>
                 <th><span class="mono">forbidden</span></th>
                 <td>
                   Does not push to the protected branch: it opens a working branch, pushes it and sends the
-                  change as a PR.
+                  change as a PR, with no question.
+                </td>
+              </tr>
+              <tr>
+                <th><span class="mono">evidence</span></th>
+                <td>
+                  Pushes without asking <b>only when</b> the pre-push gate passes (the hook runs
+                  <span class="mono">bun run edd gate</span>). On a fail: no push, no question, fix forward
+                  and retry.
                 </td>
               </tr>
               <tr>
                 <th>block missing or <span class="mono">null</span></th>
-                <td>Behaves as <span class="mono">confirm</span>: asking is the safe default.</td>
+                <td>Reads as <span class="mono">evidence</span>.</td>
               </tr>
             </tbody>
           </table>
@@ -2206,10 +2212,11 @@
       <div class="wrap">
         <div class="sec-head r">
           <div class="eyebrow"><span class="num">07</span> · operations · branch and commit</div>
-          <h2>Branches with a proposed name, commits with a single reason</h2>
+          <h2>Branches with a picked name, commits with a single reason</h2>
           <p class="sub">
-            The AI proposes the branch name and the full commit block, and waits for your OK before
-            running anything. You can accept, change or reject each one.
+            The AI picks the branch name, groups the commits, runs them and reports what it did. It asks
+            for no OK on a branch name, a commit set or a PR body: the only stops are the closed list in
+            <span class="mono">.agents/skills/edd/references/human-gates.md</span>.
           </p>
         </div>
 
@@ -2278,10 +2285,10 @@
       <div class="wrap">
         <div class="sec-head r">
           <div class="eyebrow"><span class="num">08</span> · operation · pull request</div>
-          <h2>It opens with full context and stops there</h2>
+          <h2>It opens with full context and merges on evidence</h2>
           <p class="sub">
-            The base comes from the strategy, the body is built on the spot, and the merge stays as your
-            explicit next step.
+            The base comes from the strategy, the body is built on the spot, and the merge follows
+            <span class="mono">git_strategy.policy.merge_mode</span>.
           </p>
         </div>
 
@@ -2300,15 +2307,35 @@
               Summary, Changes, Test Plan, Traceability (issue, branch, base, strategy, worktree and
               session), Evidence and Merge danger (way in or way back, blast radius and
               rollback). What the skill cannot complete stays visible so
-              you can edit it: it is not deleted silently. It shows you the body and base before sending them with
-              <span class="mono">gh pr create --body-file</span>.
+              you can edit it: it is not deleted silently. The body carries the evidence block printed by
+              <span class="mono">bun run edd render --pr</span> and goes out with
+              <span class="mono">gh pr create --body-file</span>, with no review round first.
             </p>
           </div>
           <div class="step">
             <h3>Labels, reviewers, draft</h3>
             <p>
-              It asks you. It does not invent labels the repo may not have: if in doubt, it
-              confirms them with <span class="mono">gh label list</span>.
+              Set before review, without asking: labels only from
+              <span class="mono">gh label list</span> (never invented), the owner of the work as assignee,
+              a reviewer only under <span class="mono">human-approves</span> (from CODEOWNERS).
+            </p>
+          </div>
+          <div class="step">
+            <h3>Merge by mode</h3>
+            <p>
+              <span class="mono">auto</span>: once <span class="mono">bun run git:policy verify --merge {base}</span>
+              exits 0, <span class="mono">gh pr merge --auto --{method}</span>, and GitHub merges when the checks,
+              <span class="mono">edd/evidence</span> included, pass. <span class="mono">human-approves</span>: the
+              same call, and a person approves. <span class="mono">manual</span>: it opens the PR and stops. The
+              method is a merge commit unless <span class="mono">decisions.feature_merge</span> says otherwise.
+            </p>
+          </div>
+          <div class="step">
+            <h3>After opening: the watcher</h3>
+            <p>
+              It arms <span class="mono">.agents/skills/edd/scripts/pr-watch.sh</span> on its own PR, labels the
+              terminal tab and ends the turn. On merged: <span class="mono">git fetch</span> and
+              <span class="mono">git merge-base --is-ancestor</span> confirm the merge is on the base.
             </p>
           </div>
           <div class="step">
@@ -2322,8 +2349,10 @@
         </div>
 
         <div class="gate r">
-          <b>Gate</b> The skill never merges. It leaves you the PR and the command for when it is
-          approved.
+          <b>Gate</b> No <span class="mono">--auto</span> before
+          <span class="mono">bun run git:policy verify --merge {base}</span> passes; on a protected base that
+          fails it, the skill stops and tells you. The gate catches mistakes and drift, not a deliberately
+          forged check.
         </div>
       </div>
     </section>
@@ -2338,14 +2367,14 @@
             A wrong fix here costs hours. The AI looks at
             <span class="mono">git status</span>, <span class="mono">git diff --check</span> and the
             state files in <span class="mono">.git/</span> to know what happened before
-            proposing anything.
+            resolving anything.
           </p>
         </div>
 
         <div class="states r">
           <span class="st">explain the cause</span><span class="ar">→</span>
-          <span class="st hum">options by safety</span><span class="ar">→</span>
-          <span class="st">guide step by step</span><span class="ar">→</span>
+          <span class="st">safest option</span><span class="ar">→</span>
+          <span class="st">resolve step by step</span><span class="ar">→</span>
           <span class="st">verify</span><span class="ar">→</span>
           <span class="st">how to avoid it</span>
         </div>
@@ -2377,9 +2406,10 @@
         </div>
 
         <div class="callout r">
-          <b>Destructive options are never picked silently.</b> Force push, hard reset or
+          <b>Destructive options are never picked silently.</b> The AI resolves a non-destructive
+          conflict itself and reports it. Force push, hard reset, a rebase skip that drops commits or
           aborting a merge with uncommitted work are presented to you as an option, with their risk, and
-          wait for your decision.
+          wait for your decision; so does a conflict whose two sides disagree on product behaviour.
         </div>
       </div>
     </section>
@@ -2408,7 +2438,7 @@
             <tbody>
               <tr>
                 <th>Q1 · is it mostly mechanical? (rename, formatting, generated code)</th>
-                <td><span class="mono">size-exception</span>: one PR, with your override and a <span class="mono">Why size-exception:</span> line</td>
+                <td><span class="mono">size-exception</span>: one PR, the AI's call, with a <span class="mono">Why size-exception:</span> line</td>
                 <td>go to Q2</td>
               </tr>
               <tr>
@@ -2578,7 +2608,7 @@
           <div class="it">
             <span class="bx"></span
             ><span
-              ><b>It does not merge</b> or chain PRs without naming the dependency in the body of each
+              ><b>It does not chain PRs</b> without naming the dependency in the body of each
               one.</span
             >
           </div>
@@ -2799,8 +2829,9 @@
           <p>
             <b style="color: var(--ink)">The core idea.</b> Git policy is decided once,
             stored in one place and checked against the host. After that, every branch, commit,
-            push and PR applies it without anyone having to remember it. The AI proposes and executes; you
-            choose the strategy, accept or reject the divergences and do the merge.
+            push and PR applies it without anyone having to remember it. The AI executes and delivers on
+            evidence; you choose the strategy, accept or reject the divergences, and approve only where
+            <span class="mono">merge_mode</span> asks you to.
           </p>
         </div>
         <div class="sig">

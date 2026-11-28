@@ -171,7 +171,7 @@ The record is the commit itself, and no side file holds it. Every agent commit e
 - [ ] The branch's work is committed and pushed (or deliberately discarded).
 - [ ] `bun run worktree:audit <path> --rescue` exits 0 (no state left only in the worktree).
 - [ ] `git worktree remove <path>` (or `ExitWorktree remove`) succeeds, which it does only when the tree is clean.
-- [ ] `git branch -d <branch>` once the branch is merged.
+- [ ] `git branch -d <branch>` once the branch is merged and not checked out in any worktree. Never switch a shared checkout's branch just to delete one.
 - [ ] `git worktree prune` if any directory was removed by hand.
 - [ ] Local `info/exclude` entries are cleaned up if the worktree path is gone for good.
 
@@ -201,8 +201,8 @@ When an AI session needs isolation from in-progress work on another branch:
 4. Keep the primary repo's `git status` clean, and verify it with `git -C <primary> status`.
 5. Hide a worktree nested inside the repo from the primary tree through the local `info/exclude`.
 6. Do all further work (edits, verifies, commits with the forensic trailers) in the worktree.
-7. On completion, commit on the worktree's branch, open its own PR, run `bun run worktree:audit <wt> --rescue`, and remove the worktree (`git worktree remove`, or the harness tool's own remove).
+7. On completion, commit on the worktree's branch, open its own PR (`references/pr-loop.md`), run `bun run worktree:audit <wt> --rescue`, and remove the worktree (`git worktree remove`, or the harness tool's own remove).
 
 ## With nobody at the keyboard
 
-Worktree work has no person gate of its own, so the steps above run unchanged in a worker or a routine. Two points still need care. A conductor that launches workers owns worktree creation (`/agent-orchestration`, `agentic-dev-core/references/fleet-provisioning.md`), so a worker does not create or remove worktrees it was not given. Removing a worktree whose audit still exits 1 is irreversible, so without a person or a brief that says otherwise, stop at the audit, run `--rescue`, and report.
+Worktree work has no person gate of its own, so the steps above run unchanged in a worker or a routine: choosing and creating a worktree is the agent's call, made and reported, and removing one after a clean orphan audit (`bun run worktree:audit <wt> --rescue` exits 0) goes ahead and is reported. Two points still need care. A conductor that launches workers owns worktree creation (`/agent-orchestration`, `agentic-dev-core/references/fleet-provisioning.md`), so a worker does not create or remove worktrees it was not given. Removing a worktree whose audit still exits 1, or a forced removal or discard over uncommitted, UNKNOWN or CONFLICT content, destroys work: it is human gate 2 in `.agents/skills/edd/references/human-gates.md`. Without a person or a brief that covers it, stop at the audit, run `--rescue`, and report.

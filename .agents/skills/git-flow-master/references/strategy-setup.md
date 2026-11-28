@@ -48,16 +48,27 @@ Run it after the strategy slug is resolved (Step 2), and ask the questions in or
 
 - Applies to: every strategy, because each has at least one protected branch. It is not gated.
 - Skipped on a re-run when `git_strategy.policy.*` is already populated (non-default values were chosen).
-- It has three sub-decisions, each with its default first:
-  1. `direct_push_to_protected` sets how the Push operation (SKILL.md 3.3) treats a direct push to a protected branch. `confirm` (default) always asks. `forbidden` refuses the direct push and routes it through a PR. `allowed` is a standing authorization: push without a per-push confirm, and the recorded value is the authorization. The sensible default for `solo-main` is `allowed`, and for every multi-branch or PR-gated strategy it is `forbidden`.
-  2. `admin_bypass` is `false` (default) or `true`. It is a team policy (intent) on whether a repo admin may bypass the gate for urgent changes, and it does not enforce anything, because real capability depends on the GitHub user's role. With `true`, the skill may offer a bypass, but only after re-confirming at runtime that the operator is an admin (ask, because the skill cannot know the GitHub role) and which irreversible action is meant. With `false`, the skill offers no bypass.
-  3. `require_pr_reviews` is `null` (default, unspecified), `0` or `N`: the minimum approvals before a merge to a protected branch. It records the team's expectation. Section 4.5 can now materialize these answers onto the host, so the gap between expectation and enforcement closes in the same run. `bun run git:policy verify` confirms what the host enforces and is what stamps `meta.policy_source: verified`.
-- Persisted as `git_strategy.policy.direct_push_to_protected`, `git_strategy.policy.admin_bypass` and `git_strategy.policy.require_pr_reviews`, plus `git_strategy.meta.policy_verified` and `meta.policy_source`. Step 1b writes those two, not this questionnaire, and Setup always leaves `policy_source: declared`.
-- It drives how strict the Push gate (SKILL.md 3.3) is, and whether an admin bypass may ever be offered.
-- Close Q4 with a drift warning: these three answers describe intent. Until Step 1b reconciles them with the host, do not tell the user what the remote requires. A `require_pr_reviews: 0` next to a remote that demands an approval is the drift that ambushes a merge mid-flight.
+- It has four sub-decisions. The doctrine behind the push and merge values is `.agents/skills/edd/` (`SKILL.md` and `references/flows.md`); this file only records the answers.
+  1. `direct_push_to_protected` sets how the Push operation (SKILL.md 3.3) treats a direct push to a protected branch: `forbidden` | `confirm` | `allowed` | `evidence`.
+     - `forbidden`: never direct-push, route through a PR, no question.
+     - `confirm`: ask before every push. A team chose it, so the ask stays.
+     - `allowed`: standing authorization. The recorded value is the authorization, no gate and no question.
+     - `evidence`: push without asking only when the pre-push gate passes (the hook runs `bun run edd gate` itself). On a failed gate there is no push and no question: fix forward and retry.
+     - A missing or null value, or a missing block, reads as `evidence`.
+     - Default per strategy: `solo-main` is `evidence`; every PR strategy (`main-integration`, `enterprise`, `gitflow`, `github-flow`, `gitlab-flow`, `trunk-based`) is `forbidden`.
+  2. `merge_mode` sets how a PR reaches a protected base (SKILL.md 3.4): `auto` | `human-approves` | `manual`. Default `auto` for every PR strategy.
+     - `auto`: the agent runs `gh pr merge --auto --<method>` once the PR is open and its head carries its evidence, after `bun run git:policy verify --merge <base>` passes, and GitHub merges when the required checks, `edd/evidence` among them, pass. Zero approvals.
+     - `human-approves`: the same call, but the ruleset requires a person's approval. Choosing it means `CODEOWNERS` must cover the gate paths (`evidence.human.paths` in `.agents/project.yaml`): when an entry is missing, add it as an ordinary commit and report it. `git:policy` only reports on `CODEOWNERS`; it does not manage the file.
+     - `manual`: the agent opens the PR and stops. A person merges.
+     - A missing or null value reads as `auto`. The merge method comes from `git_strategy.decisions.feature_merge` (Q2), a merge commit when it is `n/a` or missing.
+  3. `admin_bypass` is `false` (default) or `true`. It is a team policy (intent) on whether a repo admin may bypass the gate for urgent changes, and it does not enforce anything, because real capability depends on the GitHub user's role. With `true`, the skill may offer a bypass, but only after re-confirming at runtime that the operator is an admin (ask, because the skill cannot know the GitHub role) and which irreversible action is meant. With `false`, the skill offers no bypass.
+  4. `require_pr_reviews` is `null`, `0` or `N`: the minimum approvals before a merge to a protected branch. It records the team's expectation and follows `merge_mode`: under `auto`, `git:policy` derives 0 required approvals whatever this field says; under `human-approves` it derives the larger of 1 and this value. Default `0`. Section 4.5 can now materialize these answers onto the host, so the gap between expectation and enforcement closes in the same run. `bun run git:policy verify` confirms what the host enforces and is what stamps `meta.policy_source: verified`.
+- Persisted as `git_strategy.policy.direct_push_to_protected`, `git_strategy.policy.merge_mode`, `git_strategy.policy.admin_bypass` and `git_strategy.policy.require_pr_reviews`, plus `git_strategy.meta.policy_verified` and `meta.policy_source`. Step 1b writes those two, not this questionnaire, and Setup always leaves `policy_source: declared`.
+- It drives how a direct push is gated (SKILL.md 3.3), how a PR reaches its base (SKILL.md 3.4), and whether an admin bypass may ever be offered.
+- Close Q4 with a drift warning: these answers describe intent. Until Step 1b reconciles them with the host, do not tell the user what the remote requires. A `require_pr_reviews: 0` next to a remote that demands an approval is the drift that ambushes a merge mid-flight.
 - Per-strategy defaults are in `references/branching-strategies.md` under "git_strategy field rules (per strategy)", in each strategy's `policy:` example.
 
-The Q1 to Q3 defaults (ff-only, merge-commit, branch-off-prod-backmerge) are the `main-integration` worked-example choices. They are defaults, so present them as overridable and show the alternatives before selecting anything. The Q4 defaults (`confirm`, `false`, `null`, with `allowed` for `solo-main`) are overridable in the same way.
+The Q1 to Q3 defaults (ff-only, merge-commit, branch-off-prod-backmerge) are the `main-integration` worked-example choices. They are defaults, so present them as overridable and show the alternatives before selecting anything. The Q4 defaults (`evidence` for `solo-main` and `forbidden` for every PR strategy, `merge_mode: auto`, `admin_bypass: false`, `require_pr_reviews: 0`) are overridable in the same way.
 
 ---
 
@@ -78,12 +89,12 @@ For the resolved strategy, make sure the long-lived branches in this table exist
 Branch creation rules:
 
 - Single-branch strategies (`solo-main`, `github-flow`, `trunk-based`) ensure `main` only, so a normal repo has nothing to create. They never get an integration branch.
-- `main-integration`: if the integration branch is missing, ask its name (default `staging`), then propose creating it off `main` and fast-forward syncing it (Section 3).
+- `main-integration`: if the integration branch is missing, ask its name (default `staging`), then create it off `main` and fast-forward sync it (Section 3).
 - `gitflow`: ensure `develop`, created off `main` if missing. Do not create `release/*` or `hotfix/*` at setup.
 - `gitlab-flow`: ensure `pre-production` and `production`, created off `main` in pipeline order if missing.
 - `enterprise`: ensure integration off `main`. `release/*` and `feature/*` are on-demand only.
 
-Propose each branch creation (which branch, off what, why) and wait for an OK before running `git checkout -b` or `git branch`. A silent branch creation is the failure to avoid, because it changes the remote's shape without anyone having agreed to it.
+The accepted questionnaire is the decision: create each branch the answers imply without a second OK, and report each one in the closing report (which branch, off what, why). A strategy change is a human gate (`.agents/skills/edd/references/human-gates.md` item 5), so the offer and the questionnaire stay asked; only the materialization inside an accepted setup needs no further approval.
 
 ---
 
@@ -116,7 +127,7 @@ For the local checkout of the behind branch, `git merge --ff-only <ahead-ref>` i
 ### 3.3 Hard rules
 
 - No `--force` and no `--force-with-lease` in a setup sync. A sync is a fast-forward or it is not a sync, and a forced push on a protected branch rewrites history others have already pulled.
-- A setup fast-forward push to a protected branch (integration or production) asks first, whatever `direct_push_to_protected` says. Strategy Setup runs before the user has ratified the new `policy:` values, so `allowed` does not authorize its own setup push.
+- A setup fast-forward push to a protected branch (integration or production) follows `git_strategy.policy.direct_push_to_protected` like any other push (SKILL.md 3.3). Under `forbidden` the sync goes through a PR; under `confirm` the ask stays.
 - When the pair has diverged both ways, stop and hand to conflict resolution. Setup does not resolve conflicts itself.
 
 ---
@@ -128,9 +139,9 @@ Once the branches are materialized and the decisions captured, persist in this o
 1. Write the `git_strategy:` block in `.agents/project.yaml` in place. Create the block if it is absent, overwrite the relevant fields if it exists, keep the rest of the file, and never use a separate file. Fill the fields that apply to the resolved strategy, all under `git_strategy`:
    - `strategy:` is the resolved slug.
    - `branches:` holds `production` (the release or default branch), `integration` (the long-lived integration branch name, or `null`) and `ephemeral_pattern` (the strategy's on-demand trunk pattern, or `null`).
-   - `protected:` lists the branches whose direct push `policy.direct_push_to_protected` gates (SKILL.md 3.3).
+   - `protected:` lists the branches whose direct push `policy.direct_push_to_protected` governs (SKILL.md 3.3).
    - `decisions:` holds `promote_method`, `feature_merge` and `hotfix_policy`, each captured from Q1, Q2 or Q3, or left `n/a` when the question does not apply.
-   - `policy:` holds `direct_push_to_protected`, `admin_bypass` and `require_pr_reviews`, captured from Q4 (every strategy).
+   - `policy:` holds `direct_push_to_protected`, `merge_mode`, `admin_bypass` and `require_pr_reviews`, captured from Q4 (every strategy).
    - `branch_prefixes:` holds `precedence` and the naming patterns. Carry the defaults unless the user overrides them.
    - `description:` is the one-paragraph human summary of the flow for this repo.
    - `meta.created:` is the date of the run. Bump `meta.setup_version` on a re-run that changes the schema. Leave `meta.policy_verified: null` and `meta.policy_source: declared`, because only a successful `bun run git:policy verify --stamp` may flip them (Section 4.5).
@@ -147,7 +158,7 @@ The `## Git Strategy` section of `.agents/instructions/agent-git.md` is a shippe
 
 The questionnaire has just captured the branch policy, and the same answers describe a GitHub ruleset. Setup can therefore close the gap between intent and enforcement instead of leaving a `declared` block to drift: one questionnaire, two artifacts.
 
-Start read-only, because an existing repo usually has protection already:
+Start read-only, because an existing repo usually has protection already. A person at a terminal can run `bun run git:policy setup` instead: it asks the strategy, push and merge questions, writes those keys, prints the plan and the admin preflight, and applies only on a yes typed at that terminal (or prints a hand-off for an admin).
 
 ```bash
 bun run git:policy verify   # what the host enforces now vs what was just captured
@@ -164,7 +175,7 @@ bun run git:policy apply --yes   # writes it
 Three rules for this step:
 
 1. Show the dry run before proposing the write. The payload is the proposal, and a described change is not a reviewed one.
-2. A refusal to loosen is a result and not an obstacle. `apply` blocks any change that removes a guard, lowers the approval bar, turns off code-owner review or widens the allowed merge methods. If `--allow-loosening` is needed, say exactly which guard is being given up and get an explicit yes for that specific thing.
+2. A refusal to loosen is a result and not an obstacle. `apply` blocks any change that removes a guard, lowers the approval bar, turns off code-owner review or widens the allowed merge methods. If `--allow-loosening` is needed, say exactly which guard is being given up and get a yes for that specific thing (human gate 5).
 3. Drift has three resolutions, and changing the host is only one of them. The yaml may be the wrong side. Or the divergence is intended, and then it is recorded in `git_strategy.policy.accepted_divergences` (`.agents/project.yaml`, one entry per `verify` finding field, each with a reason; `references/ruleset-parity.md` §2b). `verify` then reports it as ACCEPTED, and a later session stops raising it again. The project's own `.agents/instructions/agent-project.md` under `## Git Strategy (this repository)` may add prose context, but the acceptance does not live there.
 
 The mapping table, the derived fields, and what the tool deliberately leaves unmanaged (`bypass_actors`, `CODEOWNERS`, org-level rulesets) are in `references/ruleset-parity.md`.
@@ -187,7 +198,8 @@ Decisions captured:
   - hotfix_policy:  <value | n/a>
 
 Policy captured (INTENT, not yet verified against the host):
-  - direct_push_to_protected: <forbidden | confirm | allowed>
+  - direct_push_to_protected: <forbidden | confirm | allowed | evidence>
+  - merge_mode: <auto | human-approves | manual>
   - admin_bypass: <true | false>
   - require_pr_reviews: <null | 0 | N>
   - policy_source: declared  (Step 1b reconciles this against the host on the first push / PR intent)
@@ -207,13 +219,13 @@ If a diverged pair stopped the sync, the report states the divergence and points
 
 ## With nobody at the keyboard
 
-Strategy Setup waits for a person at four points: the strategy choice when detection is inconclusive, the questionnaire, each branch creation, and the host-ruleset write. The decision protocol (`agentic-dev-core/references/decision-protocol.md`) says which of these reaches a person at all. Beyond that, each point has a path for the three ways the skill runs.
+Strategy Setup waits for a person at three points, all of them human gate 5 in `.agents/skills/edd/references/human-gates.md` (a strategy or policy change): the strategy choice when detection is inconclusive, the questionnaire, and the host-ruleset write (`apply --yes`, `--allow-loosening`). Branch creation inside an accepted setup and the sync push under the declared push policy need no ask. The decision protocol (`agentic-dev-core/references/decision-protocol.md`) says which of these reaches a person at all. Beyond that, each point has a path for the three ways the skill runs.
 
 | Gate | A person is present | Supervised worker | Routine with nobody |
 | --- | --- | --- | --- |
-| Strategy choice (detection step 5) | Ask, numbered list | Ask the conductor | Use a strategy the brief names. Without one, stop before writing anything and report the detection evidence |
-| Q1 to Q4 | Ask, defaults first | The conductor answers or confirms the defaults | Run only when the brief gives every answer. With any answer missing, write nothing, report the detection evidence and the open questions, and stop |
-| Branch creation and setup ff-sync push | Propose, wait for OK | The conductor holds the OK | Create nothing on the remote and push nothing. A local `git branch` is reversible, but name it in the report. Report what is missing |
-| `git:policy apply --yes` | Dry run, offer, wait | The conductor holds the OK | Run `verify` and the dry run only, and report the payload. The ruleset write is outward and irreversible, so it needs a person |
+| Strategy choice (detection step 5) | Ask, numbered list | Ask the conductor as a question with options | Use a strategy the brief names. Without one, stop before writing anything and report the detection evidence |
+| Q1 to Q4 | Ask, defaults first | The conductor answers or confirms the defaults; only that change waits | Run only when the brief gives every answer. With any answer missing, write nothing, report the detection evidence and the open questions, and stop |
+| Branch creation and setup ff-sync push | Inside an accepted setup, create and push under the push policy, then report | The same | Only when the brief gave every answer; otherwise create nothing on the remote, push nothing, and report the branches the answers would imply |
+| `git:policy apply --yes` | Dry run, offer, wait | The worker sends the question, with the dry run, to its launcher | Run `verify` and the dry run only, and report the payload. The ruleset write is outward and irreversible, so it needs a person |
 
-A brief that names the strategy and the policy values is the approval source for the `project.yaml` write. It does not cover a push or a ruleset write unless it says so.
+A brief that names the strategy and the policy values is the approval source for the `project.yaml` write and for the branches and sync pushes the answers imply (pushes still follow the push policy). It does not cover a ruleset write unless it says so.
