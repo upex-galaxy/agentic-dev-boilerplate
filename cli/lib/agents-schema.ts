@@ -569,12 +569,12 @@ export const GENERIC_RULES: Readonly<Record<string, GenericRule>> = {
   //
   // `git_strategy.meta.strategy_source` is `inherited` in the schema: nobody
   // has chosen anything yet. A template that hands a brand-new project
-  // `direct_push_to_protected: allowed` alongside `inherited` would contradict
-  // that: the AI would push to `main` without asking, under an authorization
-  // the maintainer granted to THEIR OWN repo and nobody granted to this one
-  // (AGENTS.md Critical Rule #4). `confirm` costs one prompt and is
-  // reversible; `allowed` is the default nobody notices until it has already
-  // pushed.
+  // `direct_push_to_protected: allowed` would let the AI push to `main` with
+  // no gate, under an authorization the maintainer granted to THEIR OWN repo and
+  // nobody granted to this one. The template ships `evidence`, the value
+  // Critical Rule #4 reads for an unset key: the AI pushes without asking only
+  // when the pre-push evidence gate passes, so nothing lands unchecked and no
+  // person has to authorize a push.
   //
   // `admin_bypass: true` is a FACT about this repo's credential, not a policy:
   // the push credential is an org admin and sits on the ruleset's bypass list,
@@ -584,8 +584,12 @@ export const GENERIC_RULES: Readonly<Record<string, GenericRule>> = {
   //
   // Strategy Setup raises both to the project's real answer when it runs.
   'git_strategy.policy.direct_push_to_protected': {
-    value: 'confirm',
-    why: 'this repo grants itself standing push authorization; a fresh project has authorized nothing',
+    value: 'evidence',
+    why: 'this repo grants itself standing push authorization with no gate; a fresh project pushes only when the evidence gate passes',
+  },
+  'git_strategy.policy.merge_mode': {
+    value: 'null',
+    why: 'a fresh project has chosen no merge mode; git:policy reads null as auto and only warns until it is declared',
   },
   'git_strategy.policy.admin_bypass': {
     value: 'false',
@@ -761,6 +765,8 @@ export const FILLED_ELSEWHERE: Readonly<Record<string, string>> = {
   'autonomous_delivery.automation_gh_account': 'the project owner, by hand, when it opts into /autonomous-delivery',
   'autonomous_delivery.report_channel': 'the project owner, by hand, when it opts into /autonomous-delivery (null is a valid answer)',
   'autonomous_delivery.escalation_channel': 'the project owner, by hand, when it opts into /autonomous-delivery (null is a valid answer)',
+  'evidence.review.bot': 'by hand when the project adopts a review bot; null = none',
+  'git_strategy.policy.merge_mode': 'the git-flow-master Strategy Setup questionnaire; null reads as auto',
   'secrets.onepassword.vault': 'the secret-manager choice of `bun setup` (cli/lib/secret-providers.ts; null while secrets.provider is local)',
   'secrets.onepassword.account': 'the secret-manager choice of `bun setup` (optional: null = the 1Password CLI default account)',
   'issue_tracker.github.project_number': 'written by `bun run github:project:bootstrap --apply` (null until the board exists)',

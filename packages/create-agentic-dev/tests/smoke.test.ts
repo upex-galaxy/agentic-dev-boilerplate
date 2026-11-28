@@ -479,7 +479,7 @@ describe('seedProjectYamlFromSchema', () => {
     writeFileSync(join(dir, '.agents', 'project.schema.yaml'), readFileSync(join(repoRoot, '.agents', 'project.schema.yaml'), 'utf8'));
     expect(await seedProjectYamlFromSchema(dir)).toBe(true);
     const yaml = readYaml();
-    expect(yaml).toContain('    direct_push_to_protected: confirm\n');
+    expect(yaml).toContain('    direct_push_to_protected: evidence\n');
     expect(yaml).toContain('    strategy_source: inherited\n');
     expect(yaml).not.toContain('ProtectPublic');
     expect(yaml.split('\nproject:\n')[1].split('\n').filter(l => l.includes('#'))).toEqual([]);
