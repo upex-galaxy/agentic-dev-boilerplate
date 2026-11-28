@@ -35,6 +35,7 @@ export const REINCLUDE_PROBES: readonly ReincludeProbe[] = [
   { probe: '.agents/skills/project-adoption/SKILL.md', path: '.agents/skills', dir: true },
   { probe: '.agents/instructions/agent-project.md', path: '.agents/instructions', dir: true },
   { probe: '.agents/hooks/personality-reinject.mjs', path: '.agents/hooks', dir: true },
+  { probe: '.agents/edd/allowed_signers', path: '.agents/edd', dir: true },
   ...['README.md', 'project.schema.yaml', 'jira-fields.json', 'jira-link-types.json', 'jira-required.yaml', 'jira-workflows.json'].map(name => file(`.agents/${name}`)),
   file('.agents/personality-override.md'),
   file('.env.schema'),

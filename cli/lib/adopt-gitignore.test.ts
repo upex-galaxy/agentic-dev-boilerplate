@@ -71,7 +71,7 @@ describe('reincludeAgenticStore', () => {
   test('a rule on the children re-includes each delivered path, never the whole store', () => {
     const root = repo({ '.gitignore': '.agents/*\n' });
     const out = reincludeAgenticStore(root);
-    expect(out.added).toEqual(['!/.agents/project.yaml', '!/.agents/skills/', '!/.agents/instructions/', '!/.agents/hooks/', ...STORE_FILES.slice(1).map(f => `!/${f}`)]);
+    expect(out.added).toEqual(['!/.agents/project.yaml', '!/.agents/skills/', '!/.agents/instructions/', '!/.agents/hooks/', '!/.agents/edd/', ...STORE_FILES.slice(1).map(f => `!/${f}`)]);
     expect(out.stillHidden).toEqual([]);
     expect(hiddenPaths(root, ['.agents/briefs/plan.md']).map(h => h.pattern)).toEqual(['.agents/*']);
   });
@@ -80,7 +80,7 @@ describe('reincludeAgenticStore', () => {
     const app = '.agents/*\n!.agents/instructions/\n!.agents/project.yaml\n!.agents/skills/\n.env*\n!.envrc\n';
     const root = repo({ '.gitignore': app });
     const out = reincludeAgenticStore(root);
-    expect(out.added).toEqual(['!/.agents/hooks/', ...STORE_FILES.slice(1).map(f => `!/${f}`), '!/.env.schema', '!/.env.core.schema']);
+    expect(out.added).toEqual(['!/.agents/hooks/', '!/.agents/edd/', ...STORE_FILES.slice(1).map(f => `!/${f}`), '!/.env.schema', '!/.env.core.schema']);
     expect(out.stillHidden).toEqual([]);
     expect(hiddenPaths(root, ['.agents/briefs/x.md', '.agents/orchestration/run.json', '.env', '.env.local']).map(h => h.path))
       .toEqual(['.agents/briefs/x.md', '.agents/orchestration/run.json', '.env', '.env.local']);
