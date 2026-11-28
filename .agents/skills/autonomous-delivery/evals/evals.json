@@ -27,7 +27,13 @@
     {
       "name": "should-not-end-the-run-on-a-null-integration-branch",
       "prompt": "Run /autonomous-delivery story. git_strategy is solo-main, branches.integration is null.",
-      "expected_behavior": "Does NOT end in Phase 0 for a missing integration branch: `<integration-branch>` resolves to `git_strategy.branches.production` for the ancestry and base checks. The dispatched ticket stops at an open PR with its preview deployment verified; the run never merges into production (that is /sprint-development Stage 5, human-gated) and says so in the report.",
+      "expected_behavior": "Does NOT end in Phase 0 for a missing integration branch: `<integration-branch>` resolves to `git_strategy.branches.production` for the ancestry and base checks. The PR into the production branch is the delivery and follows `git_strategy.policy.merge_mode` like any other: the dispatched ticket is attested, `bun run git:policy verify --merge <base>` passes and auto-merge is enabled; the run never stops to ask a person.",
+      "category": "positive"
+    },
+    {
+      "name": "should-enable-auto-merge-after-attest-on-solo-main",
+      "prompt": "Run /autonomous-delivery story. git_strategy is solo-main, merge_mode is auto, direct_push_to_protected is unset, automation_gh_account is configured.",
+      "expected_behavior": "Dispatches /sprint-development for one story. The ticket ends attested (`bun run edd attest`, a tester other than the author at depth standard or deeper), pushes its work branch and opens the PR. It asserts `gh auth status` against `automation_gh_account` immediately before the first push and again immediately before `gh pr merge --auto`, runs `bun run git:policy verify --merge <base>`, then enables auto-merge. After GitHub merges, it runs `git fetch` and `git merge-base --is-ancestor <merge-commit> origin/<base>` before calling the ticket shipped. It never asks a person to approve a commit, push or merge.",
       "category": "positive"
     },
     {

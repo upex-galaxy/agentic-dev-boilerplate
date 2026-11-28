@@ -11,7 +11,7 @@
 | cap | `autonomous_delivery.caps` (story 1 per run, bug up to 3 sequential, discovery writes no code) | `orchestration.max_workers` only lowers it, never raises it: the lower of the two wins |
 | run report and handoff | this skill (`.session/autonomous-delivery/<mode>/`, written as it goes) | each worker's handle and dispatch id is added to that report the moment it opens |
 | launching, waiting, closing, orphan audit | `/agent-orchestration` (conductor cycle §2 to §6) | the dispatched worker runs `/sprint-development <KEY> fleet worker` with the briefing component 7 that Phase 3 requires (migration gate, worktree path, no-rebase rule, context-budget stop) |
-| migration, merge, deploy | this skill gates them; a worker never applies a migration to the shared database | the conductor-only list in `agentic-dev-core/references/fleet-project-profile.md` §4 is the same rule for a supervised fleet |
+| migration, merge, deploy | this skill gates the migration and runs the merge (auto-merge per `git_strategy.policy.merge_mode`, after attest) and the deploy; a worker never applies a migration to the shared database | the conductor-only list in `agentic-dev-core/references/fleet-project-profile.md` §4 is the same rule for a supervised fleet |
 | brakes | this skill, "The three brakes" | the orchestration skill's brakes are the same three and are not applied twice; a fix run never chains |
 
 A delivery routine's versioned prompt therefore opens with `/autonomous-delivery <mode>` and restates nothing of the orchestration skill's run discipline. The scope, launch file and topology rows are in `agentic-dev-core/references/fleet-launch-seam.md` §4; the routine recipes are in `fleet-project-profile.md` §2.
