@@ -126,7 +126,10 @@ Four categories, and they are exhaustive. Everything outside them is yours.
    accepted before, escalates.
 3. Irreversible or destructive actions: history rewrites, force pushes, deleting data or branches, anything
    that needs a `--force` or `--no-verify` style override, production actions with no rollback, spending
-   money, and any external side effect that cannot be taken back.
+   money, and any external side effect that cannot be taken back. A push or a merge is not on this list by
+   itself: the git policy decides whose it is (`AGENTS.md` Critical Rule #4 and
+   `git_strategy.policy.merge_mode`), and what stays a person's under every policy is the closed list in
+   `edd/references/human-gates.md`.
 4. Anything the operator reserved. A standing instruction to be asked about a class of thing outranks this
    file for that class.
 
@@ -182,7 +185,8 @@ Every wait for a person has three paths, and the path depends on who is running:
 - A routine with nobody (`/autonomous-delivery`, an unattended automation, CI): technical calls are decided and
   reported as DECIDED, with the option each one beat. A §5 question is neither asked nor assumed. Write it into
   the run's escalation log (what happened, which category, what the person has to decide, what waiting costs
-  downstream), do the reversible work, stop before any outward or irreversible action (a push, a tracker
+  downstream), do the reversible work, stop before any outward or irreversible action (a push or a merge the
+  git policy gives to a person under Critical Rule #4 and `git_strategy.policy.merge_mode`, a tracker
   write, a message) and end the run cleanly. A brief from the launcher that covers the decision counts as the
   approval. A routine never waits for a reply.
 

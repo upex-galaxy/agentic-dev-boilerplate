@@ -84,7 +84,7 @@ This repo's prompt hook injects `ROUTE:` lines from the router in `AGENTS.md`. A
 The conductor copies the skill's `COMMON.md` template and fills its "Project rules" section from here:
 
 1. Read `AGENTS.md` first. The Critical Rules that matter most for a worker: #3 (no AI attribution), #5 (never rewrite pushed history), #6 (tests, then types, then lint), #7 (read before edit), #10 (read `package.json` for scripts, never quote a command from a doc), #13 (no global git discards; restore only paths you modified), #14 (UI fidelity: reuse the live components), #16 (verify at the destination), #18 (no comments in code by default).
-2. Repo artifacts are English (Critical Rule #12). Never push to a protected branch (Critical Rule #4), merge, deploy, apply a shared migration or post to chat unless the brief assigns that step; a story worker pushes its own branch and opens its own PR.
+2. Repo artifacts are English (Critical Rule #12). Never push to a protected branch, merge, deploy, apply a shared migration or post to chat unless the brief assigns that step (fleet coordination); a story worker pushes its own branch and opens its own PR.
 3. Generated files are generated: do not hand-edit `.agents/skills/REGISTRY.md`, the `bun run agents:compat` surfaces, Supabase types or `api/schemas/`; report one that went stale.
 4. Run the gates before each commit in the Critical Rule #6 order, script names read from `package.json`; a change to skills or docs also runs the skill and docs checks the same file declares.
 
