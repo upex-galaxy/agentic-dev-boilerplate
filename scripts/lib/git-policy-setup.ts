@@ -534,7 +534,7 @@ export function unappliedNote(a: SetupAnswers): string[] {
   return [
     '',
     `.agents/project.yaml now declares push ${a.push} and merge_mode ${a.merge}, and GitHub does not enforce that yet.`,
-    'Until the plan is applied, bun run git:policy verify (and the pre-push hook that runs it) reports every difference, and with strategy_source chosen a difference blocks the push.',
+    'Until the plan is applied, bun run git:policy verify reports every difference as drift and exits 1.',
     'Apply the plan (bun run git:policy setup at a terminal, as an admin), or list the difference in git_strategy.policy.accepted_divergences with a reason.',
   ];
 }

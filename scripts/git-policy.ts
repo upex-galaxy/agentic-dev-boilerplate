@@ -1568,14 +1568,13 @@ function main(): void {
     return;
   }
   const gs = readStrategy();
-  const slug = readSlug();
 
   switch (cmd) {
     case 'verify':
-      process.exit(verify(gs, slug, argv.includes('--stamp')));
+      process.exit(verify(gs, readSlug(), argv.includes('--stamp')));
       break;
     case 'apply':
-      process.exit(apply(gs, slug, argv.includes('--yes'), argv.includes('--allow-loosening')));
+      process.exit(apply(gs, readSlug(), argv.includes('--yes'), argv.includes('--allow-loosening')));
       break;
     case 'plan': {
       // `plan` makes no host calls, so it cannot know which unmanaged rules
