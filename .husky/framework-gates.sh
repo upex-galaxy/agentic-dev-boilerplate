@@ -384,6 +384,12 @@ framework_gates_pre_commit() {
 #                                <reason>`. Maintainer-only in v1: prints one line and exits
 #                                0 in a downstream project. Called by path, guarded by `-f`,
 #                                like the commit-msg check (no package.json key needed).
+#   - edd gate                   the evidence gate (EDD), FIRST in the chain so a failing check
+#                                still leaves its record under .session/evidence/. Inert (no bun
+#                                process) unless git_strategy.policy.direct_push_to_protected is
+#                                `evidence`; called by path, guarded by `-f` (framework_gate_evidence).
+#   - shared:check               the files shared with the QA boilerplate still match their
+#                                hashes, where scripts/shared-files.json and the key exist.
 #   - varlock load               the developer's own .env against the committed env schema
 #                                (.env.schema + .env.core.schema). WARN-ONLY: it describes the
 #                                developer's machine, like vars:env:check's drift rule, and the
@@ -411,13 +417,15 @@ framework_gates_pre_commit() {
 framework_gates_pre_push() {
   _fg_resolve_scope
   if [ "$_fg_mode" = staged ]; then _fg_push_range; fi
-  _fg_gate format:check "$_FG_FORMAT" _fg_format_check \
+  framework_gate_evidence \
+    && _fg_gate format:check "$_FG_FORMAT" _fg_format_check \
     && _fg_gate lint:check "$(_fg_lint_inputs)" _fg_scoped lint:check tooling:lint:check \
     && _fg_gate vars:env:check "$_FG_ENV" _fg_vars_env_check \
     && _fg_gate skills:registry:check '^\.agents/skills/' bun run skills:registry:check \
     && _fg_gate agents:compat:check "$_FG_COMPAT" bun run agents:compat:check \
     && _fg_gate docs:check "$(_fg_deleted_or "$_FG_DOCS")" framework_gate_docs_check \
     && framework_gate_doc_contracts --push \
+    && framework_gate_shared_check \
     && _fg_gate varlock "$_FG_ENV" framework_gate_varlock_warn \
     && _fg_report_skipped "file in the push range"
 }
@@ -437,6 +445,75 @@ framework_gate_docs_check() {
 framework_gate_doc_contracts() {
   if [ -f scripts/lint-doc-contracts.ts ]; then
     bun scripts/lint-doc-contracts.ts "$1" || return 1
+  fi
+  return 0
+}
+
+# Prints the effective `direct_push_to_protected` of the project.yaml on stdin:
+# `forbidden`, `confirm` or `allowed` when the `git_strategy:` block says so
+# (block or flow style), and `evidence` for anything else, a missing key, a
+# null value or a missing block included (Critical Rule #4, scripts/git-policy.ts).
+_fg_policy_value() {
+  awk '
+    { sub(/\r$/, "") }
+    /^[^[:space:]#]/ { ings = ($0 ~ /^git_strategy:[[:space:]]*(#.*)?$/); next }
+    ings && !/^[[:space:]]*#/ && match($0, /direct_push_to_protected:[[:space:]]*[^,}#[:space:]]*/) {
+      v = substr($0, RSTART, RLENGTH); sub(/direct_push_to_protected:[[:space:]]*/, "", v); gsub(/["\047]/, "", v)
+      found = 1; exit
+    }
+    END { if (found && (v == "forbidden" || v == "confirm" || v == "allowed")) print v; else print "evidence" }
+  '
+}
+
+# The gate is on when the working tree OR the remote's copy reads as
+# `evidence`, so an uncommitted local edit cannot switch it off; leaving
+# `evidence` is a push the gate itself checks. A remote ref without the file
+# does not count.
+_fg_evidence_on() {
+  if [ ! -f .agents/project.yaml ] || [ "$(_fg_policy_value < .agents/project.yaml 2>/dev/null)" = evidence ]; then return 0; fi
+  for _fg_ref in refs/remotes/origin/HEAD refs/remotes/origin/main refs/remotes/origin/master; do
+    _fg_yaml=$(git show "$_fg_ref:.agents/project.yaml" 2>/dev/null) || continue
+    if [ "$(printf '%s\n' "$_fg_yaml" | _fg_policy_value 2>/dev/null)" = evidence ]; then return 0; fi
+  done
+  return 1
+}
+
+# The evidence gate (spec WP-D): `scripts/edd.ts gate` re-runs the contract's
+# pre-push checks, verifies the evidence commit a protected ref needs and
+# writes the record. Inert unless the policy is `evidence` (_fg_evidence_on), so every other
+# policy pushes exactly as before. The refs on stdin are read here and handed
+# back as stdin, so the gates after this one still see them.
+framework_gate_evidence() {
+  _fg_evidence_on || return 0
+  if [ ! -f scripts/edd.ts ]; then
+    for _fg_ref in refs/remotes/origin/HEAD refs/remotes/origin/main refs/remotes/origin/master; do
+      if git cat-file -e "$_fg_ref:scripts/edd.ts" 2>/dev/null; then
+        echo "❌ The evidence policy is on and scripts/edd.ts is missing here but present on $_fg_ref: restore it, the gate cannot be skipped by deleting it."
+        return 1
+      fi
+    done
+    return 0
+  fi
+  if [ -t 0 ]; then
+    bun scripts/edd.ts gate
+    return
+  fi
+  _fg_edd_refs=
+  while IFS= read -r _fg_line || [ -n "$_fg_line" ]; do
+    [ -n "$_fg_line" ] && _fg_edd_refs="${_fg_edd_refs:+$_fg_edd_refs
+}$_fg_line"
+  done
+  exec 0<<_FG_EDD_EOF
+$_fg_edd_refs
+_FG_EDD_EOF
+  printf '%s\n' "$_fg_edd_refs" | bun scripts/edd.ts gate
+}
+
+# `shared:check` on every push where the manifest and the key exist (inert
+# outside the boilerplate's own checkout, see scripts/shared-check.ts).
+framework_gate_shared_check() {
+  if [ -f scripts/shared-files.json ] && grep -q '"shared:check"' package.json 2>/dev/null; then
+    bun run shared:check || return 1
   fi
   return 0
 }
