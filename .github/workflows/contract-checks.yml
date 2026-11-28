@@ -1,0 +1,73 @@
+# ============================================
+# EDD - Contract checks (one check per evidence contract id)
+# ============================================
+# Purpose: post one check per `ci` id of the evidence contract
+# (evidence.static in .agents/project.yaml), named by the id, so a ruleset can
+# require it beside edd/evidence (`bun run git:policy plan` lists them). The
+# command each job runs comes from the contract at the base commit, through
+# `bun scripts/edd.ts check <id>`, not from this file. The matrix names the ids
+# this project's contract declares: change both together.
+#
+# This workflow travels to every project scaffolded from the boilerplate (ci.yml
+# does not), so a project's required checks have a job that posts them.
+
+name: EDD Contract Checks
+run-name: ${{ github.actor }} triggered EDD Contract Checks on ${{ github.ref_name }}
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  ContractChecks:
+    # One check per ci id of the evidence contract (evidence.static in
+    # .agents/project.yaml), named by the id so a ruleset can require it. The
+    # command comes from the contract at the base commit, not from this file.
+    # No job-level skip: a skipped job reports success to a required check.
+    name: ${{ matrix.id }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        id: [lint, types, unit, repo-gates]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      # repo:check runs agents:compat:check, which expects the gitignored
+      # .claude/skills symlink a workstation has. Only the link is made here:
+      # `bun run agents:compat` would also repair what the check exists to catch.
+      - name: Workstation alias
+        if: matrix.id == 'repo-gates'
+        run: |
+          if [ -d .agents/skills ] && [ ! -e .claude/skills ]; then
+            mkdir -p .claude
+            ln -s ../.agents/skills .claude/skills
+          fi
+
+      - name: Contract check
+        env:
+          CHECK_ID: ${{ matrix.id }}
+          EDD_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          if [ -f scripts/edd.ts ]; then
+            bun scripts/edd.ts check "$CHECK_ID"
+          else
+            echo "scripts/edd.ts is not in this checkout: $CHECK_ID has nothing to run"
+          fi
