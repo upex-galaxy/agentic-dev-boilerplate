@@ -20,7 +20,7 @@ Branch names come from `git_strategy.branches`; `main` and `staging` are the con
 
 | Branch | Role |
 |---|---|
-| `main` | Production, whatever `git_strategy.branches.production` names. PRs merge into it from the integration branch or from `feat/*` after review. |
+| `main` | Production, whatever `git_strategy.branches.production` names. PRs merge into it from the integration branch or from `feat/*` once their evidence passes, as `git_strategy.policy.merge_mode` says. |
 | `staging` | The integration branch for AI commits and pre-release validation, whatever `git_strategy.branches.integration` names (`develop`, `dev` and so on). It exists only when the strategy names one; under `solo-main` it is null. |
 | `feat/*` | Task-specific, named `feat/TICKET-ID-desc` (prefix table: `/git-flow-master` §3.1). |
 | `fix/*` | Bug fixes, named `fix/TICKET-ID-desc`. |
@@ -32,7 +32,8 @@ Commit rules:
 - `Docs-Checked: <label> <reason>` (ADR-0017) goes above the two forensic trailers, only when a change touched a `LINT.IfChange(<label>)` region and the pages it names still hold. Never add it by reflex and never without the reason: it is the escape the pre-push and CI documentation-contract gate accepts, and the drift sweep counts every one. binding: `/git-flow-master`
 - Branch, commit, push, PR, conflict fix and chained-PR planning all run through `/git-flow-master`.
 - `bun run git:policy verify` reconciles `git_strategy` against the host ruleset, and `apply` writes it (a dry run until `--yes`). See `git-flow-master/references/ruleset-parity.md`.
-- `AGENTS.md` §1 #3 to #5 hold the no-AI-attribution rule, the push-to-protected policy (`direct_push_to_protected`) and the git-history rules.
+- `AGENTS.md` §1 #3 to #5 hold the no-AI-attribution rule, the push-to-protected policy (`direct_push_to_protected` for a direct push, `merge_mode` for a PR into a protected branch) and the git-history rules.
+- Delivery runs on evidence: branches, commits, pushes and PRs need no per-step approval, and the gate's verdict decides whether a change lands. `edd` is the doctrine, `/git-flow-master` runs the operations, and the closed list of what still asks a person is `.agents/skills/edd/references/human-gates.md`, plus the push ask under `direct_push_to_protected: confirm`. binding: `/git-flow-master`
 
 ---
 

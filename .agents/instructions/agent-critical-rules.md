@@ -36,7 +36,7 @@ Commits carry no AI attribution: no "Generated with Claude Code", no "Co-Authore
 
 ## 4. Push to protected follows `git_strategy.policy.direct_push_to_protected`
 
-Before pushing to a protected branch, resolve `git_strategy.policy.direct_push_to_protected` in `.agents/project.yaml` (the protected list is `git_strategy.protected`). With `forbidden`, never push directly: route the change through a PR. With `confirm`, ask for explicit user confirmation before every push. With `allowed`, push without asking: the authorization is standing, and asking anyway collapses `allowed` into `confirm`. A missing or null `git_strategy` block (fresh scaffold) behaves as `confirm`. The variable is the decision, so never hardcode the answer here. Mechanics: `git-flow-master` §3.3.
+Before pushing to a protected branch, resolve `git_strategy.policy.direct_push_to_protected` in `.agents/project.yaml` (the protected list is `git_strategy.protected`). With `forbidden`, never push directly: route the change through a PR. With `confirm`, ask for explicit user confirmation before every push. With `allowed`, push without asking: the authorization is standing, and asking anyway collapses `allowed` into `confirm`. With `evidence`, push without asking only when the pre-push evidence gate (`bun run edd gate`) passes; on a fail there is no push and no question: fix forward and retry. A missing or null value or `git_strategy` block (fresh scaffold) behaves as `evidence`. A pull request into a protected branch follows `git_strategy.policy.merge_mode`: `auto` (the default), `human-approves` or `manual`. Under `auto` and `human-approves` the agent enables auto-merge once the PR is open and its head carries its evidence, and only after `bun run git:policy verify --merge <base>` passes; GitHub merges once the required checks pass, after a person's approval under `human-approves`. Under `manual` the agent stops at PR creation and a person merges. The variable is the decision, so never hardcode the answer here. Doctrine: `edd`; mechanics: `git-flow-master` §3.3.
 
 ## 5. Git history
 
@@ -44,7 +44,7 @@ Never rewrite pushed history (rebase or amend on pushed commits), never force-pu
 
 ## 6. Quality verification
 
-After code changes, verify in this order: tests, then types, then lint. Run all three; skip none.
+After code changes, verify in this order: tests, then types, then lint. Run all three; skip none. The evidence gate is where verification is enforced: `bun run edd gate` re-runs the contract's pre-push checks before a push under policy `evidence`, and the CI verifier re-checks every PR (the `edd/evidence` check) and every push to a protected branch. A green local run is not a delivery: the gate's verdict is (`bun run edd gate`, the `edd/evidence` check).
 
 ## 7. File operations
 
