@@ -188,7 +188,7 @@ Git Branch           Ambiente           Auto-deploy?
 ─────────────────────────────────────────────────────
 feature/login    →    Local / Preview    Preview por PR
 staging          →    Staging            Sí (automático)
-main             →    Production         Sí (con aprobación)
+main             →    Production         Sí (por la política de git)
 ```
 
 **Auto-deploy:** un push a `staging` se despliega solo al ambiente staging vía CI/CD. Con `solo-main` no hay branch `staging`: el mapeo sale de la estrategia que declara tu `git_strategy:`, y el deploy a staging y la promoción a producción los conduce `/sprint-development`. Que un deploy esté listo se verifica leyendo el deploy del commit hasta que diga `READY`, nunca porque el push salió bien (`AGENTS.md` Regla #16).

@@ -39,7 +39,7 @@ The sealed mutation contract. It binds every run of either mode.
 
 ## With nobody at the keyboard
 
-Every approval gate in both references follows `agentic-dev-core/references/decision-protocol.md`. A person present holds the gate. A supervised worker reports the plan or audit to its conductor and waits for the answer. A routine counts the delegating brief as approval only when it names this exact change: the mode, the project key and, for a migration, both hosts. Otherwise it does the read-only work (derive, list, dry-run, audit), puts the plan or findings in the report, and stops before any Jira write, credential login, push or message. A worker or routine whose brief names no mode reports that and stops; it does not guess one.
+Every approval gate in both references follows `agentic-dev-core/references/decision-protocol.md`. A person present holds the gate. A supervised worker reports the plan or audit to its conductor and waits for the answer. A routine counts the delegating brief as approval only when it names this exact change: the mode, the project key and, for a migration, both hosts. Otherwise it does the read-only work (derive, list, dry-run, audit), puts the plan or findings in the report, and stops before any Jira write, credential login or message; a push follows Critical Rule #4, where `git_strategy.policy.direct_push_to_protected` decides. A worker or routine whose brief names no mode reports that and stops; it does not guess one.
 
 ## Composable Skills (auto-resolved at skill entry)
 
@@ -55,6 +55,6 @@ Expected matches in this repo:
 | Category | Skill | Why it composes |
 |---|---|---|
 | `issue-tracker` | `/acli` | Owns `[ISSUE_TRACKER_TOOL]`: auth status, site switching, every Jira read this skill performs. Load it before any Jira operation, in both modes. |
-| `meta-skill` | `/git-flow-master` | Owns the commit, branch and push contract for the migration mode's Phase 5. Push only with explicit confirmation. |
+| `meta-skill` | `/git-flow-master` | Owns the commit, branch and push contract for the migration mode's Phase 5. The push follows the git policy (Critical Rule #4). |
 
 `acli` cannot create, rename or delete Components, so the components mode drives `scripts/sync-jira-components.ts` against the REST API and not `[ISSUE_TRACKER_TOOL]`. That is a documented limit of the tool, not a bypass of the composition contract.

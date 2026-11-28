@@ -8,7 +8,7 @@
 
 ## Filosofía del Flujo
 
-La AI genera código y lo commitea inteligentemente, pero **tú mantienes el control** en los puntos clave: la política de push a una branch protegida (la fijás vos en `git_strategy.policy`) y qué se mergea.
+La AI genera código y lo commitea inteligentemente, pero **tú mantienes el control** de lo que solo una persona decide: qué comportamiento es el correcto y las reglas de entrega (las fijás vos en `git_strategy.policy`). Commit, push y merge los decide la evidencia (`.agents/skills/edd/SKILL.md`), no un OK por paso.
 
 > **Fuente de verdad:** la estrategia activa de CADA proyecto vive en el bloque `git_strategy:` de `.agents/project.yaml`, y la skill `git-flow-master` la lee y adapta cada commit, branch, push y PR a ella. Este documento explica los conceptos con un sabor de referencia (**main + staging**); tu proyecto puede usar otro.
 
@@ -34,7 +34,7 @@ La política de protección declarada (`git_strategy.policy`) es una intención.
 
 ### main
 
-Código de producción. Solo recibe merges desde `staging` a través de pull requests aprobados.
+Código de producción. Solo recibe merges desde `staging` a través de pull requests cuya evidencia pasa (`edd/evidence`) y, bajo `merge_mode: human-approves`, que una persona aprobó.
 
 ### staging
 
@@ -73,7 +73,7 @@ Para trabajar en paralelo sin mezclar cambios (otra sesión de AI, un hotfix mie
 
 ### 3. Commits Agrupados
 
-La AI analiza cambios y propone commits separados, y espera tu OK antes de ejecutarlos:
+La AI analiza cambios y los separa en commits, y los ejecuta sin esperar un OK: lo que decide si el trabajo avanza es la evidencia, no un visto bueno por commit.
 
 **feat:** Nueva funcionalidad
 
@@ -109,21 +109,32 @@ docs: actualizar README con nuevas variables de entorno
 
 Pushear tu branch de trabajo es libre. Pushear directo a una branch protegida (`main`, o `staging` en este sabor) depende de `git_strategy.policy.direct_push_to_protected`:
 
-| Valor       | Qué hace la AI                                               |
-| ----------- | ------------------------------------------------------------ |
-| `confirm`   | Pregunta antes de cada push a la branch protegida            |
-| `forbidden` | Se niega y lleva el trabajo por PR                           |
-| `allowed`   | Pushea directo sin preguntar: el valor ya es tu autorización |
+| Valor       | Qué hace la AI                                                                                                              |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `evidence`  | Pushea directo sin preguntar solo si pasa la compuerta previa al push (`bun run edd gate`); si falla, no pushea y no pregunta: corrige y reintenta |
+| `confirm`   | Pregunta antes de cada push a la branch protegida                                                                           |
+| `forbidden` | Se niega y lleva el trabajo por PR                                                                                          |
+| `allowed`   | Pushea directo sin preguntar y sin compuerta: el valor ya es tu autorización                                                |
 
-Si el bloque `git_strategy` falta o está en `null` (proyecto recién scaffoldeado), se comporta como `confirm`. La variable decide, no la AI (`AGENTS.md` Regla #4): con `allowed` preguntar igual la convertiría en `confirm`. Nunca usa `--force` ni `--no-verify`.
+Si el bloque `git_strategy` falta o está en `null` (proyecto recién scaffoldeado), se comporta como `evidence`. La variable decide, no la AI (`AGENTS.md` Regla #4): con `allowed` o `evidence` preguntar igual la convertiría en `confirm`. Nunca usa `--force` ni `--no-verify`. La compuerta atrapa errores y deriva, no un check falsificado a propósito.
 
 ### 5. Pull Request
 
 Cuando la feature está completa:
 
 - La AI pushea la branch y crea el PR con `gh pr create`, hacia la base que dicta la estrategia (`staging` en este sabor, `main` en `solo-main` o `github-flow`)
-- Revisas los cambios en GitHub
-- Apruebas y haces merge: **la AI se detiene al crear el PR**, el merge es tuyo
+- Antes de activar el auto-merge corre `bun run git:policy verify --merge <base>`; si una base protegida no lo pasa, la AI se detiene y te avisa
+- `git_strategy.policy.merge_mode` decide quién mergea:
+
+| Valor            | Qué pasa con el PR hacia una branch protegida                                                                                              |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `auto`           | Por defecto. La AI corre `gh pr merge --auto --<método>` una vez abierto el PR y con su evidencia en el head, y GitHub mergea cuando pasan los checks requeridos (`edd/evidence` entre ellos), sin aprobaciones |
+| `human-approves` | Igual, pero el ruleset exige aprobaciones: GitHub mergea cuando una persona aprueba (opt-in)                                               |
+| `manual`         | La AI se detiene al abrir el PR y una persona mergea (opt-in)                                                                              |
+
+- El método es un merge commit salvo que `git_strategy.decisions.feature_merge` declare otro: un squash pierde la firma del commit de evidencia
+- Una base sin ruleset (PR apilado, trunk sin protección) nunca recibe `--auto`: la AI espera `edd/evidence` en verde y recién ahí corre `gh pr merge --<método>`
+- La AI arma el vigía del PR (`.agents/skills/edd/scripts/pr-watch.sh`) y, al ver el merge, confirma con `git fetch` y `git merge-base --is-ancestor <merge-commit> origin/<base>`
 
 Si un cambio supera unas 400 líneas, `git-flow-master` propone partirlo en PRs encadenados (stacked) antes de empezar.
 

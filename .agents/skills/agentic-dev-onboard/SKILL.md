@@ -138,9 +138,9 @@ The loop has five stages:
 | 2     | Implementation    | Write code per plan, run unit tests, lint and types, commit on the feature branch                   |
 | 3     | Code Review       | Open the PR, run review                                                                             |
 | 4     | Staging Deploy    | Deploy to the integration target (`git_strategy.branches.integration` in `.agents/project.yaml`, or a Preview under `solo-main`), verify by commit SHA, smoke-check, transition to Ready For QA |
-| 5     | Production Deploy | Gated and optional: promote to production (`git_strategy.branches.production`), deploy with a rollback plan |
+| 5     | Production Deploy | Optional: promote to production (`git_strategy.branches.production`) through the git policy, deploy with a rollback plan |
 
-The skill handles Jira transitions, branch creation, commits, the PR and the deploy. The person confirms at its gates.
+The skill handles Jira transitions, branch creation, commits, the PR, the merge and the deploy. None of them waits for a per-step OK: a push follows Critical Rule #4 and a merge follows `git_strategy.policy.merge_mode`, once the evidence passes. The person is asked only for what `.agents/skills/edd/references/human-gates.md` lists, plus the push ask under `direct_push_to_protected: confirm`.
 
 ---
 

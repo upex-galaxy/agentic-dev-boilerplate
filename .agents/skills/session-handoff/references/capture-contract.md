@@ -22,7 +22,7 @@ Who the owner is, how they decide, what they delegated and what they reserved. I
 
 Anything the owner said once and will not repeat goes here verbatim.
 
-*Failure mode*: a successor that re-asks a delegated decision burns the owner's patience; one that assumes authority it lacks (a push to `main`, a production deploy, a migration apply) does damage.
+*Failure mode*: a successor that re-asks a delegated decision burns the owner's patience; one that assumes authority it lacks (a push or merge the git policy gives to a person, a production deploy the project reserves, a migration apply under `migrations: confirm`) does damage.
 
 ## §2 · What was built
 

@@ -9,12 +9,12 @@ Este boilerplate cubre el desarrollo: definir, construir, revisar y desplegar ca
 
 ## Dónde se toca el trabajo del dev con IQL
 
-| Momento           | Lado dev (este repo)                                                            | Lado QA                                                                      |
-| ----------------- | ------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| Antes de codear   | `/product-management` refina la historia y sus criterios de aceptación          | revisión shift-left de los criterios (estado `Shift-Left QA` de la historia) |
-| Mientras se codea | `/sprint-development` etapas 1 a 3; `/unit-testing` arma la base de la pirámide | prepara el plan de pruebas de la historia                                    |
-| La entrega        | etapa 4: merge, deploy a staging, historia en `Ready For QA`                    | toma la historia y empieza a probar                                          |
-| Después de probar | etapa 5, solo con QA en verde y aprobación del negocio                          | firma la historia o abre bugs                                                |
+| Momento           | Lado dev (este repo)                                                             | Lado QA                                                                      |
+| ----------------- | -------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| Antes de codear   | `/product-management` refina la historia y sus criterios de aceptación           | revisión shift-left de los criterios (estado `Shift-Left QA` de la historia) |
+| Mientras se codea | `/sprint-development` etapas 1 a 3; `/unit-testing` arma la base de la pirámide  | prepara el plan de pruebas de la historia                                    |
+| La entrega        | etapa 4: merge, deploy a staging, historia en `Ready For QA`                     | toma la historia y empieza a probar                                          |
+| Después de probar | etapa 5, por la política de git, con checklist y plan de rollback como evidencia | firma la historia o abre bugs                                                |
 
 Los nombres de estados de esta tabla son los del catálogo por defecto. Los de tu instancia están en `.agents/jira-workflows.json` (lo regenera `bun run jira:sync-workflows`).
 

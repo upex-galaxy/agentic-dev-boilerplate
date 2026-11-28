@@ -1067,7 +1067,7 @@
         <!-- 05 -->
         <section id="historia">
           <div class="eyebrow"><span class="num">05</span> una historia de punta a punta</div>
-          <h2>Cinco etapas, y la última tiene una puerta</h2>
+          <h2>Cinco etapas, y la última es un evento aparte</h2>
           <ol class="pipe">
             <li>
               <span class="s">ETAPA 1</span><b>Plan</b>Plan de implementación, publicado en el campo
@@ -1082,21 +1082,21 @@
               independientes (spec y estándares) marcan severidades.
             </li>
             <li class="qa">
-              <span class="s">ETAPA 4</span><b>Staging</b>Merge con tu OK y deploy verificado por
-              SHA.
+              <span class="s">ETAPA 4</span><b>Staging</b>Merge cuando pasa la evidencia y deploy
+              verificado por SHA.
             </li>
             <li class="gate">
-              <span class="s">ETAPA 5 · PUERTA</span><b>Producción</b>Solo con QA en verde y
-              aprobación del negocio.
+              <span class="s">ETAPA 5 · EVENTO APARTE</span><b>Producción</b>Por la política de git,
+              con el checklist pre-deploy y el plan de rollback como evidencia.
             </li>
           </ol>
           <div class="prose">
             <p>
               Lo conduce <code>/sprint-development</code>. Cada etapa alimenta a la siguiente, así
-              que nunca corren en paralelo; el paralelismo vive adentro de una etapa. El merge nunca
-              es automático: lo pedís vos. Bajo una estrategia sin rama de integración (como
-              <code>solo-main</code>), el "staging" de la etapa 4 es el Preview deployment de la
-              rama del PR.
+              que nunca corren en paralelo; el paralelismo vive adentro de una etapa. El merge lo
+              decide la evidencia (<code>merge_mode</code>), no un OK por paso. Bajo una estrategia
+              sin rama de integración (como <code>solo-main</code>), el "staging" de la etapa 4 es
+              el Preview deployment de la rama del PR.
             </p>
           </div>
 
@@ -1296,7 +1296,9 @@
                 <b>Push a una rama protegida:</b> lo resuelve
                 <code>git_strategy.policy.direct_push_to_protected</code>. Con
                 <code>forbidden</code> va por PR, con <code>confirm</code> pregunta cada vez, con
-                <code>allowed</code> empuja sin preguntar.
+                <code>allowed</code> empuja sin preguntar y con <code>evidence</code> (el valor por
+                defecto, también si falta) empuja sin preguntar solo si pasa
+                <code>bun run edd gate</code>.
               </li>
               <li>
                 <b>Política contra el host:</b> <code>bun run git:policy verify</code> compara lo
@@ -1309,7 +1311,9 @@
               </li>
               <li>
                 <b>Historia intocable:</b> nunca se reescribe lo que ya está pusheado, nunca se
-                fuerza un push sobre una rama compartida, y un PR nunca se mergea solo.
+                fuerza un push sobre una rama compartida, y el merge de un PR lo hace GitHub cuando
+                pasan los checks requeridos (<code>edd/evidence</code>), según
+                <code>merge_mode</code>.
               </li>
             </ul>
             <p>
