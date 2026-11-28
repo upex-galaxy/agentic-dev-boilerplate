@@ -40,6 +40,12 @@ The `acli` session, then one question that picks the catalog source for the whol
 
 Optional: creates the repository with `gh` and pushes, or records an existing remote. It waits for the Install lane, and the push is confirmed with `git ls-remote`.
 
+### Git strategy and GitHub configuration
+
+Right after the GitHub step the installer asks three questions: the branching strategy, who confirms a push to a protected branch, and how a pull request is merged. Each option says what it changes in your day, and Enter keeps the recommended one (`evidence` for pushes when the evidence gate exists, `auto` for merges). The answers go to `git_strategy` in `.agents/project.yaml`, together with the merge method: a merge commit unless the project already chose one (`bun run git:policy setup --feature-merge` picks another). For `gitlab-flow` the production branch becomes `production`, and `main`, `pre-production` and `production` are protected. The installer then runs `bun run git:policy setup --plan-only`, which prints what the GitHub repository needs (ruleset, required checks, repository settings, the Actions approval switch) and a read-only check of your permissions.
+
+The installer never writes to GitHub. To apply the plan, run `bun run git:policy setup` in a terminal. If you administer the repository it shows the dry run and asks before it writes anything (the default answer is no). If you do not, it prints a hand-off for an admin, as a prompt for their AI agent and as the equivalent `gh api` commands for this repository. A non-interactive run asks nothing and only prints the plan.
+
 ### Verify and done
 
 The external CLI table (information only, see [External CLIs](#external-clis-verified-not-auto-installed)), the project MCP servers, the agent contract, the state file, and the retirement of plaintext MCP credential copies an older install left (see [Launching the agent after setup](#launching-the-agent-after-setup)).
@@ -166,6 +172,18 @@ The fastest way for an AI to figure out **what's wired and what's missing** with
 bun run setup:doctor          # human-readable summary
 bun run setup:doctor --json   # machine-readable, parse with jq / agent
 ```
+
+Its **skill drift** section (`skill_drift` in `--json`) covers every skill in `PROJECT_LEVEL_SKILLS` and `USER_LEVEL_SKILLS`. It is report only: it never changes the verdict or the exit code.
+
+| State | Meaning |
+|---|---|
+| `dev-link` | A development link: its target, the checkout's branch and unpushed commit count |
+| `matches` | The commit recorded at install is the source's current HEAD |
+| `source-moved` | The source repo moved since install, not necessarily this skill's folder |
+| `modified` | A project copy edited since install (project copies only) |
+| `not-installed` | Declared, with no installed copy |
+| `unknown` | It cannot be decided, with the reason (no recorded commit, source unreachable, another source, unreadable lock) |
+| `no-source` | A user-level skill no list declares and the lock does not record |
 
 Exit code: `0` when everything is green, `1` when any pending action remains. JSON shape:
 
@@ -294,7 +312,7 @@ The scaffold ships a **default** git strategy (`solo-main`) with `meta.strategy_
 
 > **"set up our git strategy"**
 
-That runs git-flow-master's Strategy Setup: it resolves your branching flow (solo-main / main-integration / trunk-based / others), asks the merge + hotfix + protection-policy questions, materializes any long-lived branches, and writes the `git_strategy:` block with `strategy_source: chosen`. Until you do this, the agent will OFFER Strategy Setup on your first git intent — that offer is the signal that this setup is pending, not a bug. At any point, `bun run git:policy verify` reconciles the declared policy against the host's actual branch ruleset (and `apply` writes it — dry run until `--yes`).
+The installer step above already records the strategy and the push and merge policy. Strategy Setup covers the rest: it resolves your branching flow (solo-main / main-integration / trunk-based / others), asks the merge + hotfix + protection-policy questions, materializes any long-lived branches, and writes the `git_strategy:` block with `strategy_source: chosen`. Until you do this, the agent will OFFER Strategy Setup on your first git intent — that offer is the signal that this setup is pending, not a bug. At any point, `bun run git:policy verify` reconciles the declared policy against the host's actual branch ruleset (and `apply` writes it — dry run until `--yes`).
 
 ---
 
@@ -398,6 +416,31 @@ These skills evolve with the repo and are versioned in git. The split is intenti
 
 The user-level community skills (`USER_LEVEL_SKILLS` in `cli/install.ts`) are asked per skill in the Team phase: one checkbox per skill, all pre-checked. A skill you uncheck is recorded as `declined` in the state file and is not offered again, not even when `INSTALL_FORCE_COMMUNITY_SKILLS=1` or `--sync-skills` forces a re-run; the question card of a later run names the `bunx skills add` line to install it by hand. A non-interactive run installs every skill you have not declined.
 
+### Development links are never overwritten
+
+`skills add` and `skills update` replace a development link with a copy, and write into a local checkout when a whole skills directory links into it. So before either one, the guard looks for an entry named after the skill in these folders, below your home directory for a user-level skill and below the project root for a project one:
+
+| Folders checked | Level |
+|---|---|
+| `.agents/skills/` (the skills CLI's store) and `.claude/skills/` | both |
+| every `<hidden folder>/skills/` and `<hidden folder>/<folder>/skills/`, such as `.windsurf/skills/` or `.codeium/windsurf/skills/` | both |
+| `skills/`, `data/skills/`, `agent/skills/`, `agent/subagents/<name>/skills/` | project |
+| `.config/kimchi/harness/skills/` | user |
+| `$CLAUDE_CONFIG_DIR/skills/` (the Claude Code folder when that variable is set), `$XDG_CONFIG_HOME/<folder>/skills/`, `%APPDATA%\reasonix\skills`, and `skills/` under `$VIBE_HOME`, `$HERMES_HOME`, `$AUTOHAND_HOME`, `$GROK_HOME` or `$REASONIX_HOME` | user |
+
+The skill is skipped when one of those entries is:
+
+- a symlink leading out of the store, or
+- inside a skills directory that a symlink (the directory itself or a parent) sends somewhere other than `.agents/skills/` or the Claude Code folder. Links above your home directory or the project root do not count.
+
+These do not count:
+
+- an entry outside the store that resolves to the store entry of the same name (the CLI's own fan-out links, a directory aliased to the store): the store entry is judged instead;
+- `.agents/skills/` linked to `.claude/skills/`, or the reverse, with real folders inside;
+- a linked skills directory that does not hold the skill yet: it is **not flagged**.
+
+A package declared without a skill name is judged on every entry of those folders. `bun setup` names each skipped skill and its link paths, and records it as `skipped`, never as `declined` or `failed`; the updater prints the skill names only and records no state. The guard is `devLinkedDestinations` in `cli/lib/user-skills-update.ts`. To get the published copy back, remove the link and run `bun setup --sync-skills`.
+
 ### Invoking a skill with a mode
 
 No slash-command files ship ([ADR-0006](.context/ADR/ADR-0006-skill-plus-mode-invocation.md)). A skill is invoked by its own name plus a mode: `/project-context data` or `/jira-administration components` on Claude Code, `/skill:project-context data` on Pi, the skill and mode named in prose on OpenCode and Codex. Each multi-mode skill lists its modes in its `## Mode routing` section; the former command names (`business-data-map`, `dev-roadmap`, `jira-components`, ...) still work as trigger phrases.
@@ -473,7 +516,7 @@ Release history of each behaviour below: `CHANGELOG.md` (the `updater 8.x` secti
 - **Never a destructive default.** `take upstream` is suggested only where the project lacks the content entirely. A row naming project-only servers, keys, headings or edits suggests `merge`; an `opencode.jsonc` holding four project servers reads "only here: ... declare them in `.mcp.json`, `.codex/config.toml` and `.pi/mcp.json`, or remove them", still blocking, never "take upstream".
 - **`--dry-run` previews with the new updater.** When upstream carries a newer `cli/`, the preview does not write it: the fetched updater runs from the upstream clone against the project (same flags, same cwd) and shows its migration plan, component preview and parity table. Nothing is written and the prompt is not saved (`[dry-run] prompt not saved`). Without a terminal on stdin and no `--auto` / `--interactive`, the run assumes `--auto` and prints one notice instead of hanging.
 - **Post-sync gates.** After the apply, the gate scripts `GATE_SCRIPTS` in `cli/update-boilerplate.ts` names run (`ADOPTED_GATE_SCRIPTS` in an adopted app; each under a timeout; a gate that does not finish is skipped with a note; `--no-gates` disables them). A failure becomes a "Verificación" row with the exit code, the first error lines and which of the failing files this run applied, plus a `Gates:` line in the closing box. Informational only: never an abort, never blocking under `--strict`.
-- **Community skills update.** As its last step, the updater refreshes the community skills `cli/install.ts` declares: `bunx skills update <names> -g -y` for `USER_LEVEL_SKILLS` and `bunx skills update <names> -p -y` for `PROJECT_LEVEL_SKILLS`. It passes only the names that `bunx skills ls --json` reports as installed and tracked from the same source, so a skill you declined, a same-named skill from another source and the rest of your global skills stay as they are. A skill installed as a symlink that leads out of the skills CLI's store (a development link into a skills repo) is skipped, because `skills update` would replace the link with a copy. Each project skill is copied to `.backups/skills-update-<timestamp>/` before its update: the update replaces the folder, and these skills are gitignored. The skills CLI exits 0 even when a fetch fails, so the updater reads its output and turns a failure into a warning; the run's exit code never depends on this step, `--strict` included. `--dry-run` prints the command it would run. Opt out with `--no-skills-update`, or with `UPEX_SKIP_SKILLS_UPDATE=1` on the first run after upgrading from an updater that does not know the flag yet (an older updater stops on an unknown flag). Project skills installed before the skills CLI wrote `skills-lock.json` are untracked: the run lists them and `bun setup --sync-skills` reinstalls them. Logic and the measured CLI behaviour: `cli/lib/user-skills-update.ts`.
+- **Community skills update.** As its last step, the updater refreshes the community skills `cli/install.ts` declares: `bunx skills update <names> -g -y` for `USER_LEVEL_SKILLS` and `bunx skills update <names> -p -y` for `PROJECT_LEVEL_SKILLS`. It passes only the names that `bunx skills ls --json` reports as installed and tracked from the same source, so a skill you declined, a same-named skill from another source and the rest of your global skills stay as they are. A development link into a skills repo is skipped, because `skills update` would replace the link with a copy (see [Development links are never overwritten](#development-links-are-never-overwritten)). Each project skill is copied to `.backups/skills-update-<timestamp>/` before its update: the update replaces the folder, and these skills are gitignored. The skills CLI exits 0 even when a fetch fails, so the updater reads its output and turns a failure into a warning; the run's exit code never depends on this step, `--strict` included. `--dry-run` prints the command it would run. Opt out with `--no-skills-update`, or with `UPEX_SKIP_SKILLS_UPDATE=1` on the first run after upgrading from an updater that does not know the flag yet (an older updater stops on an unknown flag). Project skills installed before the skills CLI wrote `skills-lock.json` are untracked: the run lists them and `bun setup --sync-skills` reinstalls them. Logic and the measured CLI behaviour: `cli/lib/user-skills-update.ts`.
 - **`package.json` rows.** Every key kept at the project's value while upstream differs is one `package.json` row (`scripts.repo:check: project value kept; upstream differs`), with both values in the saved file, so a non-interactive run keeps the FYI out of the scrollback.
 - **Overwritten project edits.** An interactive run asks first ("Collect, then apply" above). A synced file the project had edited (3-way against the lock cursor) and the run overwrote (`--auto`, or "take the new one") gets a `merge` row on Skills or Componentes: `project edit overwritten; backup: .backups/update-<ts>/<path>; N hunks vs applied`, with the full diff in the saved file.
 - **Re-run safety.** The run records what it wrote in `.template/last-apply.json` (gitignored, sha256 per path). The next dirty-tree guard exempts a recorded path whose hash still matches, so `bun sync --auto` twice in a row, without committing in between, proceeds as a no-op (the previous prompt file is kept). An unrelated file, or a synced file edited by hand since, still aborts, naming `Commit sugerido` and the prompt path.
@@ -551,7 +594,7 @@ Three reasons:
 - **MCPs not loading at all** — the launch method is not the cause: a bare binary and a launch with no command line (desktop app, supervised worker) both work, because every MCP server starts through the `.env` loader, whatever launched the harness. Check that the checkout has a `.env` and that the `varlock` devDependency is installed (`bun install`); `bun run harness:env:check` exits 1 while a retired plaintext copy remains.
 - **Codex ignores `.codex/config.toml` and the hook never fires** — Codex has two gates. The project must be trusted (Codex asks the first time you open it), and each project hook must be trusted too: interactive `codex` shows "Hooks need review" for a new or changed hook (review them, or "Trust all and continue"; "Continue without trusting" leaves them off), while `codex exec` skips an untrusted hook silently, so a headless run gets no `AGENT IDENTITY:` and no `ROUTE:` line. `bun run setup:doctor` reads both gates from Codex's own config and names the one missing on its WARN line; open `codex` in the repo once, trust the hooks, then restart the session. `codex exec --dangerously-bypass-hook-trust` runs them for one invocation and is meant for automation that already vets the hooks. In a linked worktree Codex reads the primary checkout's `.codex/` and its trust, so a hook edit in the worktree takes effect only once it reaches the primary checkout.
 - **Pi shows only `AGENTS.md`: no skills, no MCP tools, no hook**: the folder is not trusted. Pi's project trust gates `.agents/skills`, `.pi/mcp.json` and `.pi/extensions`. Run `/trust` inside Pi and restart the session; `bun run setup:doctor` reports the trust state.
-- **The skills alias disappeared after an edit** — you probably hand-edited the `.claude/skills` alias. Fix the source instead (`.agents/skills/`), then run `bun run agents:compat`. Verify with `bun run agents:compat:check`.
+- **The skills alias disappeared after an edit** — you probably hand-edited the `.claude/skills` alias. Fix the source instead (`.agents/skills/`), then run `bun run agents:compat`. A link to a folder that holds files is left as it is, and the error names the steps to take first. Verify with `bun run agents:compat:check`.
 - **A project command vanished into `.backups/shadowing-commands/`** — it had the name of a repo skill, which hides that skill's instructions. Port anything worth keeping into the skill, or rename the command, then restore it.
 - **`agents:compat:check` fails on `CLAUDE.md`** — it holds more than the one-line `@AGENTS.md` shim. Move the prose into the owning skill (or into its instruction section under `.agents/instructions/`) and regenerate.
 - **Skills not appearing in autocomplete** — restart Claude Code (or your agent of choice). MCP and skill configs are cached at agent startup. On Claude Code specifically, also confirm the `.claude/skills` alias exists; if a checkout dropped it, `bun run agents:compat` recreates it.
