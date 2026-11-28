@@ -1749,7 +1749,8 @@
                 es <span class="mono">null</span> (<span class="mono">solo-main</span>,
                 <span class="mono">github-flow</span>, <span class="mono">trunk-based</span>). Un
                 <span class="mono">integration: null</span> es válido y no termina la corrida: en
-                ese caso la corrida nunca mergea y el ticket queda en un PR abierto.
+                ese caso el PR a la rama de producción es la entrega y sigue la política de merge
+                como cualquier otro: se activa el auto-merge después del attest.
               </li>
               <li>
                 <span class="mono">.context/dev-roadmap.md</span> como fuente de las aristas de
@@ -1978,7 +1979,7 @@
             ><span
               ><span class="mono">gh auth status</span> contra
               <span class="mono">automation_gh_account</span>: en la fase 0, justo antes del primer
-              push y justo antes de cualquier merge. Una CLI con varias cuentas puede cambiar de
+              push y justo antes de activar el auto-merge. Una CLI con varias cuentas puede cambiar de
               identidad en el medio, y el error recién aparece en el merge, disfrazado de protección
               de rama.</span
             >
@@ -2301,10 +2302,10 @@ git merge-base --is-ancestor <span class="s">&lt;merge-commit&gt;</span> origin/
                 Cuando pasa la compuerta de orquestación (binario y runtime alcanzable), un
                 despacho de <span class="mono">story</span> o <span class="mono">bug</span> puede ir
                 a un worker por ticket. Lock, auditoría, selección, topes y compuertas siguen siendo
-                de esta skill; el worker para en un PR abierto y el merge queda en la corrida.
-                Con <span class="mono">integration: null</span> pasa lo mismo en toda la corrida:
-                nunca mergea, y el merge a producción es la etapa 5 de
-                <span class="mono">/sprint-development</span>, una decisión humana.
+                de esta skill; el worker para en un PR abierto y el merge queda en la corrida:
+                activa el auto-merge después del attest, según <span class="mono">merge_mode</span>,
+                y no espera a nadie. Con <span class="mono">integration: null</span> pasa lo mismo
+                en toda la corrida: el PR a producción sigue la misma política.
               </li>
             </ul>
           </div>
@@ -2461,7 +2462,7 @@ git merge-base --is-ancestor <span class="s">&lt;merge-commit&gt;</span> origin/
               >Lo que produce una corrida pasa tres frenos: los checks propios de la app, la
               revisión del Stage 3 de <span class="mono">/sprint-development</span> hecha por un lector
               que no escribió el trabajo, y la revisión de una persona después de que la corrida
-              termina. Ninguno hace esperar a la corrida ni estrecha el permiso de merge. Una corrida
+              termina. Ninguno hace esperar a la corrida, y el merge sigue la política de git. Una corrida
               de arreglo nunca arranca por la falla de otra (anti-patrón A23), y un ticket fallido se
               reintenta tres veces como máximo antes de reportarse <span class="mono">BLOCKED</span>.</span
             >

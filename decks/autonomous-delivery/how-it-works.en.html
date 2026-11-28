@@ -1749,7 +1749,8 @@
                 is <span class="mono">null</span> (<span class="mono">solo-main</span>,
                 <span class="mono">github-flow</span>, <span class="mono">trunk-based</span>). An
                 <span class="mono">integration: null</span> is valid and does not end the run: in
-                that case the run never merges and the ticket stays on an open PR.
+                that case the PR into the production branch is the delivery and follows the
+                merge policy like any other: auto-merge is enabled after attest.
               </li>
               <li>
                 <span class="mono">.context/dev-roadmap.md</span> as the source of the dependency
@@ -1978,7 +1979,7 @@
             ><span
               ><span class="mono">gh auth status</span> against
               <span class="mono">automation_gh_account</span>: in phase 0, right before the first
-              push and right before any merge. A CLI with several accounts can switch
+              push and right before enabling auto-merge. A CLI with several accounts can switch
               identity in between, and the error only shows up at the merge, disguised as branch
               protection.</span
             >
@@ -2301,10 +2302,10 @@ git merge-base --is-ancestor <span class="s">&lt;merge-commit&gt;</span> origin/
                 When the orchestration gate passes (binary and reachable runtime), a
                 <span class="mono">story</span> or <span class="mono">bug</span> dispatch can go
                 to one worker per ticket. Lock, audit, selection, caps and gates stay
-                with this skill; the worker stops at an open PR and the merge stays with the run.
-                With <span class="mono">integration: null</span> the same holds for the whole run:
-                it never merges, and the merge to production is stage 5 of
-                <span class="mono">/sprint-development</span>, a human decision.
+                with this skill; the worker stops at an open PR and the merge stays with the run:
+                it enables auto-merge after attest, per <span class="mono">merge_mode</span>, and
+                waits for no one. With <span class="mono">integration: null</span> the same holds
+                for the whole run: the PR into production follows the same policy.
               </li>
             </ul>
           </div>
@@ -2461,7 +2462,7 @@ git merge-base --is-ancestor <span class="s">&lt;merge-commit&gt;</span> origin/
               >What a run produces passes three brakes: the app's own checks, the
               Stage 3 review of <span class="mono">/sprint-development</span> done by a reader
               who did not write the work, and a person's review after the run
-              ends. None of them makes the run wait or narrows the merge permission. A fix run
+              ends. None of them makes the run wait, and the merge follows the git policy. A fix run
               never starts because another one failed (anti-pattern A23), and a failed ticket is
               retried three times at most before it is reported <span class="mono">BLOCKED</span>.</span
             >

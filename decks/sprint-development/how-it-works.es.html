@@ -1580,7 +1580,7 @@
           <span class="mono">/sprint-development</span> lleva una historia del tracker (Jira o GitHub) hasta código
           desplegado. Planea antes de escribir una línea, verifica lo que construye contra la
           <b>app que corre</b>, pasa el diff por un revisor que no lo escribió, y recién ahí lo lleva
-          a staging. Producción es un evento aparte, con <b>tu</b> aprobación.
+          a staging. Cada merge ocurre cuando pasa la <b>evidencia</b>; producción es un evento aparte.
         </p>
 
         <div class="hero-meta">
@@ -1618,13 +1618,13 @@
           <div class="node">
             <div class="n">Stage 4</div>
             <h3>Staging Deploy</h3>
-            <p>Merge con tu OK, deploy verificado, pase a QA.</p>
+            <p>Merge con evidencia, deploy verificado, pase a QA.</p>
             <div class="arw">→</div>
           </div>
           <div class="node">
             <div class="n">Stage 5</div>
             <h3>Production</h3>
-            <p>Opcional y con compuerta: QA en verde + negocio.</p>
+            <p>Opcional, evento propio: checklist + evidencia.</p>
           </div>
         </div>
       </div>
@@ -1767,7 +1767,7 @@
             >
           </div>
           <div class="lane">
-            <div class="lane-head">Entrega · con tu OK</div>
+            <div class="lane-head">Entrega · con evidencia</div>
             <a class="wf" href="#staging"
               ><span class="lt sig">4</span
               ><span
@@ -1816,7 +1816,7 @@
               </tr>
               <tr>
                 <th>Promover a producción</th>
-                <td>Stage 5, solo con QA en verde y aprobación de negocio</td>
+                <td>Stage 5, un evento aparte que se entrega con evidencia</td>
               </tr>
             </tbody>
           </table>
@@ -2494,7 +2494,7 @@ playwright-cli list   <span class="c"># la prueba: &lt;KEY&gt; ya no está</span
           <div class="eyebrow"><span class="num">11</span> · Stage 4 · staging deploy</div>
           <h2>Mergeado no es desplegado: se verifica en el destino</h2>
           <p class="sub">
-            El merge del PR pasa <b>solo con tu OK</b>: la skill nunca mergea sola. Después, el CI
+            El merge del PR sigue la política de git: por defecto, <b>auto-merge cuando pasa la evidencia</b>, sin tu OK. Después, el CI
             corre y el deploy de staging se vigila hasta que el deployment de ese commit dice
             <span class="mono">READY</span>.
           </p>
@@ -2515,7 +2515,7 @@ playwright-cli list   <span class="c"># la prueba: &lt;KEY&gt; ya no está</span
             <ul>
               <li>Pasa con <span class="mono">solo-main</span>, <span class="mono">github-flow</span> y <span class="mono">trunk-based</span>.</li>
               <li>No hay merge a staging: el Stage 4 verifica el Preview deployment de la rama del PR.</li>
-              <li>El merge a <span class="mono">git_strategy.branches.production</span> es el Stage 5.</li>
+              <li>El PR a <span class="mono">git_strategy.branches.production</span> es la entrega a producción: primero el checklist, después el auto-merge.</li>
             </ul>
           </div>
         </div>
@@ -2580,11 +2580,11 @@ playwright-cli list   <span class="c"># la prueba: &lt;KEY&gt; ya no está</span
       <div class="wrap">
         <div class="sec-head r">
           <div class="eyebrow"><span class="num">12</span> · Stage 5 · production</div>
-          <h2>Producción es otro evento, con otra aprobación</h2>
+          <h2>Producción es otro evento, con su propia evidencia</h2>
           <p class="sub">
-            Nunca se encadena desde el Stage 4. Corre solo con QA en verde en staging <b>y</b>
-            aprobación explícita de negocio, de una persona o de un brief que nombre ese ticket y
-            ese deploy. Si la sesión ya se archivó, la Phase 0 la reabre y suma
+            Nunca se encadena desde el Stage 4. La promoción sigue la política de git, con el checklist
+            y el plan de rollback como su <b>evidencia</b>, más el veredicto de QA donde hay un flujo de
+            QA; espera a una persona solo si el proyecto se reserva ese OK final. Si la sesión ya se archivó, la Phase 0 la reabre y suma
             las entradas del Stage 5.
           </p>
         </div>
@@ -2595,7 +2595,7 @@ playwright-cli list   <span class="c"># la prueba: &lt;KEY&gt; ya no está</span
             <p>
               <span class="mono">pre-deploy-checklist.md</span>: tests, tipos, lint y build de
               producción; review aprobada; variables y secretos de producción; migraciones listas;
-              backup reciente; monitoreo y alertas; PM y QA con su go.
+              backup reciente; monitoreo y alertas; el go de QA, y el OK del PM solo si el proyecto lo reserva.
             </p>
           </div>
           <div class="step">
@@ -2710,7 +2710,7 @@ playwright-cli list   <span class="c"># la prueba: &lt;KEY&gt; ya no está</span
               </li>
               <li>El loop corre Stages 1 a 4 por ticket y espera tu OK antes del siguiente.</li>
               <li>Un ticket bloqueado no hace avanzar al próximo: se reporta y espera.</li>
-              <li>El Stage 5 nunca corre en batch: producción es manual, ticket por ticket.</li>
+              <li>El Stage 5 nunca corre en batch: producción es su propio evento, por ticket o por release.</li>
             </ul>
           </div>
           <div class="plane agent">
@@ -2724,7 +2724,7 @@ playwright-cli list   <span class="c"># la prueba: &lt;KEY&gt; ya no está</span
               </li>
               <li>
                 Cada worker corre Stages 1 a 3 sobre un ticket, en su propio worktree, sin
-                checkpoints humanos, y se detiene en el PR abierto.
+                checkpoints humanos, atesta su evidencia y se detiene en el PR abierto; el conductor habilita el merge.
               </li>
               <li>
                 Un worker se reconoce por su prompt: <span class="mono">/sprint-development &lt;KEY&gt; fleet worker</span>
@@ -2814,7 +2814,7 @@ playwright-cli list   <span class="c"># la prueba: &lt;KEY&gt; ya no está</span
             ><span
               ><b>No pushea a una rama protegida sin resolver la política.</b>
               <span class="mono">git_strategy.policy.direct_push_to_protected</span>:
-              <span class="mono">allowed</span> pushea, <span class="mono">confirm</span> pregunta,
+              <span class="mono">evidence</span> pushea si pasa la compuerta, <span class="mono">allowed</span> pushea, <span class="mono">confirm</span> pregunta,
               <span class="mono">forbidden</span> manda por PR (Critical Rule #4, mecánica en
               <span class="mono">/git-flow-master</span>).</span
             >
@@ -2822,7 +2822,7 @@ playwright-cli list   <span class="c"># la prueba: &lt;KEY&gt; ya no está</span
           <div class="it">
             <span class="bx"></span
             ><span
-              ><b>No mergea sola</b>, no encadena producción desde staging, y no saltea la review en
+              ><b>No mergea sin evidencia</b>: el merge sigue <span class="mono">merge_mode</span>. No encadena producción desde staging, y no saltea la review en
               un PR que toca comportamiento de producción.</span
             >
           </div>
@@ -3036,8 +3036,8 @@ playwright-cli list   <span class="c"># la prueba: &lt;KEY&gt; ya no está</span
           <p>
             <b style="color: var(--ink)">La idea de fondo.</b> Cada etapa deja algo que la siguiente
             puede leer, y cada compuerta se abre con evidencia, no con una etiqueta. La IA planea,
-            construye, revisa y verifica en el destino; tú eliges la ruta de diseño, das el OK del
-            merge y decides cuándo algo llega a producción.
+            construye, revisa y verifica en el destino; tú eliges la ruta de diseño y decides cuándo algo llega a
+            producción; el merge sigue la política de git cuando pasa la evidencia.
           </p>
         </div>
         <div class="sig">
