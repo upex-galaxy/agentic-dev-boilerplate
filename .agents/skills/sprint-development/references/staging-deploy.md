@@ -4,7 +4,7 @@
 
 Gets a reviewed feature onto the staging environment so QA can pick it up: automatically through CI/CD, or by hand when CI is not set up. Run it after `ci-cd-setup.md` (GitHub Actions configured), `environment-config.md` (variables set) and Stage 3 (code review).
 
-> **Integration branch**: its real name is `git_strategy.branches.integration` in `.agents/project.yaml`. This document says `staging` for the conventional name. Read the value before running any git command below, and never write the literal `staging` or `develop` in a command. When it is `null` (`solo-main`, `github-flow`, `trunk-based`) there is no integration branch: there is no merge to staging, Stage 4 verifies the Vercel Preview deployment of the PR branch, and the merge to `git_strategy.branches.production` is Stage 5.
+> **Integration branch**: its real name is `git_strategy.branches.integration` in `.agents/project.yaml`. This document says `staging` for the conventional name. Read the value before running any git command below, and never write the literal `staging` or `develop` in a command. When it is `null` (`solo-main`, `github-flow`, `trunk-based`) there is no integration branch: there is no merge to staging, Stage 4 verifies the Vercel Preview deployment of the PR branch, and the feature PR into `git_strategy.branches.production` is the production delivery: the Stage 5 pre-deploy checklist and rollback plan run before its auto-merge is enabled, and it merges by `merge_mode` once its evidence passes.
 >
 > **Stack**: the app's commands are its own scripts (`{{stack.package_manager}} run {{stack.scripts.<role>}}` from `{{stack.app_root}}`; a null role is skipped and reported). CI is whatever the app already runs (`{{stack.ci}}`, any workflow under `.github/workflows/`) and hosting is `{{stack.hosting}}`. With a host other than `vercel`, replace the Vercel steps below with that host's equivalent check. If the host exposes none, report the deploy as unverified (Critical Rule #16). See `../SKILL.md`, `## Stack parameters`.
 
@@ -14,7 +14,7 @@ Load before Step 1: `/deploy-to-vercel` (deploy method, category `deploy`) next 
 
 ## What to read first
 
-1. The PR state: approved in code review (Stage 3), unit tests passing locally, local build green, feature branch ready to merge.
+1. The PR state: approved in code review (Stage 3), its evidence attested at the change's depth (`../SKILL.md` `#### Evidence and attest`), unit tests passing locally, local build green, auto-merge enabled per `git_strategy.policy.merge_mode`.
 2. The app's CI workflows (`.github/workflows/*.yml`, any name; critical) to see what runs on each push or PR and what triggers the deploy, and `.context/ci-cd-setup.md`. Is GitHub Actions configured, does the automatic staging deploy work, and which branch triggers it?
 
 Tools: git, access to the GitHub repo, access to the Vercel or Railway dashboard. No MCP is needed.
@@ -29,7 +29,7 @@ Result: the feature is deployed on staging, the URL is shared with QA, and the s
 
 ## Rules
 
-- The PR must be approved and CI green before a deploy. Merge through the pull request and let GitHub Actions do the deploy, never around the CI.
+- The PR must pass review and CI, `edd/evidence` included, before a deploy. It merges through the pull request by `git_strategy.policy.merge_mode`, and GitHub Actions does the deploy, never around the CI.
 - No force push (`git push -f`).
 - No production deploy in this stage.
 - Validate locally first (lint, test, build), then validate the deployment with a smoke test, and share the staging URL with QA.
@@ -60,9 +60,9 @@ Then pick the path from the CI workflows you read. Do not ask the user what the 
 
 ### 2.1 Merge the pull request
 
-On GitHub, open the PR (`https://github.com/[org]/[repo]/pull/[number]`) and check that code review is approved, CI checks are green and there are no conflicts. Click "Merge pull request", with "Squash and merge" or "Merge commit" according to the strategy, and confirm.
+The merge follows `git_strategy.policy.merge_mode`, through `/git-flow-master`. Under `auto` and `human-approves`, auto-merge was enabled at the end of Stage 3 after `bun run git:policy verify --merge <integration>`, and GitHub merges when `edd/evidence` and the other required checks pass (after a person's approval under `human-approves`). Under `manual`, a person merges. The method is a merge commit unless `git_strategy.decisions.feature_merge` names another, because a squash loses the evidence commit's signature. A base with no ruleset never gets `--auto`: wait for `edd/evidence` to pass, then run `gh pr merge --<method>`. The PR watcher (`.agents/skills/edd/references/waiting.md`) follows the PR until it merges; then `git fetch` and `git merge-base --is-ancestor <merge-commit> origin/<integration>` confirm the merge commit is on the base. On a conflict, merge the base into the branch (never rebase a pushed branch) and re-attest when the diff changed.
 
-Through the CLI instead:
+Through a direct merge and push instead, only where the policy allows a direct push:
 
 ```bash
 # <integration> = git_strategy.branches.integration (.agents/project.yaml)
@@ -79,7 +79,7 @@ git merge [feature-branch]
 git push origin <integration>
 ```
 
-Merge to the integration branch with the method `git_strategy.decisions.feature_merge` names, as `../SKILL.md` Stage 4 says. Do not push straight to the integration branch unless `git_strategy.policy.direct_push_to_protected` allows it.
+Merge to the integration branch with the method `git_strategy.decisions.feature_merge` names, as `../SKILL.md` Stage 4 says. Do not push straight to the integration branch unless `git_strategy.policy.direct_push_to_protected` allows it (`allowed`, or `evidence` with the pre-push gate `bun run edd gate` passing).
 
 ### 2.2 Monitor GitHub Actions
 
@@ -199,11 +199,11 @@ When the harness shows no tokens and nobody enters them, leave the field empty a
 
 ## With nobody at the keyboard
 
-Follow `agentic-dev-core/references/decision-protocol.md` §5.2. The reads and local checks (Step 1) are reversible and run in every mode. The outward actions are the merge or push of Step 2.1, the manual deploy of Step 3 and the tracker writes of Step 5 (assignee, DTU comment, the QA notification). A person present asks the questions as written. A supervised worker stops at an open PR and leaves the merge to its launcher. A routine does these only when the delegating brief names them. Without that, it stops after Step 1, reports what is ready and which actions are pending, and does not wait.
+Follow `agentic-dev-core/references/decision-protocol.md` §5.2. The reads and local checks (Step 1) are reversible and run in every mode. The merge or push of Step 2.1 follows the git policy in every mode, with nobody present exactly as with a person: the gate's verdict is the decision, and an item on the closed list in `.agents/skills/edd/references/human-gates.md` goes to whoever launched the session while that change waits. A fleet worker leaves enabling the merge to its conductor (`fleet-mode.md` §2.1). The other outward actions keep their rule: the manual deploy of Step 3 and the tracker writes of Step 5 (assignee, DTU comment, the QA notification). A person present asks the questions as written. A supervised worker asks its launcher. A routine does these only when the delegating brief names them. Without that, it reports which actions are pending and does not wait.
 
 ## Done when
 
-- Pre-deploy: PR approved, local tests and build green, CI path checked.
+- Pre-deploy: PR approved and attested, local tests and build green, CI path checked.
 - Deploy: the feature is merged (or deployed manually), GitHub Actions ran or the manual deploy completed, and the staging URL is known.
 - Post-deploy: the smoke test ran, the app loads without 500s, the console has no critical errors, and the database connection is validated.
 - Communication: the URL is shared with QA, `assignee` is moved to the QA in `{{jira.qa_assignee}}` and read back (or left as is with the reason in the QA comment), and the DTU cycle comment is posted with the cumulative field updated (or N/A with the reason).

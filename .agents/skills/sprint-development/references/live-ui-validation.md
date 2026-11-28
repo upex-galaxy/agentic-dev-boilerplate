@@ -137,7 +137,7 @@ While building UI, keep the dev server up and re-render after each meaningful ch
 
 ### 5.2 Final verification pass (Stage 3)
 
-Before approving the PR, run a clean pass over all of the story's screens against the §4 checklist (all states, responsive, every interactive AC). Capture evidence into `.session/sprint-development/<KEY>/evidence/` for the Spec Compliance Matrix, and publish what a matrix row cites on the PR or the Jira issue (the session folder is working scratch).
+Before approving the PR, run a clean pass over all of the story's screens against the §4 checklist (all states, responsive, every interactive AC). Capture evidence into `.session/sprint-development/<KEY>/evidence/` for the Spec Compliance Matrix, and publish what a matrix row cites on the PR or the Jira issue (the session folder is working scratch). The gate's agentic evidence is a separate output: from depth `light`, a tester saves the `live-ui` screenshots, taken after the last code commit, to the attest layout and runs `bun run edd attest` (`../SKILL.md` `#### Evidence and attest`), with the session rules of this file.
 
 ### 5.3 Fix loop (gate)
 

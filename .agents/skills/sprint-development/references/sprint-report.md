@@ -202,7 +202,7 @@ If a transition is skipped (manual merge, red CI, failed deploy), append a Sessi
 
 ### Stage 5 — Production Deploy
 
-Stage 5 never runs in batch mode. A production deploy is always a per-ticket manual invocation, gated by QA green and business approval.
+Stage 5 never runs in batch mode. A production deploy is its own invocation, per ticket or per release, delivered on evidence through the git policy (`../SKILL.md` Stage 5). With a null integration branch, each ticket's PR into the production branch is its production delivery, so its Stage 5 checklist runs inside the loop, before that PR's auto-merge.
 
 - On a successful prod deploy: **Status** `STAGING_DEPLOYED` to `PROD_DEPLOYED`, with a Session Log entry holding the deploy timestamp and the outcome of the monitoring window.
 - On rollback: **Status** to `BLOCKED`. Put a pointer to the rollback runbook entry in the row's `Blocking` field, and add a Session Log entry that summarizes the rollback decision.
@@ -278,7 +278,7 @@ The report stays a sprint-scoped artifact owned by batch mode, so a one-off invo
 ## Batch mode boundaries
 
 - **The loop runs Stage 1 through Stage 4 only.** After Stage 4 completes for a ticket, the orchestrator shows a per-ticket summary and the remaining queue, and waits for the user's OK before pulling the next ticket.
-- **Stage 5 is never chained in batch mode.** Production promotion is a separate, per-ticket manual invocation. Even when every ticket in the sprint is `STAGING_DEPLOYED`, prod needs an explicit dispatch per ticket.
+- **Stage 5 is never chained in batch mode.** Production promotion is its own invocation, per ticket or per release. Even when every ticket in the sprint is `STAGING_DEPLOYED`, the loop never starts it.
 - **A red signal stops the loop.** If a ticket lands in `BLOCKED` mid-stage, append a Session Log entry, show the blocker to the user, and wait for instructions instead of moving to the next ticket.
 - **TDD on a function** is handed off per ticket to `/unit-testing`. Batch mode does not override TDD decisions.
 

@@ -1580,7 +1580,7 @@
           <span class="mono">/sprint-development</span> takes a tracker story (Jira or GitHub) all the way to deployed
           code. It plans before writing a line, checks what it builds against the
           <b>running app</b>, sends the diff to a reviewer who did not write it, and only then moves
-          it to staging. Production is a separate event, with <b>your</b> approval.
+          it to staging. Each merge happens once the <b>evidence</b> passes; production is a separate event.
         </p>
 
         <div class="hero-meta">
@@ -1618,13 +1618,13 @@
           <div class="node">
             <div class="n">Stage 4</div>
             <h3>Staging Deploy</h3>
-            <p>Merge with your OK, verified deploy, handoff to QA.</p>
+            <p>Merge on evidence, verified deploy, handoff to QA.</p>
             <div class="arw">→</div>
           </div>
           <div class="node">
             <div class="n">Stage 5</div>
             <h3>Production</h3>
-            <p>Optional and gated: QA green + business sign-off.</p>
+            <p>Optional, its own event: checklist + evidence.</p>
           </div>
         </div>
       </div>
@@ -1767,7 +1767,7 @@
             >
           </div>
           <div class="lane">
-            <div class="lane-head">Delivery · with your OK</div>
+            <div class="lane-head">Delivery · on evidence</div>
             <a class="wf" href="#staging"
               ><span class="lt sig">4</span
               ><span
@@ -1816,7 +1816,7 @@
               </tr>
               <tr>
                 <th>Promote to production</th>
-                <td>Stage 5, only with QA green and business approval</td>
+                <td>Stage 5, a separate event delivered on evidence</td>
               </tr>
             </tbody>
           </table>
@@ -2494,7 +2494,7 @@ playwright-cli list   <span class="c"># the proof: &lt;KEY&gt; is gone</span></d
           <div class="eyebrow"><span class="num">11</span> · Stage 4 · staging deploy</div>
           <h2>Merged is not deployed: it is verified at the destination</h2>
           <p class="sub">
-            The PR merge happens <b>only with your OK</b>: the skill never merges on its own. After that, CI
+            The PR merge follows the git policy: by default, <b>auto-merge once the evidence passes</b>, with no OK from you. After that, CI
             runs and the staging deploy is watched until the deployment of that commit says
             <span class="mono">READY</span>.
           </p>
@@ -2515,7 +2515,7 @@ playwright-cli list   <span class="c"># the proof: &lt;KEY&gt; is gone</span></d
             <ul>
               <li>It happens with <span class="mono">solo-main</span>, <span class="mono">github-flow</span> and <span class="mono">trunk-based</span>.</li>
               <li>There is no merge to staging: Stage 4 verifies the Preview deployment of the PR's branch.</li>
-              <li>The merge to <span class="mono">git_strategy.branches.production</span> is Stage 5.</li>
+              <li>The PR into <span class="mono">git_strategy.branches.production</span> is the production delivery: the checklist first, then auto-merge.</li>
             </ul>
           </div>
         </div>
@@ -2580,11 +2580,11 @@ playwright-cli list   <span class="c"># the proof: &lt;KEY&gt; is gone</span></d
       <div class="wrap">
         <div class="sec-head r">
           <div class="eyebrow"><span class="num">12</span> · Stage 5 · production</div>
-          <h2>Production is another event, with another approval</h2>
+          <h2>Production is another event, with its own evidence</h2>
           <p class="sub">
-            It is never chained from Stage 4. It runs only with QA green in staging <b>and</b>
-            explicit business approval, from a person or from a brief that names that ticket and
-            that deploy. If the session was already archived, Phase 0 reopens it and adds
+            It is never chained from Stage 4. The promotion follows the git policy, with the checklist
+            and the rollback plan as its <b>evidence</b>, plus QA's verdict where a QA flow exists; it
+            waits for a person only where the project reserves that final OK. If the session was already archived, Phase 0 reopens it and adds
             the Stage 5 entries.
           </p>
         </div>
@@ -2595,7 +2595,7 @@ playwright-cli list   <span class="c"># the proof: &lt;KEY&gt; is gone</span></d
             <p>
               <span class="mono">pre-deploy-checklist.md</span>: tests, types, lint and production
               build; review approved; production variables and secrets; migrations ready;
-              recent backup; monitoring and alerts; PM and QA with their go.
+              recent backup; monitoring and alerts; QA's go, and a PM OK only when the project reserves one.
             </p>
           </div>
           <div class="step">
@@ -2710,7 +2710,7 @@ playwright-cli list   <span class="c"># the proof: &lt;KEY&gt; is gone</span></d
               </li>
               <li>The loop runs Stages 1 to 4 per ticket and waits for your OK before the next one.</li>
               <li>A blocked ticket does not move the next one forward: it is reported and waits.</li>
-              <li>Stage 5 never runs in batch: production is manual, ticket by ticket.</li>
+              <li>Stage 5 never runs in batch: production is its own event, per ticket or per release.</li>
             </ul>
           </div>
           <div class="plane agent">
@@ -2724,7 +2724,7 @@ playwright-cli list   <span class="c"># the proof: &lt;KEY&gt; is gone</span></d
               </li>
               <li>
                 Each worker runs Stages 1 to 3 on one ticket, in its own worktree, without
-                human checkpoints, and stops at the open PR.
+                human checkpoints, attests its evidence and stops at the open PR; the conductor enables the merge.
               </li>
               <li>
                 A worker is recognized by its prompt: <span class="mono">/sprint-development &lt;KEY&gt; fleet worker</span>
@@ -2814,7 +2814,7 @@ playwright-cli list   <span class="c"># the proof: &lt;KEY&gt; is gone</span></d
             ><span
               ><b>It does not push to a protected branch without resolving the policy.</b>
               <span class="mono">git_strategy.policy.direct_push_to_protected</span>:
-              <span class="mono">allowed</span> pushes, <span class="mono">confirm</span> asks,
+              <span class="mono">evidence</span> pushes when the gate passes, <span class="mono">allowed</span> pushes, <span class="mono">confirm</span> asks,
               <span class="mono">forbidden</span> sends it through a PR (Critical Rule #4, mechanics in
               <span class="mono">/git-flow-master</span>).</span
             >
@@ -2822,7 +2822,7 @@ playwright-cli list   <span class="c"># the proof: &lt;KEY&gt; is gone</span></d
           <div class="it">
             <span class="bx"></span
             ><span
-              ><b>It does not merge on its own</b>, does not chain production from staging, and does not skip review on
+              ><b>It does not merge without evidence</b>: the merge follows <span class="mono">merge_mode</span>. It does not chain production from staging, and does not skip review on
               a PR that touches production behavior.</span
             >
           </div>
@@ -3036,8 +3036,8 @@ playwright-cli list   <span class="c"># the proof: &lt;KEY&gt; is gone</span></d
           <p>
             <b style="color: var(--ink)">The idea behind it.</b> Each stage leaves something the next one
             can read, and each gate opens with evidence, not with a label. The AI plans,
-            builds, reviews and verifies at the destination; you choose the design route, give the OK for the
-            merge and decide when something reaches production.
+            builds, reviews and verifies at the destination; you choose the design route and decide when something reaches
+            production; the merge follows the git policy once the evidence passes.
           </p>
         </div>
         <div class="sig">

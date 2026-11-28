@@ -1,0 +1,8 @@
+agentic:
+  - { id: app-screens, kind: screenshots, tool: playwright-cli, envs: [local], min_depth: light }
+  - { id: data-and-api, kind: api-calls, tool: db-mcp, envs: [local], min_depth: deep }
+depth:
+  rules:
+    - { paths: ['supabase/migrations/**', 'middleware.ts', 'src/middleware.ts'], depth: deep }
+    - { paths: ['**/*.css', '**/*.scss', 'DESIGN.md'], depth: light }
+    - { paths: ['src/**', 'app/**', 'components/**', 'lib/**'], depth: standard }

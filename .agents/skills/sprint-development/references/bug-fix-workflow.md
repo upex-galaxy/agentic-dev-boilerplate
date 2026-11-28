@@ -29,7 +29,7 @@ Each point where this workflow would wait for a person has a path for the three 
 
 | Wait point | A person is present | Supervised worker | Routine with nobody |
 | --- | --- | --- | --- |
-| Git strategy differs from the default (Git strategy section) | Ask. | The launcher answers. | Use `git_strategy` from `.agents/project.yaml`; report it as DECIDED. |
+| Git strategy differs from the default (Git strategy section) | Use `git_strategy` from `.agents/project.yaml`; no question. | Same. | Same; report it as DECIDED. |
 | Slug does not resolve, option 2 of the fallback | Ask which field maps. | The launcher answers. | Take fallback 3 (put the information in the Jira comment) and say so. |
 | Possible duplicate (Phase 1) | Offer the three options. | Send the question to the launcher. | Decide by evidence: same root cause is a duplicate, otherwise continue as a separate bug. Report DECIDED. |
 | Not reproducible, WAD or enhancement (Phases 2 and 3) | Offer the options. | Send the question to the launcher. | The delegating brief covers tracker writes for this bug; without one, record the finding in the escalation log and stop before any Jira write. |
@@ -214,14 +214,14 @@ When a field's `.md` is a stub, the field is absent on this instance. The stub p
 
 ### 4. Git strategy
 
-The default branching pattern, which the user can override:
+The default branching pattern, which `git_strategy` in `.agents/project.yaml` overrides:
 
 | Type | Branch pattern | Target |
 | --- | --- | --- |
 | Bugfix | `fix/{ISSUE_KEY}/{short-description}` | `git_strategy.branches.integration` (the production branch when integration is null) |
 | Hotfix | `hotfix/{ISSUE_KEY}/{short-description}` | `git_strategy.branches.production` |
 
-Ask the user whether they use a different git strategy before creating the branch (see "With nobody at the keyboard" for the other two cases).
+Read `git_strategy` before creating the branch; the branch name is the agent's call and asks nobody (`.agents/skills/edd/references/human-gates.md`).
 
 ---
 
@@ -646,7 +646,9 @@ gh pr create \
   --base <production>
 ```
 
-Confirm the PR to the user:
+Step 4. After the Stage 3 review (`../SKILL.md`), attest and hand off the merge. From depth `light` a tester (never the author from `standard`) runs the contract's agentic checks and `bun run edd attest --tester <label>` (`../SKILL.md` `#### Evidence and attest`); then `/git-flow-master` pushes the attested head, runs `bun run git:policy verify --merge <base>`, enables auto-merge per `git_strategy.policy.merge_mode` and arms the PR watcher.
+
+Report the PR:
 
 ```
 Pull Request created
@@ -657,8 +659,8 @@ URL: [PR_URL]
 Base: [integration branch, or production when integration is null]
 
 Next steps:
-1. Request code review
-2. After merge, I'll update Jira
+1. Stage 3 review, then the evidence attested at the change's depth
+2. Auto-merge per merge_mode; after the merge lands, I'll update Jira
 ```
 
 ---
@@ -953,7 +955,7 @@ A hotfix applies when severity is Crítica and the environment is Production (th
 2. [ ] Implement the minimal fix
 3. [ ] Verify the fix locally
 4. [ ] Create a PR to `<production>` with the [HOTFIX] tag
-5. [ ] Request expedited review
+5. [ ] Stage 3 review, the pre-deploy checklist and rollback plan (this PR is a production delivery), and the evidence attested; the PR merges by `git_strategy.policy.merge_mode`
 6. [ ] After merge to `<production>`:
    - [ ] Verify the production deployment
    - [ ] Backport to the integration branch (`git_strategy.branches.integration`)
@@ -989,6 +991,7 @@ gh pr create --base <production> --title "fix(ISSUE_KEY): description [HOTFIX]"
 git checkout <integration>
 git pull origin <integration>
 git cherry-pick [hotfix-commit-hash]
+# Direct push to a protected branch: resolved by git_strategy.policy.direct_push_to_protected
 git push origin <integration>
 ```
 

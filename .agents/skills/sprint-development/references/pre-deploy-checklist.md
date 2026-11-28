@@ -1,6 +1,6 @@
 # Pre-deploy checklist (Stage 5 go/no-go)
 
-Run this before deploying to production. Every box must be ticked, or the item named as skipped with its reason. One unticked box with no reason is a no-go.
+Run this before deploying to production: before the promotion push or PR, or, with a null integration branch, before auto-merge is enabled on the feature PR into the production branch. With the rollback plan it is the promotion's evidence. Every box must be ticked, or the item named as skipped with its reason. One unticked box with no reason is a no-go.
 
 ## 1. Tests (dev scope)
 
@@ -34,13 +34,13 @@ Full QA verification (E2E, exploratory, regression) is out of scope here.
 
 ## 5. Stakeholders
 
-- [ ] The PM approved the deployment.
-- [ ] QA gave a go/no-go (QA validation is managed in QA's own flow).
+- [ ] Where a QA workflow exists, QA's go/no-go on staging is green, read back from the tracker (QA validation is managed in QA's own flow).
+- [ ] A final OK, such as the PM's, only when the project reserves one for a person (`.agents/skills/edd/references/human-gates.md`); otherwise the box is named as not applicable.
 - [ ] DevOps is ready to monitor.
 
 ## With nobody at the keyboard
 
-Section 5 is a person's decision, and a routine cannot tick it. Follow `agentic-dev-core/references/decision-protocol.md` §5.2: run sections 1 to 4 (all reads and local checks), then report the result with the approvals still missing and stop. A brief that records the PM and QA approvals counts as them.
+The checklist runs the same with nobody present: sections 1 to 4 are reads and local checks, and section 5 reads QA's verdict from the tracker. Only a final OK the project reserves waits for a person: it goes to whoever launched the session with the checklist result, and this promotion waits while other work continues.
 
 ## Output
 

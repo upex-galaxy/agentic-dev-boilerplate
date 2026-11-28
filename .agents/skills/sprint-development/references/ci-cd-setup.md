@@ -9,7 +9,7 @@ CI that exists is the app's, so this guide only adds to it. List `.github/workfl
 | What you find | What you do |
 |---|---|
 | No workflow, and `{{stack.ci}}` is `github-actions` (or null) | Follow this guide, Steps 1 to 5. |
-| One or more workflows (any name, `ci.yml` included) | Never replace, rename, delete or write over an existing workflow. Read which jobs run and on which branches. If Stage 4 needs something that is missing (lint, types, test, build or the integration deploy), propose a new workflow with its own name (for example `.github/workflows/agentic-checks.yml`) that adds only what is missing, or the small change to the existing one as a diff. Write nothing until the user approves. |
+| One or more workflows (any name, `ci.yml` included) | Never replace, rename, delete or write over an existing workflow. Read which jobs run and on which branches. If Stage 4 needs something that is missing (lint, types, test, build or the integration deploy), add a new workflow with its own name (for example `.github/workflows/agentic-checks.yml`) that adds only what is missing, or the small change to the existing one as a diff. The addition is delivered like any other change: depth `standard` or deeper, and the record flags it `touches_gate` when the workflow is among the contract's gate paths (`evidence.human.paths`, `.agents/skills/edd/references/contract.md`). |
 | `{{stack.ci}}` is `gitlab`, `other` or `none` | Out of scope. Report which CI the app uses (or that it has none) and that Stage 4 is verified against what that CI and `{{stack.hosting}}` expose. Do not create a GitHub Actions workflow in an app that uses another CI. |
 
 ## What to read first
@@ -32,9 +32,9 @@ Tools: git, access to the GitHub repo, and optionally the GitHub CLI to check se
 - Runs on push and pull request to `<production>` and `<integration>`.
 - Lint, unit tests with optional coverage, and build, in that order, so a lint failure stops the rest.
 - Deploys to Vercel staging on a push to `<integration>`.
-- Optionally deploys to production on a push to `<production>` in a separate workflow (`.github/workflows/deploy-production.yml`), only behind a manual approval.
+- Optionally deploys to production on a push to `<production>` in a separate workflow (`.github/workflows/deploy-production.yml`). That push is the Stage 5 promotion, already delivered on evidence; a required approval on the deploy job is added only when the project reserves that final OK for a person (`.agents/skills/edd/references/human-gates.md`).
 
-Out of scope: an automatic production deploy without approval, integration and E2E tests (QA's), performance tests, and security scanning (it can be added later).
+Out of scope: integration and E2E tests (QA's), performance tests, and security scanning (it can be added later).
 
 Outputs: `.github/workflows/ci.yml`, the GitHub secrets `VERCEL_TOKEN`, `VERCEL_ORG_ID` and `VERCEL_PROJECT_ID` (plus any project-specific ones), `.context/ci-cd-setup.md`, and CI badges in `README.md`.
 
@@ -44,7 +44,7 @@ Outputs: `.github/workflows/ci.yml`, the GitHub secrets `VERCEL_TOKEN`, `VERCEL_
 - Check action versions with Context7 so no deprecated action ships. Check that every script exists in `package.json` before the workflow calls it.
 - Create or edit files only (the workflow, the docs, the README badge). The one step that changes anything else is the commit and push of Step 4.
 - Keep the workflow simple and modular, with one job per concern (lint, test, build, deploy) and `needs:` ordering so it fails fast.
-- A production deploy always needs a manual approval.
+- A production deploy runs only from `<production>`, which a change reaches through the git policy (Stage 5); a manual approval on it exists only where the project reserves that final OK.
 
 ## Step 1: analyze the project
 
@@ -292,7 +292,7 @@ The workflow runs on a push to `<production>`, a push to `<integration>`, and a 
 
 ```
 <production> (git_strategy.branches.production)
-  ^ merge after QA
+  ^ promotion (Stage 5, on evidence)
 <integration> (git_strategy.branches.integration; null = PRs go straight to <production>)
   ^ merge PRs here
 feature/STORY-{PROJECT_KEY}-{ISSUE_NUM}-{name}
@@ -301,13 +301,14 @@ feature/STORY-{PROJECT_KEY}-{ISSUE_NUM}-{name}
 ### From local to production
 
 1. Develop on a feature branch and push it.
-2. Open a pull request to the integration branch. CI runs lint, test and build. When green, merge, and staging deploys automatically.
+2. Open a pull request to the integration branch. CI runs lint, test and build. When the required checks pass, `edd/evidence` among them, the PR merges by `git_strategy.policy.merge_mode`, and staging deploys automatically.
 3. QA validates on https://[project]-staging.vercel.app. Bugs go back through a fix and repeat.
 4. Release to production:
 
    ```bash
    # <production> / <integration>: git_strategy.branches.* in .agents/project.yaml
    # Promotion method: git_strategy.decisions.promote_method, via /git-flow-master
+   # Direct push to a protected branch: resolved by git_strategy.policy.direct_push_to_protected
    git checkout <production>
    git merge <integration>
    git push origin <production>
@@ -356,11 +357,11 @@ Every push to `<integration>` now deploys to staging.
 
 ## With nobody at the keyboard
 
-Follow `agentic-dev-core/references/decision-protocol.md` §5.2. In this guide the points that wait for a person are:
+Follow `agentic-dev-core/references/decision-protocol.md` §5.2. In this guide the points where a person could be involved are:
 
-- Step 0, an existing workflow: the proposal needs the user's OK. A supervised worker sends the proposal to its launcher, which holds the gate. A routine writes the proposed workflow or diff to its scratch directory, records it in the report and stops. It never edits an existing workflow without a brief that covers it.
+- Step 0, an existing workflow: it is never replaced, renamed or written over, and the additive workflow or diff is delivered like any other change, the same with nobody present.
 - Step 3, secrets: only a human can create and add them. Record which secrets are missing in the report and continue with the workflow file.
-- Step 4, commit and push: an outward action. Do it when a person asked for it or the delegating brief names it. Otherwise leave the files uncommitted and report that the push is pending.
+- Step 4, commit and push: the push follows Critical Rule #4 (`git_strategy.policy.direct_push_to_protected`) in every mode, with nobody present exactly as with a person. Under `evidence` the pre-push gate decides; only `confirm` waits for a person's yes, which a supervised worker relays through its launcher.
 
 ## Done when
 

@@ -14,7 +14,7 @@ Read this only when batch-sprint mode runs with more than one executor. `SKILL.m
 
 | Term | Meaning here |
 |---|---|
-| conductor | the session that talks to the user, owns the sprint scope, merges and deploys. One per sprint run. |
+| conductor | the session that talks to the user, owns the sprint scope, enables the merges per `merge_mode` and deploys. One per sprint run. |
 | worker | one launched session running this skill in single-ticket mode on exactly one story or bug. |
 | fleet | every worker of this sprint run. |
 | round | one concurrency group: up to `orchestration.max_workers` tickets in flight at once. |
@@ -46,8 +46,8 @@ These go through the conductor and never through a worker, because each one chan
 
 | Operation | Why conductor-only |
 |---|---|
-| Stage 4: merge into the integration branch, staging deploy and its verification | one staging environment, one correct merge order; two workers deploying is a race neither can see. Merge in dependency order, one ticket at a time, and verify that the deployment for each merge SHA reads `READY` before the next (Critical Rule #16) |
-| Stage 5: production deploy | always manual per ticket, exactly as in N=1 |
+| Stage 4: merge into the integration branch, staging deploy and its verification | one staging environment, one correct merge order; two workers deploying is a race neither can see. Enable each PR's auto-merge per `git_strategy.policy.merge_mode` (after `bun run git:policy verify --merge <base>`) in dependency order, one ticket at a time, and verify that the deployment for each merge SHA reads `READY` before the next (Critical Rule #16). This coordinates shared state; it is not a human gate |
+| Stage 5: production deploy | its own event per ticket or per release, delivered on evidence exactly as in N=1 |
 | Applying a migration to a shared database | irreversible, and it hits every worker at once. The conductor reads the DB MCP's migration history at apply time and applies per `{{stack.database.migrations_tool}}` (`agentic-dev-core/references/db-change-doctrine.md`); a worker sends its SQL and waits |
 | Regenerating output from a live instance (Supabase types, `bun run api:sync` into `api/schemas/`) | one writer, after the last migration lands; a worker's regeneration silently absorbs a sibling's unmerged schema |
 | The sprint report `.context/reports/SPRINT-{N}-DEVELOPMENT.md` | one writer, rows ordered by close time |
@@ -82,7 +82,7 @@ A worker:
 - runs to completion without returning to its prompt. Stage boundaries are not checkpoints, and the run ends when the done-report is sent (§9). A worker that parks at its prompt after Stage 1 looks exactly like a crashed one to the conductor's liveness sweep;
 - runs without human checkpoints, because nobody is watching its terminal. The "EXPLAIN STORY" and "WAIT FOR CONFIRMATION" steps of `AGENTS.md` §8 become report content: the story explanation and every stage summary go into its report. A decision it genuinely needs goes out as an `ask` (§9), never as a user-question prompt nobody will see. The conductor answers an `ask` by `agentic-dev-core/references/decision-protocol.md` and reaches a person only for what that protocol reserves;
 - skips no gate: the design gate on a UI story, the review size forecast gate, the automation-identity gate, the capability probes. A gate that would have stopped for a human becomes an `ask` (then the worker ends its turn and Orca wakes it with the answer) or a `BLOCKED:` report, and the worker never guesses past it;
-- runs Stages 1-3 and stops at an open PR. It pushes its own branch, opens its own PR and transitions its own ticket per `agentic-dev-core/references/artifact-lifecycle.md`. It never merges, deploys or applies a migration to the shared database (§2.1);
+- runs Stages 1-3 and stops at an open PR. It attests its own evidence (`../SKILL.md` `#### Evidence and attest`), pushes its own branch, opens its own PR and transitions its own ticket per `agentic-dev-core/references/artifact-lifecycle.md`. It never enables the merge, deploys or applies a migration to the shared database (§2.1): those coordinate shared state and stay with the conductor;
 - creates no sprint-altitude state: no sprint report row, no bulk sync. Its session scope is `<<PRIMARY_ROOT>>/.session/sprint-development/<KEY>/`, exactly as in N=1;
 - reports once when done, plus `ask` or `escalation` as needed, and then stops. It sends no heartbeats: periodic "still alive" messages wake the conductor for nothing, and the `/agent-orchestration` worker contract (hard rule 25) rules them out, overriding any generic preamble the launcher injects.
 
@@ -139,7 +139,7 @@ Run: <run id — ONLY when this worker was launched without a supervised dispatc
 <label> <KEY> <one-line scope>   ← so a worker can broadcast a fact that changes another's decision
 
 ## Rules
-- single-ticket mode on <KEY>; Stages 1-3; stop at an open PR; no merge, no deploy, no shared-DB migration
+- single-ticket mode on <KEY>; Stages 1-3 and the attest; stop at an open PR; no merge (auto-merge included), no deploy, no shared-DB migration
 - start from the current tip of the integration branch, not the tip the round was planned on: before the first edit run `git fetch` and confirm the worktree contains `origin/<base>`, and when it does not, merge `origin/<base>` into your branch (never rebase). Before you report the PR, merge the tip in again so the conductor lands your branch without conflicts. The conductor briefs you with pointers (the plan, the ticket, the research notes, earlier commits) and never pastes summaries; you pass pointers back in your report the same way. A conflict you cannot resolve is a `BLOCKED:` line (§9), and the rest of your Stage 1 to 3 work continues
 - run every stage without returning to the prompt until the done-report is sent; stage boundaries are not checkpoints
 - no sprint-report writes, no bulk sync, no registry regeneration
@@ -180,7 +180,7 @@ claude <harness flags per fleet-launch-seam.md> '/sprint-development UPEX-123 fl
 1. Take the sprint's unblocked tickets in the order `.context/dev-roadmap.md` gives (Phase 0b).
 2. Fill a round up to `orchestration.max_workers` (an explicit user number wins). Two tickets that own the same module, or that both carry a migration, go in different rounds. A ticket that genuinely spans two modules goes to one worker, which then owns both. A ticket whose blocker is in the same round waits for the next one.
 3. Create one Orca worktree per worker just before launch, provision it, and verify its SHA against `origin/<base>` (`agentic-dev-core/references/fleet-provisioning.md` §5, and the `/agent-orchestration` conductor cycle §2). A worker starts from the current tip of the integration branch, not the tip the round was planned on, and the brief's `## Rules` tell it how to check.
-4. Launch the round, wait, and as each worker reports: review its PR (Stage 3 adjudication is still this skill's), merge in dependency order, deploy to staging and verify, update the sprint report row, and close the worker. Then form the next round. A round is the unit that gets a summary and a user checkpoint, so do not trickle a replacement worker into a half-finished round.
+4. Launch the round, wait, and as each worker reports: review its PR (Stage 3 adjudication is still this skill's; when adjudication changes the diff, the worker re-attests before the conductor enables the merge), enable its merge per `merge_mode` in dependency order, deploy to staging and verify, update the sprint report row, and close the worker. Then form the next round. A round is the unit that gets a summary and a user checkpoint, so do not trickle a replacement worker into a half-finished round.
 5. Before the next round, every remaining worktree of the closed round has passed the orphan audit and is removed (`/agent-orchestration` conductor cycle §6). A merged ticket's branch moves the base, so the next round's worktrees are created from the new `origin/<base>`.
 
 The cadence is advisory and the cap is not. If the user wants 4, use 4. The cap counts every live worker, including an ad-hoc hotfix (§8).

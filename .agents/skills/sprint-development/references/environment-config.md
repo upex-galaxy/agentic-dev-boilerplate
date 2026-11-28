@@ -237,7 +237,8 @@ In the Vercel dashboard the build and the deployment succeed. Then open the stag
 Follow `agentic-dev-core/references/decision-protocol.md` §5.2. Secret values are a human's to type in every mode, so the run never waits on them:
 
 - Do the reversible work: update `.env.example`, write `.context/environment-variables.md`, and list which variables the human still has to set in `.env` and on the platform.
-- Setting dashboard variables and the staging validation push (the empty commit) are outward. Do them only when a person asked or the delegating brief names them. A supervised worker asks its launcher. A routine reports them as pending.
+- Setting dashboard variables is outward. Do it only when a person asked or the delegating brief names it. A supervised worker asks its launcher. A routine reports it as pending.
+- The staging validation push (the empty commit) follows Critical Rule #4 (`git_strategy.policy.direct_push_to_protected`) like any push, with nobody present exactly as with a person.
 
 ## Done when
 

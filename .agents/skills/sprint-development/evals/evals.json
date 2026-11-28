@@ -3,7 +3,7 @@
     {
       "name": "should-trigger-single-user-story",
       "prompt": "Implement the user story UPEX-277. It's the empty-states story for the dashboard.",
-      "expected_behavior": "Activates sprint-development in single-story mode. Runs the 12-step workflow: epic precheck, Jira transition Ready-For-Dev -> In Progress, Stage 1 Planning (story-implementation-plan.md), Stage 2 Implementation (code + unit tests, may invoke /unit-testing for TDD slices), Stage 3 Code Review (review-pr.md, transitions to In Review), Stage 4 Staging Deploy. Pauses for user OK before each stage transition.",
+      "expected_behavior": "Activates sprint-development in single-story mode. Runs the 12-step workflow: epic precheck, Jira transition Ready-For-Dev -> In Progress, Stage 1 Planning (story-implementation-plan.md), Stage 2 Implementation (code + unit tests, may invoke /unit-testing for TDD slices), Stage 3 Code Review (review-pr.md, transitions to In Review), Stage 4 Staging Deploy. Runs the stages without pausing for a user OK between them: at the end of Stage 3 the evidence is attested at the change's depth, and /git-flow-master enables auto-merge per git_strategy.policy.merge_mode after bun run git:policy verify --merge <base>.",
       "category": "positive"
     },
     {
@@ -15,25 +15,25 @@
     {
       "name": "should-trigger-resume-work",
       "prompt": "Continue from where I left off on UPEX-100 — I think I had the API done but the UI wasn't wired yet.",
-      "expected_behavior": "Activates sprint-development in continue-implementation mode. Reads continue-implementation.md reference. Loads the .context/PBI/epics/EPIC-<KEY>-<slug>/stories/STORY-UPEX-100-<slug>/ folder to recover state (synced implementation-plan, local session notes), inspects git status + recent commits to detect actual progress, summarizes what's done vs pending, asks user OK before resuming the next stage.",
+      "expected_behavior": "Activates sprint-development in continue-implementation mode. Reads continue-implementation.md reference. Loads the .context/PBI/epics/EPIC-<KEY>-<slug>/stories/STORY-UPEX-100-<slug>/ folder to recover state (synced implementation-plan, local session notes), inspects git status + recent commits to detect actual progress, summarizes what's done vs pending and resumes the next stage.",
       "category": "positive"
     },
     {
       "name": "should-trigger-code-review",
       "prompt": "Code review for PR #123 — please go through it before I merge.",
-      "expected_behavior": "Activates sprint-development in Stage 3 Code Review mode. Reads review-pr.md reference. Fetches the PR via gh, walks the diff, checks adherence to project-dev-guide and code-standards, flags issues with severity, posts inline review comments, produces a final verdict (approve / request-changes / comment). Does not merge automatically.",
+      "expected_behavior": "Activates sprint-development in Stage 3 Code Review mode. Reads review-pr.md reference. Fetches the PR via gh, walks the diff, checks adherence to project-dev-guide and code-standards, flags issues with severity, posts inline review comments, produces a final verdict (approve / request-changes / comment). Does not merge: the user said they merge this PR.",
       "category": "positive"
     },
     {
       "name": "should-trigger-staging-deploy",
       "prompt": "Deploy to staging once the tests are green on the PR for UPEX-200.",
-      "expected_behavior": "Activates sprint-development in Stage 4 Staging Deploy mode. Verifies CI is green via gh, merges the PR (after user OK), triggers the staging deploy workflow, monitors until completion, posts the staging URL + version to Jira, transitions the ticket to Ready-For-QA. Does NOT auto-deploy to production (gated separate step).",
+      "expected_behavior": "Activates sprint-development in Stage 4 Staging Deploy mode. Verifies CI is green via gh, edd/evidence among the required checks. The merge follows git_strategy.policy.merge_mode through /git-flow-master with no user OK: under auto, the auto-merge enabled after bun run git:policy verify --merge <integration> lands it once the checks pass, and the merge commit is confirmed on the base with git merge-base --is-ancestor. It then watches the staging deploy until completion, posts the staging URL + version to Jira, transitions the ticket to Ready-For-QA. Does NOT chain into production: Stage 5 is a separate event.",
       "category": "positive"
     },
     {
       "name": "should-trigger-spanish-implement-story",
       "prompt": "Implementá la historia UPEX-412 de punta a punta: plan, código, PR y deploy a staging.",
-      "expected_behavior": "Activates sprint-development in single-story mode and runs the five-stage pipeline in order: Stage 1 plan, Stage 2 implementation with verification, Stage 3 code review, Stage 4 staging deploy. Stops before Stage 5, which needs QA green and a person's approval.",
+      "expected_behavior": "Activates sprint-development in single-story mode and runs the five-stage pipeline in order: Stage 1 plan, Stage 2 implementation with verification, Stage 3 code review, Stage 4 staging deploy. The PR merges on evidence per merge_mode without a person's OK. Stops before Stage 5, a separate event the project triggers when it releases.",
       "category": "positive"
     },
     {
@@ -75,7 +75,7 @@
     {
       "name": "should-target-production-when-integration-is-null",
       "prompt": "Open the PR for UPEX-88 and take it through Stage 4. git_strategy is solo-main with branches.integration: null.",
-      "expected_behavior": "Opens the PR against `git_strategy.branches.production` through /git-flow-master, never against a literal `staging` or `develop`. Stage 4 verifies the PR's preview deployment instead of merging into an integration branch; the merge to production is Stage 5, gated.",
+      "expected_behavior": "Opens the PR against `git_strategy.branches.production` through /git-flow-master, never against a literal `staging` or `develop`. Stage 4 verifies the PR's preview deployment instead of merging into an integration branch. The PR into production is the production delivery: the pre-deploy checklist and rollback plan run, the evidence is attested, and auto-merge is enabled per merge_mode, with no stop for a person's OK.",
       "category": "positive"
     },
     {
@@ -99,7 +99,19 @@
     {
       "name": "should-not-overwrite-an-existing-ci-workflow",
       "prompt": "Set up CI for this project (first time). The repo already has .github/workflows/ci.yml running lint and build on main.",
-      "expected_behavior": "Follows references/ci-cd-setup.md Step 0: the existing `ci.yml` is never replaced, renamed or written over. It reports what the workflow covers, and proposes only the missing jobs (types, test, the integration deploy) as a NEW workflow with its own name or as a diff to approve; nothing is written without the user's OK.",
+      "expected_behavior": "Follows references/ci-cd-setup.md Step 0: the existing `ci.yml` is never replaced, renamed or written over. It reports what the workflow covers, and proposes only the missing jobs (types, test, the integration deploy) as a NEW workflow with its own name or as a diff. The addition is delivered like any other change (depth standard or deeper, flagged touches_gate when the workflow is a gate path), with no wait for a user OK.",
+      "category": "positive"
+    },
+    {
+      "name": "should-attest-at-standard-with-a-tester-subagent",
+      "prompt": "Implement UPEX-512: the invoice list in src/features/billing/ gets a status filter. The project lists sprint-development in evidence.include, merge_mode is auto and the integration branch is staging.",
+      "expected_behavior": "The change touches app code, so the contract gives depth standard. After the Stage 3 review, the live-UI pass and the Spec Compliance Matrix, it dispatches a fresh-context tester subagent labelled <author label>/tester (never the author itself). The tester runs app-screens against the story's acceptance criteria on the running dev server through /playwright-cli, in a named in-memory session as the automation identity, after the last code commit, and writes the screenshots plus a verdict.json to <primary-root>/.session/evidence/artifacts/<subject-sha>/app-screens/local/. data-and-api is not required below deep. It runs bun run edd attest --tester <author label>/tester, then hands off to /git-flow-master, which pushes the attested head, renders the evidence into the PR body with bun run edd render --pr, runs bun run git:policy verify --merge staging, enables gh pr merge --auto --merge and arms the PR watcher. No question to the user before the push or the merge.",
+      "category": "positive"
+    },
+    {
+      "name": "should-auto-merge-the-pr-into-production-when-integration-is-null",
+      "prompt": "Take UPEX-88 all the way. git_strategy is github-flow with branches.integration null, merge_mode auto and direct_push_to_protected forbidden.",
+      "expected_behavior": "Opens the PR against git_strategy.branches.production through /git-flow-master. Stage 4 verifies the PR's preview deployment; the PR into production is the production delivery, so the pre-deploy checklist and the rollback plan run before auto-merge is enabled. After the attest at the change's depth it runs bun run git:policy verify --merge <production> and gh pr merge --auto with a merge commit unless feature_merge declares another, watches the PR until it merges and confirms the merge commit with git merge-base --is-ancestor. It never stops at the open PR waiting for a Stage 5 approval and never asks the user to push or merge.",
       "category": "positive"
     },
     {
